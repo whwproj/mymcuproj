@@ -15,9 +15,9 @@ public class ConvertedToUnifiedCoding {
     // 要转换成的统一编码格式
     static Charset specifiedEncoding = StandardCharsets.UTF_8;
     // 需要转换的java文件路径
-    static String sourceDirPath = "D:\\ProjectDocuments\\SKECHERS\\src\\skx";
+    static String sourceDirPath = "C:\\Users\\whw\\Desktop\\mymcuproj\\8266命令分发中转站\\程序代码\\STM32G030F6P6TR\\Core";
     // 生成的目录
-    static String targetDirPath = "C:\\Users\\whw\\Desktop\\转换的代码";
+    static String targetDirPath = "C:\\Users\\whw\\Desktop\\mymcuproj\\8266命令分发中转站\\程序代码\\STM32G030F6P6TR\\out";
 
     public static void main(String[] args) {
 
@@ -34,7 +34,7 @@ public class ConvertedToUnifiedCoding {
 
         // -------- 单独转换这个java文件 ---------
         } else {
-            if (file.getName().endsWith(".java")) {
+            if ( file.getName().endsWith(".c") || file.getName().endsWith(".h") ) {
                 encodeConvert(file);
             }
         }
@@ -65,7 +65,7 @@ public class ConvertedToUnifiedCoding {
             for (File file : files) {
 
                 // --- 转换文件 ---
-                if (file.isFile() && file.getName().endsWith(".java")) {
+                if (file.isFile() && ( file.getName().endsWith(".c") || file.getName().endsWith(".h") )) {
                     encodeConvert(file);
 
                 // --- 递归遍历 ---
