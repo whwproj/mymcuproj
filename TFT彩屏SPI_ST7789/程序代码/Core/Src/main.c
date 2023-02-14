@@ -18,20 +18,43 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
-#include "cmsis_os.h"
 #include "spi.h"
 #include "usart.h"
 #include "gpio.h"
-#include <stdio.h>
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "lcd.h"
+#include "lcd_init.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
+/* 函数指针重命名 主要是用于跳转 */
 
+typedef  void (*pFunction)(void);
+
+/* app起始执行地址 */
+
+#define APPLICATION_ADDRESS   (uint32_t)0x08007000
+
+/* 跳转函数 */
+
+pFunction Jump_To_Application;
+
+/* 跳转地址,中间变量作用 */
+
+uint32_t JumpAddress;
+
+/* 主流STM32芯片的SRAM地址范围都是从 0x2000 0000处开始。 128 Kbytes 的 SRAM
+
+28 Kbytes的SRAM 地址范围是 0x2000 0000  --0x2001 FFFF;
+
+所以 SP & 0x2FFE 0000 == 0x2000 0000，意味着如果超出128sram 就肯定是不正确的,所以检查17之后的位
+
+同理,不同大小的sram    0x2FFE0000是需要改变的
+
+*/
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
@@ -51,7 +74,6 @@
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
-void MX_FREERTOS_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -89,19 +111,16 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
-  MX_SPI1_Init();
   MX_USART1_UART_Init();
+  MX_SPI1_Init();
   /* USER CODE BEGIN 2 */
-	printf("init");while(1);
-  /* USER CODE END 2 */
+	HAL_Delay(100);
+	
+	LCD_Init();//LCD初始化
+	LCD_Fill(0,0,LCD_W,LCD_H,WHITE);
+	
+  /* USER DCODE END 2 */
 
-  /* Call init function for freertos objects (in freertos.c) */
-  MX_FREERTOS_Init();
-
-  /* Start scheduler */
-  osKernelStart();
-
-  /* We should never get here as control is now taken by the scheduler */
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)

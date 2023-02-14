@@ -25,6 +25,7 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "../Bsp/bsp_qspi.h "
+#include <stdio.h>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -89,21 +90,23 @@ int main(void)
   MX_TIM3_Init();
   MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
-
+		
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
 	
 	
-
+	
 	Init_LCD();
 	BlockWrite(0, 320, 0, 320);
+	printf("init ok now start\r\n");
+	while(1);
+	
   while (1)
   {
     /* USER CODE END WHILE */
-		BlockWrite(0, 320, 0, 320);
-		Delay_Ms(2000);
+
     /* USER CODE BEGIN 3 */
   }
   /* USER CODE END 3 */

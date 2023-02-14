@@ -50,7 +50,6 @@ void QspiQuadIOWriteData(uint8_t dat)
 {    
 	uint8_t i;
 
-	        
 	for(i=0;i<2;i++){              
 	QSPI_CLK_Clr();
 	if(dat&0x80)
@@ -176,7 +175,7 @@ void QspiWrData16(ENUM_QSPI_IO_NUM l_line, uint16_t dat)
 void QspiWrComm(uint8_t dat)
 {
 //        QSPI_RS_Clr();//Ð´ÃüÁî
-	QspiSingleIOWriteData(0x02);
+	QspiSingleIOWriteData(0x02);	
 	QspiSingleIOWriteData(0x00);
 	QspiSingleIOWriteData(dat);
 	QspiSingleIOWriteData(0x00);
@@ -192,19 +191,20 @@ static void write_dat(uint8_t data) {
 
 void Init_LCD(void)
 {
-     QSPI_DA0_Clr();
+     QSPI_DA0_Set();
      QSPI_DA1_Set();
      QSPI_DA2_Set();
      QSPI_DA3_Set();
      QSPI_PWR_EN_Set(); 
      //QSPI_RS_Set();
-     QSPI_BLK_Clr(); 
-			QSPI_CS_Clr();	
-     QSPI_CLK_Clr();
+     //QSPI_BLK_Clr(); 
+			//QSPI_CS_Set();	
+			QSPI_CS_Clr();
+     QSPI_CLK_Set();
 	
-QSPI_RES_Set();	Delay_Ms(50);
-QSPI_RES_Clr();	Delay_Ms(50);
-QSPI_RES_Set();	Delay_Ms(120);
+QSPI_RES_Set();	Delay_Ms(100);
+QSPI_RES_Clr();	Delay_Ms(100);
+QSPI_RES_Set();	Delay_Ms(200);
 	 
 
 //------end Reset Sequence-----//
@@ -536,15 +536,21 @@ void BlockWrite(uint16_t Xstart,uint16_t Xend,uint16_t Ystart,uint16_t Yend) {
 	write_dat(Yend>>8);
 	write_dat(Yend&0xff);
 
+//	write_dat(0x02);
+//	write_dat(0x00);
+//	write_dat(0x2c);//´¢´æÆ÷Ð´
+//	write_dat(0x00);
 	write_dat(0x12);
-	write_dat(0x00);
-	write_dat(0x2c);//´¢´æÆ÷Ð´
-	write_dat(0x00);
+	write_cmd(0x2c);//´¢´æÆ÷Ð´
 	
 	for(i=0; i<320; i++){
-		for(j=0; j<320; j++){
-			QspiQuadIOWriteData((uint8_t)(0xEF5D>>8));
-			QspiQuadIOWriteData((uint8_t)(0xEF5D));
+		for(j=0; j<386; j++){
+			//QspiQuadIOWriteData((uint8_t)(0xEF5D>>8));
+			//QspiQuadIOWriteData((uint8_t)(0xEF5D));
+			//QspiQuadIOWriteData((uint8_t)(0xEFFF>>8));
+			//QspiQuadIOWriteData((uint8_t)(0xEFFF));
+			QspiQuadIOWriteData((uint8_t)(0xEF00));
+			QspiQuadIOWriteData((uint8_t)(0x00EF));
 		}
 	}
 }
