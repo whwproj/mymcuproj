@@ -15,7 +15,7 @@ typedef struct _DEBUG_STR {
 extern DEBUG_STR debug_str;
 
 
-#define DEBUG_BUFF_SIZE	512
+#define DEBUG_BUFF_SIZE	128
 
 /*---- debug task bits start ----------------*/
 #define DEBUG_DEVICE_INIT 0

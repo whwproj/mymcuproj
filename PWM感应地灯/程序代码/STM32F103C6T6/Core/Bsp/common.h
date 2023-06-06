@@ -20,8 +20,9 @@
 
 
 /*---- Bsp -------------------------*/
-#include "bsp_wifi.h"
-#include "bsp_debug.h"
+#include "../Bsp/bsp_wifi.h"
+#include "../Bsp/bsp_debug.h"
+#include "../Bsp/bsp_flash.h"
 
 
 extern TaskHandle_t usart_wifi_TaskHandle;

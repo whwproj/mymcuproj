@@ -10,6 +10,9 @@ typedef struct _PARAM_STR {
 
 extern PARAM_STR param_str;
 
+void write_to_flash( void );
+void read_from_flash( void );
+
 #endif /*__BSP__FLASH__H*/
 
 
