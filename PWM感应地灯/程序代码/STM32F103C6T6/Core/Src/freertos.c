@@ -25,7 +25,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include "common.h"
+#include "../Bsp/common.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -53,9 +53,12 @@ osThreadId defaultTaskHandle;
 /* USER CODE BEGIN FunctionPrototypes */
 osThreadId usart_wifi_TaskHandle;
 osThreadId usart_debug_TaskHandle;
+osThreadId led_taskHandle;
 
 void usart_wifi_TaskHandleFun(void const *argument);
 void usart_debug_TaskHandleFun(void const *argument);
+void led_taskFun(void const *argument);
+
 /* USER CODE END FunctionPrototypes */
 
 void StartDefaultTask(void const * argument);
@@ -111,11 +114,14 @@ void MX_FREERTOS_Init(void) {
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
-	osThreadDef(usart_wifi_Task, usart_wifi_TaskHandleFun, osPriorityNormal, 0, 128);
+	osThreadDef(usart_wifi_Task, usart_wifi_TaskHandleFun, osPriorityNormal, 0, 512);
 	usart_wifi_TaskHandle = osThreadCreate(osThread(usart_wifi_Task), NULL);
 	
 	osThreadDef(usart_debug_Task, usart_debug_TaskHandleFun, osPriorityNormal, 0, 128);
 	usart_debug_TaskHandle = osThreadCreate(osThread(usart_debug_Task), NULL);
+	
+	osThreadDef(led_task, led_taskFun, osPriorityNormal, 0, 128);
+	led_taskHandle = osThreadCreate(osThread(led_task), NULL);
   /* USER CODE END RTOS_THREADS */
 
 }
@@ -162,7 +168,6 @@ void usart_wifi_TaskHandleFun(void const * argument) {
 			wifi_parse_data();
 		}
   }
-  /* USER CODE END StartDefaultTask */
 }
 
 void usart_debug_TaskHandleFun(void const * argument) {
@@ -179,8 +184,64 @@ void usart_debug_TaskHandleFun(void const * argument) {
 			debug_parse_data();
 		}
   }
-  /* USER CODE END StartDefaultTask */
+}
+void led_taskFun(void const * argument) {
+	uint32_t newBits, oldBits;
+  for( ;; ) {
+		xTaskNotifyWait( pdFALSE, portMAX_DELAY, &newBits, portMAX_DELAY );
+		oldBits |= newBits;
+		if ( oldBits & (1U<<LED_FAST_FLASHING) ) {
+			oldBits &=~ (1U<<LED_FAST_FLASHING);
+			for ( ;; ) {
+				xTaskNotify( led_taskHandle, pdFALSE, eSetBits );
+				xTaskNotifyWait( pdFALSE, 0, &newBits, 0 );
+				if ( newBits ) {
+					xTaskNotify( led_taskHandle, newBits, eSetBits );
+					break;
+				}
+				vTaskDelay(150);
+				HAL_GPIO_TogglePin(LED_GPIO_Port, LED_Pin);
+			}
+		}
+		if ( oldBits & (1U<<LED_SLOW_FLASHING) ) {
+			oldBits &=~ (1U<<LED_SLOW_FLASHING);
+			for ( ;; ) {
+				xTaskNotify( led_taskHandle, pdFALSE, eSetBits );
+				xTaskNotifyWait( pdFALSE, 0, &newBits, 0 );
+				if ( newBits ) {
+					xTaskNotify( led_taskHandle, newBits, eSetBits );
+					break;
+				}
+				vTaskDelay(800);
+				HAL_GPIO_TogglePin(LED_GPIO_Port, LED_Pin);
+			}
+		}
+		if ( oldBits & (1U<<LED_TURN_OFF) ) {
+			oldBits &=~ (1U<<LED_TURN_OFF);
+			HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, GPIO_PIN_SET);
+		}
+		if ( oldBits & (1U<<LED_TURN_ON) ) {
+			oldBits &=~ (1U<<LED_TURN_ON);
+			HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, GPIO_PIN_RESET);
+		}
+  }
 }
 
+
+
 /* USER CODE END Application */
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 

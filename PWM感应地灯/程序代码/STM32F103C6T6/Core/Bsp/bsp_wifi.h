@@ -23,7 +23,7 @@ typedef struct _WIFI_STR {
 extern WIFI_STR wifi_str;
 
 #define UNTIL_TIME 0x10000000
-#define WIFI_BUFF_SIZE	128
+#define WIFI_BUFF_SIZE	256
 
 /*---- wifi task bits start ----------------*/
 #define WIFI_DEVICE_INIT 	0

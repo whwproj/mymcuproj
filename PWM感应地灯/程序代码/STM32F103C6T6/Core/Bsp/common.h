@@ -23,11 +23,12 @@
 #include "../Bsp/bsp_wifi.h"
 #include "../Bsp/bsp_debug.h"
 #include "../Bsp/bsp_flash.h"
+#include "../Bsp/bsp_led.h"
 
 
 extern TaskHandle_t usart_wifi_TaskHandle;
 extern TaskHandle_t usart_debug_TaskHandle;
-
+extern TaskHandle_t led_taskHandle;
 
 
 
