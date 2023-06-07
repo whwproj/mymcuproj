@@ -9,20 +9,11 @@ typedef struct _WIFI_STR {
 	uint8_t *txBuff;
 	uint8_t *rxBuff;
 	uint32_t len;
-	
-	uint8_t nowHour;
-	uint8_t nowMin;
-	uint8_t startHour;
-	uint8_t startMin;
-	uint8_t endHour;
-	uint8_t endMin;
-	uint32_t runTime;//0x10000000
 } WIFI_STR;
 
 
 extern WIFI_STR wifi_str;
 
-#define UNTIL_TIME 0x10000000
 #define WIFI_BUFF_SIZE	256
 
 /*---- wifi task bits start ----------------*/
@@ -30,6 +21,11 @@ extern WIFI_STR wifi_str;
 #define WIFI_PARSE_DATA 	1
 #define WIFI_SEND_OK			2
 /*---- wifi task bits end ----------------*/
+
+/*---- sleep task bits start ----------------*/
+#define FALL_SLEEP 	0
+#define WAKE_UP			1
+/*---- sleep task bits end ----------------*/
 
 
 void wifi_init( void );

@@ -5,8 +5,10 @@
 DEBUG_STR debug_str;
 
 void debug_init( void ) {
+	taskENTER_CRITICAL();
 	ds.rxBuff = pvPortMalloc( DEBUG_BUFF_SIZE );
 	ds.txBuff = pvPortMalloc( DEBUG_BUFF_SIZE );
+	taskEXIT_CRITICAL();
 	//开启DMA接收 开启串口空闲中断
 	__HAL_UART_ENABLE_IT( &huart1, UART_IT_IDLE );//使能空闲中断
 	__HAL_UART_ENABLE_IT( &huart1, UART_IT_TC );//使能发送完毕中断

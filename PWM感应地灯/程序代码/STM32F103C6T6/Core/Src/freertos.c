@@ -54,10 +54,12 @@ osThreadId defaultTaskHandle;
 osThreadId usart_wifi_TaskHandle;
 osThreadId usart_debug_TaskHandle;
 osThreadId led_taskHandle;
+osThreadId sleep_taskHandle;
 
 void usart_wifi_TaskHandleFun(void const *argument);
 void usart_debug_TaskHandleFun(void const *argument);
 void led_taskFun(void const *argument);
+void sleep_taskFun(void const *argument);
 
 /* USER CODE END FunctionPrototypes */
 
@@ -122,6 +124,9 @@ void MX_FREERTOS_Init(void) {
 	
 	osThreadDef(led_task, led_taskFun, osPriorityNormal, 0, 128);
 	led_taskHandle = osThreadCreate(osThread(led_task), NULL);
+	
+	osThreadDef(sleep_task, sleep_taskFun, osPriorityNormal, 0, 128);
+	sleep_taskHandle = osThreadCreate(osThread(sleep_task), NULL);
   /* USER CODE END RTOS_THREADS */
 
 }
@@ -227,21 +232,23 @@ void led_taskFun(void const * argument) {
   }
 }
 
+void sleep_taskFun(void const * argument) {
+	uint32_t newBits, oldBits;
+  for( ;; ) {
+		xTaskNotifyWait( pdFALSE, portMAX_DELAY, &newBits, portMAX_DELAY );
+		oldBits |= newBits;
+		if ( oldBits & (1U<<FALL_SLEEP) ) {//定时进入睡眠
+			oldBits &=~ (1U<<FALL_SLEEP);
+			
+			vTaskDelay();
+		}
+		if ( oldBits & (1U<<WAKE_UP) ) {//定时苏醒
+			oldBits &=~ (1U<<WAKE_UP);
+			
+		}
+  }
+}
 
 
 /* USER CODE END Application */
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 

@@ -18,16 +18,24 @@ void wifi_init( void ) {
 	ws.rxBuff = pvPortMalloc( WIFI_BUFF_SIZE );
 	ws.txBuff = pvPortMalloc( WIFI_BUFF_SIZE );
 	
+	vTaskDelay(500);
+	sprintf( (char*)ws.txBuff, "AT+RST\r\n" );
+	HAL_UART_Transmit( &huart2, ws.txBuff, strlen((char*)ws.txBuff), portMAX_DELAY );
+	vTaskDelay(2000);
+	xTaskNotify( led_taskHandle, 1U<<LED_TURN_ON, eSetBits );//led常亮,检测wifi
+	
 	//开启DMA接收 开启串口空闲中断
 	__HAL_UART_ENABLE_IT( &huart2, UART_IT_IDLE );//使能空闲中断
 	__HAL_UART_ENABLE_IT( &huart2, UART_IT_TC );//使能发送完毕中断
 	HAL_UART_AbortReceive( &huart2 );
 	HAL_UART_Receive_DMA( &huart2, ws.rxBuff, WIFI_BUFF_SIZE );//启动DMA接收
 	
-	xTaskNotify( led_taskHandle, 1U<<LED_TURN_ON, eSetBits );//led常亮,检测wifi
-	
 	wifi_str.isConfig = 1;
 	
+	read_from_flash();
+	param_str.startHour = 20;
+	param_str.endMin = 8;
+	write_to_flash();
 //	while(1) {
 //		ws.askConfig = 0;
 //		HAL_UART_Receive_DMA( &huart2, ws.rxBuff, WIFI_BUFF_SIZE );//启动DMA接收
@@ -42,7 +50,7 @@ void wifi_init( void ) {
 	if ( check_wifi_connect() == -1 ) {
 	//if ( send_at_command_a_single_reply("AT+CIPSTA?", "STATUS:2", 0, 0 ) == -1 ) {
 		/*---- 配置网络 -----*/
-		xTaskNotify( led_taskHandle, 1U<<LED_SLOW_FLASHING, eSetBits );//led慢闪,连接wifi
+		//xTaskNotify( led_taskHandle, 1U<<LED_SLOW_FLASHING, eSetBits );//led慢闪,连接wifi
 		//读取flash,获取账号密码
 		read_from_flash();
 		//尝试连接wifi
@@ -207,7 +215,7 @@ static void wifi_smartConfig( void ) {
 
 
 static int check_wifi_connect() {
-	uint8_t timeout = 10;
+	uint8_t timeout = 5;
 	sprintf( (char*)ws.txBuff, "AT+CIPSTA?\r\n" );	
 	while( timeout ) {	
 		ws.askConfig = 0;
@@ -231,7 +239,7 @@ static int check_wifi_connect() {
 }
 
 static int connect_wifi( void ) {
-	uint8_t timeout = 10;
+	uint8_t timeout = 5;
 	sprintf( (char*)ws.txBuff, "AT+CWJAP=\"%s\",\"%s\"\r\n", param_str.wifiName, param_str.wifiPasswd );
 	HAL_UART_Receive_DMA( &huart2, ws.rxBuff, WIFI_BUFF_SIZE );
 	HAL_UART_Transmit( &huart2, ws.txBuff, strlen((char*)ws.txBuff), portMAX_DELAY );
@@ -270,8 +278,8 @@ static void get_sntp_time( void ) {
 		if ( buffCompareToBuff( "OK\r\n", (char*)&ws.rxBuff[ws.len-strlen("OK\r\n")], strlen("OK\r\n") ) ) {
 			if ( !buffCompareToBuff( "1970", (char*)&ws.rxBuff[ws.len-strlen("1970\r\nOK\r\n")], strlen("1970") ) ) {
 				//读取到更新的时间
-				ws.nowHour = (ws.rxBuff[ws.len-strlen("hh:mm:ss yyyy\r\nOK\r\n")]-0x30)*10 + ws.rxBuff[ws.len-strlen("h:mm:ss yyyy\r\nOK\r\n")]-0x30;
-				ws.nowMin = (ws.rxBuff[ws.len-strlen("mm:ss yyyy\r\nOK\r\n")]-0x30)*10 + ws.rxBuff[ws.len-strlen("m:ss yyyy\r\nOK\r\n")]-0x30;
+				ps.nowHour = (ws.rxBuff[ws.len-strlen("hh:mm:ss yyyy\r\nOK\r\n")]-0x30)*10 + ws.rxBuff[ws.len-strlen("h:mm:ss yyyy\r\nOK\r\n")]-0x30;
+				ps.nowMin = (ws.rxBuff[ws.len-strlen("mm:ss yyyy\r\nOK\r\n")]-0x30)*10 + ws.rxBuff[ws.len-strlen("m:ss yyyy\r\nOK\r\n")]-0x30;
 				check_turn_on_time();
 				break;
 			} else {
@@ -284,21 +292,21 @@ static void get_sntp_time( void ) {
 
 
 int check_turn_on_time( void ) {
-	ws.startHour = 19;
-	ws.endHour = 20;
-	if ( ws.endHour > ws.startHour ) {//一天当中
-		if ( ws.nowHour>=ws.startHour && ws.nowHour<ws.endHour ) {
-			ws.runTime = ( ws.endHour - (ws.nowHour+1) )*3600000 + (60-ws.nowMin)*60000 | UNTIL_TIME;
+	ps.startHour = 19;
+	ps.endHour = 20;
+	if ( ps.endHour > ps.startHour ) {//一天当中
+		if ( ps.nowHour>=ps.startHour && ps.nowHour<ps.endHour ) {
+			ps.runTime = ( ps.endHour - (ps.nowHour+1) )*3600000 + (60-ps.nowMin)*60000 | UNTIL_TIME;
 			return 0;
 		} else {
 			return -1; 
 		}
 	} else {//终止时间后一天
-		if ( ( ws.nowHour>=ws.startHour && ws.nowHour<=23 ) || ( ws.nowHour<ws.endHour ) ) {
-			if ( ws.nowHour>=ws.startHour && ws.nowHour<=23 ) {
-				ws.runTime = ( 24 - (ws.nowHour+1) + ws.endHour )*3600000 + (60-ws.nowMin)*60000 | UNTIL_TIME;
+		if ( ( ps.nowHour>=ps.startHour && ps.nowHour<=23 ) || ( ps.nowHour<ps.endHour ) ) {
+			if ( ps.nowHour>=ps.startHour && ps.nowHour<=23 ) {
+				ps.runTime = ( 24 - (ps.nowHour+1) + ps.endHour )*3600000 + (60-ps.nowMin)*60000 | UNTIL_TIME;
 			} else {
-				ws.runTime = ( ws.endHour - (ws.nowHour+1) )*3600000 + (60-ws.nowMin)*60000 | UNTIL_TIME;
+				ps.runTime = ( ps.endHour - (ps.nowHour+1) )*3600000 + (60-ps.nowMin)*60000 | UNTIL_TIME;
 			}
 			//计算关机时间,发送通知
 			return 0;
