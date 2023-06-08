@@ -51,15 +51,20 @@ osThreadId defaultTaskHandle;
 
 /* Private function prototypes -----------------------------------------------*/
 /* USER CODE BEGIN FunctionPrototypes */
+
+QueueHandle_t cmd_queueHandle;
+
 osThreadId usart_wifi_TaskHandle;
 osThreadId usart_debug_TaskHandle;
 osThreadId led_taskHandle;
 osThreadId sleep_taskHandle;
+osThreadId cmd_handle_taskHandle;
 
 void usart_wifi_TaskHandleFun(void const *argument);
 void usart_debug_TaskHandleFun(void const *argument);
 void led_taskFun(void const *argument);
 void sleep_taskFun(void const *argument);
+void cmd_handle_taskFun(void const *argument);
 
 /* USER CODE END FunctionPrototypes */
 
@@ -107,6 +112,7 @@ void MX_FREERTOS_Init(void) {
 
   /* USER CODE BEGIN RTOS_QUEUES */
   /* add queues, ... */
+	cmd_queueHandle = xQueueCreate( 3, sizeof(SESSION*) );//发送消息队列
   /* USER CODE END RTOS_QUEUES */
 
   /* Create the thread(s) */
@@ -116,8 +122,11 @@ void MX_FREERTOS_Init(void) {
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
-	osThreadDef(usart_wifi_Task, usart_wifi_TaskHandleFun, osPriorityNormal, 0, 512);
+	osThreadDef(usart_wifi_Task, usart_wifi_TaskHandleFun, osPriorityNormal, 0, 256);
 	usart_wifi_TaskHandle = osThreadCreate(osThread(usart_wifi_Task), NULL);
+	
+	osThreadDef(cmd_handle_task, cmd_handle_taskFun, osPriorityNormal, 0, 128);
+	cmd_handle_taskHandle = osThreadCreate(osThread(cmd_handle_task), NULL);
 	
 	osThreadDef(usart_debug_Task, usart_debug_TaskHandleFun, osPriorityNormal, 0, 128);
 	usart_debug_TaskHandle = osThreadCreate(osThread(usart_debug_Task), NULL);
@@ -143,9 +152,9 @@ void StartDefaultTask(void const * argument)
   /* USER CODE BEGIN StartDefaultTask */
   /* Infinite loop */
   for(;;)
-  {
+  {	
 		//参数初始化
-
+		
 		//debug初始化
 		xTaskNotify( usart_debug_TaskHandle, 1U<<DEBUG_DEVICE_INIT, eSetBits );
 		//wifi初始化
@@ -161,8 +170,9 @@ void StartDefaultTask(void const * argument)
 /* USER CODE BEGIN Application */
 void usart_wifi_TaskHandleFun(void const * argument) {
 	uint32_t newBits, oldBits;
+	xTaskNotify( usart_wifi_TaskHandle, (1U<<WIFI_SEND_OK), eSetBits );
   for( ;; ) {
-		xTaskNotifyWait( pdFALSE, portMAX_DELAY, &newBits, portMAX_DELAY );
+		xTaskNotifyWait( pdFALSE, ~(1U<<WIFI_SEND_OK), &newBits, portMAX_DELAY );
 		oldBits |= newBits;
 		if ( oldBits & (1U<<WIFI_DEVICE_INIT) ) {//初始化wifi数据
 			oldBits &=~ (1U<<WIFI_DEVICE_INIT);
@@ -240,7 +250,6 @@ void sleep_taskFun(void const * argument) {
 		if ( oldBits & (1U<<FALL_SLEEP) ) {//定时进入睡眠
 			oldBits &=~ (1U<<FALL_SLEEP);
 			
-			vTaskDelay();
 		}
 		if ( oldBits & (1U<<WAKE_UP) ) {//定时苏醒
 			oldBits &=~ (1U<<WAKE_UP);
@@ -249,6 +258,38 @@ void sleep_taskFun(void const * argument) {
   }
 }
 
+void cmd_handle_taskFun(void const * argument) {
+	uint32_t newBits, oldBits;
+	xTaskNotify( usart_wifi_TaskHandle, (1U<<WIFI_SEND_OK), eSetBits );
+  for( ;; ) {
+		xTaskNotifyWait( pdFALSE, ~(1U<<WIFI_SEND_OK), &newBits, portMAX_DELAY );
+		oldBits |= newBits;
+		if ( oldBits & (1U<<CMD_MAIN) ) {//主菜单
+			oldBits &=~ (1U<<CMD_MAIN);
+			if ( cmd_main_fun() != 0 ) {
+				xTaskNotify( cmd_handle_taskHandle, 1U<<CMD_MAIN, eSetBits );
+			}
+		}
+		if ( oldBits & (1U<<CMD_SUB_1) ) {
+			oldBits &=~ (1U<<CMD_SUB_1);
+			if ( cmd_sub_1_fun() != 0 ) {
+				xTaskNotify( cmd_handle_taskHandle, 1U<<CMD_SUB_1, eSetBits );
+			}
+		}
+		if ( oldBits & (1U<<CMD_SUB_2) ) {
+			oldBits &=~ (1U<<CMD_SUB_2);
+			if ( cmd_sub_2_fun() != 0 ) {
+				xTaskNotify( cmd_handle_taskHandle, 1U<<CMD_SUB_2, eSetBits );
+			}
+		}
+		if ( oldBits & (1U<<CMD_SUB_3) ) {
+			oldBits &=~ (1U<<CMD_SUB_3);
+			if ( cmd_sub_3_fun() != 0 ) {
+				xTaskNotify( cmd_handle_taskHandle, 1U<<CMD_SUB_3, eSetBits );
+			}
+		}
+  }
+}
 
 /* USER CODE END Application */
 

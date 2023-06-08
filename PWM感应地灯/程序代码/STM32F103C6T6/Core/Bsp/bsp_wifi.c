@@ -3,39 +3,58 @@
 #define ws wifi_str
 
 WIFI_STR wifi_str;
+SESSION session[3];
+
+
+char* defaultTips = "请输入数字执行相应命令:\r\n1.强制开关灯\r\n2.取消强制开关灯\r\n3.设置天黑时间\r\n4.设置天亮时间";
 
 static int send_at_command_a_single_reply( char *cmd, char *target, int headTail, uint8_t idx );
 static void wifi_smartConfig( void );
 static int check_wifi_connect( void );
 static int connect_wifi( void );
 static void get_sntp_time( void );
-
+static uint16_t str_to_u32 ( char* data );
+static void *memmem(const void *haystack, size_t haystacklen, const void *needle, size_t needlelen);
+static void destroy_session( uint8_t pid );
+static SESSION* find_sessoin_by_pid( uint8_t pid );
+static int wifi_tcp_send( char* dat, uint16_t len, uint8_t pid, xTaskHandle xHandle );
+static void wait_for_dma_idle( xTaskHandle xHandle );
 		
 void wifi_init( void ) {
+	uint8_t *tp = pvPortMalloc( 512 );
 	
+	memset( (void*)session, 0, sizeof( SESSION )*3 );
 	memset( (void*)&ws, 0, sizeof( WIFI_STR ) );
 	vTaskDelay(100);
 	ws.rxBuff = pvPortMalloc( WIFI_BUFF_SIZE );
 	ws.txBuff = pvPortMalloc( WIFI_BUFF_SIZE );
+	wifi_str.isConfig = 1;
+	vTaskDelay(100);
 	
-	vTaskDelay(500);
-	sprintf( (char*)ws.txBuff, "AT+RST\r\n" );
-	HAL_UART_Transmit( &huart2, ws.txBuff, strlen((char*)ws.txBuff), portMAX_DELAY );
-	vTaskDelay(2000);
-	xTaskNotify( led_taskHandle, 1U<<LED_TURN_ON, eSetBits );//led常亮,检测wifi
-	
+//	sprintf( (char*)ws.txBuff, "AT+RST\r\n" );
+//	HAL_UART_Transmit( &huart2, ws.txBuff, strlen((char*)ws.txBuff), portMAX_DELAY );
 	//开启DMA接收 开启串口空闲中断
 	__HAL_UART_ENABLE_IT( &huart2, UART_IT_IDLE );//使能空闲中断
 	__HAL_UART_ENABLE_IT( &huart2, UART_IT_TC );//使能发送完毕中断
 	HAL_UART_AbortReceive( &huart2 );
-	HAL_UART_Receive_DMA( &huart2, ws.rxBuff, WIFI_BUFF_SIZE );//启动DMA接收
 	
-	wifi_str.isConfig = 1;
+	vTaskDelay(4000);
+//	HAL_UART_Receive_DMA( &huart2, tp, 512 );//启动DMA接收
+//	for ( ;; ) {
+//		if ( memmem( tp, 512, "ready", strlen("ready")) != NULL ) {
+//			HAL_UART_AbortReceive( &huart2 );
+//			vPortFree(tp);
+//			break;
+//		}
+//	}
 	
-	read_from_flash();
-	param_str.startHour = 20;
-	param_str.endMin = 8;
-	write_to_flash();
+	xTaskNotify( led_taskHandle, 1U<<LED_TURN_ON, eSetBits );//led常亮,检测wifi
+	vTaskDelay(10);
+	
+//	read_from_flash();
+//	param_str.startHour = 20;
+//	param_str.endMin = 8;
+//	write_to_flash();
 //	while(1) {
 //		ws.askConfig = 0;
 //		HAL_UART_Receive_DMA( &huart2, ws.rxBuff, WIFI_BUFF_SIZE );//启动DMA接收
@@ -50,7 +69,6 @@ void wifi_init( void ) {
 	if ( check_wifi_connect() == -1 ) {
 	//if ( send_at_command_a_single_reply("AT+CIPSTA?", "STATUS:2", 0, 0 ) == -1 ) {
 		/*---- 配置网络 -----*/
-		//xTaskNotify( led_taskHandle, 1U<<LED_SLOW_FLASHING, eSetBits );//led慢闪,连接wifi
 		//读取flash,获取账号密码
 		read_from_flash();
 		//尝试连接wifi
@@ -74,8 +92,8 @@ void wifi_init( void ) {
 	//启用多连接:	AT+CIPMUX=1
 	send_at_command_a_single_reply("AT+CIPMUX=1", "OK", -1, strlen("OK\r\n") );
 
-	//设置服务器允许建立的最大连接数:		AT+CIPSERVERMAXCONN=2
-	send_at_command_a_single_reply("AT+CIPSERVERMAXCONN=2", "OK", -1, strlen("OK\r\n") );
+	//设置服务器允许建立的最大连接数:		AT+CIPSERVERMAXCONN=3
+	send_at_command_a_single_reply("AT+CIPSERVERMAXCONN=3", "OK", -1, strlen("OK\r\n") );
 	
 	//查询sntp服务器
 	send_at_command_a_single_reply("AT+CIPSNTPCFG=1,8,\"cn.ntp.org.cn\",\"ntp.sjtu.edu.cn\"", "OK", -1, strlen("OK\r\n") );
@@ -86,29 +104,140 @@ void wifi_init( void ) {
 	//建立TCP服务器:		AT+CIPSERVER=1,8266
 	send_at_command_a_single_reply("AT+CIPSERVER=1,8266", "OK", -1, strlen("OK\r\n") );
 		
+	wifi_str.isConfig = 0;
+	HAL_UART_AbortReceive( &huart2 );
+	HAL_UART_Receive_DMA( &huart2, ws.rxBuff, WIFI_BUFF_SIZE );//启动DMA接收
 	xTaskNotify( led_taskHandle, 1U<<LED_TURN_OFF, eSetBits );//led灭,配置完成
-	//res = send_at_command_a_single_reply("AT+CIPSTATUS", "STATUS:2", 0, 0 );
-	
-	//printf("res: %d\r\n", res);
-	while(1) {
-		ws.askConfig = 0;
-		HAL_UART_Receive_DMA( &huart2, ws.rxBuff, WIFI_BUFF_SIZE );//启动DMA接收
-		while( !ws.askConfig ){;;} 
-		vTaskDelay(50);HAL_UART_AbortReceive( &huart2 );
-		ws.len = WIFI_BUFF_SIZE - __HAL_DMA_GET_COUNTER(&hdma_usart2_rx);
-		HAL_UART_Transmit( &huart1, ws.rxBuff, ws.len, portMAX_DELAY );
-	}
-	
-	//wifi连接检测中 led闪烁_start
-	//vTaskDelay( 3000 );
+}
 
-	//AT+CWJAP="MI","12345678"
+static uint16_t str_to_u32 ( char* data ) {
+	uint16_t size;
+	for ( size=0; (*data>='0' && *data<='9'); data++ ) {
+		size *= 10;
+		size += (*data-'0');
+	}
+	return size;
 }
 
 
 void wifi_parse_data( void ) {
+	uint8_t pos;
+	uint16_t timeout = 0;
+	uint32_t bit;
 	ws.len = WIFI_BUFF_SIZE - __HAL_DMA_GET_COUNTER(&hdma_usart2_rx);
 	//判断类型
+	if ( buffCompareToBuff( (char*)ws.rxBuff, "\r\n+IPD", 6 )!=NULL ) {
+		while( ws.len < 11 ) { 
+			ws.len = WIFI_BUFF_SIZE - __HAL_DMA_GET_COUNTER(&hdma_usart2_rx); 
+		}
+		ws.sesp = find_sessoin_by_pid( ws.rxBuff[7]-'0' );
+		
+	} else if ( strstr( (char*)ws.rxBuff, "CONNECT" )!=NULL ) {
+		ws.sesp = find_sessoin_by_pid( ws.rxBuff[0]-'0' );
+		wifi_tcp_send( defaultTips, strlen(defaultTips), ws.sesp->pid, usart_wifi_TaskHandle );
+		
+	}else if ( strstr( (char*)ws.rxBuff, "CLOSED" )!=NULL ) {
+		destroy_session( ws.rxBuff[0]-'0' );
+		
+	} 
+
+	if( strstr( (char*)ws.rxBuff, "+IPD" ) == NULL ){
+		HAL_UART_AbortReceive( &huart2 );
+		HAL_UART_Receive_DMA( &huart2, ws.rxBuff, WIFI_BUFF_SIZE );//启动DMA接收
+		memset( ws.rxBuff, 0, WIFI_BUFF_SIZE );
+		return;
+	}
+	ws.dLen = str_to_u32( (char*)(ws.rxBuff+9) );//\r\n+IPD,0,
+	pos = 11;//\r\n+IPD,0,x:
+	if ( ws.dLen>=10 ) { pos++; }
+	if ( ws.dLen>=100 ) { pos++; }
+	while( (ws.len!=ws.dLen+pos) && (timeout<50) ) {
+		ws.len = WIFI_BUFF_SIZE - __HAL_DMA_GET_COUNTER( &hdma_usart2_rx );
+		vTaskDelay(10);
+		timeout++;
+	}
+	memcpy( ws.sesp->data, &ws.rxBuff[pos], ws.dLen );
+	memset( ws.rxBuff, 0, WIFI_BUFF_SIZE );
+	HAL_UART_AbortReceive( &huart2 );
+	HAL_UART_Receive_DMA( &huart2, ws.rxBuff, WIFI_BUFF_SIZE );//启动DMA接收
+	if ( timeout == 50 ) { return; }
+	//xTaskNotify( usart_wifi_TaskHandle, pdFALSE, eSetBits );
+	//xTaskNotifyWait( pdFALSE, ~(1U<<WIFI_SEND_OK), &bit, portMAX_DELAY );
+	
+//	sprintf( (char*)debug_str.txBuff, "接收到 pid_%d 的消息: ", session.pid );
+//	HAL_UART_Transmit( &huart1,debug_str.txBuff, strlen((char*)debug_str.txBuff), 0xffff );
+//	HAL_UART_Transmit( &huart1, ws.rxBuff+pos, ws.dLen, 0xffff );
+//	printf("\r\n");
+	
+	xQueueSend( cmd_queueHandle, &ws.sesp, pdFALSE );
+	if ( ws.sesp->dir == 0 ) {//main
+		xTaskNotify( cmd_handle_taskHandle, 1U<<CMD_MAIN, eSetBits );
+	} else if ( ws.sesp->dir == 1 ) {
+		xTaskNotify( cmd_handle_taskHandle, 1U<<CMD_SUB_1, eSetBits );
+	} else if ( ws.sesp->dir == 2 ) {
+		xTaskNotify( cmd_handle_taskHandle, 1U<<CMD_SUB_2, eSetBits );
+	} else if ( ws.sesp->dir == 3 ) {
+		xTaskNotify( cmd_handle_taskHandle, 1U<<CMD_SUB_3, eSetBits );
+	}
+	
+}
+
+static int wifi_tcp_send( char* dat, uint16_t len, uint8_t pid, xTaskHandle xHandle ) {
+	uint16_t num;
+	int res = 0;
+	
+	ws.passDataStop = 1;//停止发送解析通知
+	HAL_UART_AbortReceive( &huart2 );
+	HAL_UART_Receive_DMA( &huart2, ws.rxBuff, WIFI_BUFF_SIZE );//启动DMA接收
+	wait_for_dma_idle( xHandle );//等待DMA空闲
+	sprintf( (char*)ws.txBuff, "AT+CIPSEND=%d,%d\r\n", pid, len );
+	//HAL_UART_Transmit(&huart2, ws.txBuff, strlen((char*)ws.txBuff), portMAX_DELAY );
+	HAL_UART_Transmit_DMA( &huart2, ws.txBuff, strlen((char*)ws.txBuff) );
+	for ( num=300; num>0; num-- ) {
+		vTaskDelay(10);
+		ws.len = WIFI_BUFF_SIZE - __HAL_DMA_GET_COUNTER( &hdma_usart2_rx );
+		if ( ws.rxBuff[ws.len-1] == '>' )
+			break;
+	}
+	if ( num == 0 ) {
+		//发送异常
+		res = -1;
+		goto ret;
+	}
+	
+	HAL_UART_AbortReceive( &huart2 );
+	HAL_UART_Receive_DMA( &huart2, ws.rxBuff, WIFI_BUFF_SIZE );//启动DMA接收
+	wait_for_dma_idle( xHandle );//等待DMA空闲
+	sprintf( (char*)ws.txBuff, "%s", dat );
+	HAL_UART_Transmit_DMA( &huart2, ws.txBuff, len );
+	for ( num=300; num>0; num-- ) {
+		vTaskDelay(10);
+		ws.len = WIFI_BUFF_SIZE - __HAL_DMA_GET_COUNTER( &hdma_usart2_rx );
+		if ( buffCompareToBuff( "SEND OK\r\n", (char*)&ws.rxBuff[ws.len-9], 9 ) )
+			break;
+	}
+	if ( num == 0 ) {
+		//发送异常
+		res = -1;
+	}
+	
+ret:
+	ws.passDataStop = 0;//取消暂停发送解析通知
+	HAL_UART_AbortReceive( &huart2 );
+	HAL_UART_Receive_DMA( &huart2, ws.rxBuff, WIFI_BUFF_SIZE );//启动DMA接收
+	return res;
+}
+
+static void wait_for_dma_idle( xTaskHandle xHandle ) {
+	uint32_t newBits;
+	uint8_t num;
+	//----等待DMA发送空闲 start -----
+	xTaskNotify( xHandle, pdFALSE, eSetBits );
+	do {
+		//允许发送的通知,首次触发和DMA发送完成后触发
+		xTaskNotifyWait( pdFALSE, (1U<<WIFI_SEND_OK), &newBits, 700 );
+	} while( !(newBits & (1U<<WIFI_SEND_OK)) && ++num<4 );
+	//----等待DMA发送空闲 end -----
 }
 
 static int send_at_command_a_single_reply( char *cmd, char *target, 
@@ -117,7 +246,7 @@ static int send_at_command_a_single_reply( char *cmd, char *target,
 	ws.askConfig = 0;
 	sprintf( (char*)ws.txBuff, "%s\r\n", cmd );
 	while ( times-- ) { 
-		HAL_UART_Receive_DMA( &huart2, ws.rxBuff, WIFI_BUFF_SIZE );//启动DMA接收
+		HAL_UART_Receive_DMA( &huart2, ws.rxBuff, WIFI_BUFF_SIZE );//启用DMA接收
 		HAL_UART_Transmit( &huart2, ws.txBuff, strlen((char*)ws.txBuff), portMAX_DELAY );
 		while( !ws.askConfig ){;;} 
 		vTaskDelay(100);HAL_UART_AbortReceive( &huart2 );
@@ -147,7 +276,6 @@ static void wifi_smartConfig( void ) {
 	uint8_t i;
 	uint16_t cont;
 	
-	
 	taskENTER_CRITICAL();
 	memset(wifi_str.rxBuff, 0, DEBUG_BUFF_SIZE);
 	vTaskDelay(100);
@@ -158,7 +286,7 @@ static void wifi_smartConfig( void ) {
 	//智能配网:  AT+CWSTARTSMART=3
 	
 	for( ;;	) {
-		cont = 600;//1min
+		cont = 250;//25s
 		ws.askConfig = 0;
 		sprintf((char*)ws.txBuff, "AT+CWSTOPSMART\r\n");
 		HAL_UART_Receive_DMA( &huart2, ws.rxBuff, WIFI_BUFF_SIZE );//启动DMA接收
@@ -204,7 +332,11 @@ static void wifi_smartConfig( void ) {
 			}
 		}
 		printf("\r\n----- \r\n%s\r\n", ws.rxBuff);
-		if ( cont == 0 ) continue;//超时未连接,密码错误,重新开启
+		if ( cont == 0 ) {
+			xTaskNotify( led_taskHandle, 1U<<LED_SLOW_FLASHING, eSetBits );//led慢闪,连接wifi
+			vTaskDelay(10);
+			continue;//超时未连接,密码错误,重新开启
+		}
 		break;
 	}
 	//退出智能配网:   AT+CWSTOPSMART
@@ -233,17 +365,17 @@ static int check_wifi_connect() {
 		} else {
 			timeout--;
 		}
-		vTaskDelay( 1000 );
+		vTaskDelay( 500 );
 	}
 	return -1;
 }
 
 static int connect_wifi( void ) {
-	uint8_t timeout = 5;
+	uint8_t timeout = 10;
 	sprintf( (char*)ws.txBuff, "AT+CWJAP=\"%s\",\"%s\"\r\n", param_str.wifiName, param_str.wifiPasswd );
 	HAL_UART_Receive_DMA( &huart2, ws.rxBuff, WIFI_BUFF_SIZE );
 	HAL_UART_Transmit( &huart2, ws.txBuff, strlen((char*)ws.txBuff), portMAX_DELAY );
-	while( timeout ) {	
+	while( timeout-- ) {	
 		ws.askConfig = 0;
 		while( !ws.askConfig ){;;}
 		vTaskDelay(50);HAL_UART_AbortReceive( &huart2 );
@@ -255,7 +387,6 @@ static int connect_wifi( void ) {
 			printf( "wifi连接成功!\r\n" );
 			return 0;
 		} else {
-			timeout--;
 			HAL_UART_Receive_DMA( &huart2, ws.rxBuff, WIFI_BUFF_SIZE );//重启DMA接收
 		}
 	}
@@ -314,12 +445,122 @@ int check_turn_on_time( void ) {
 			return -1; 
 		}
 	}
-	
-	
-	
-	
 }
 
+static void *memmem(const void *haystack, size_t haystacklen, const void *needle, size_t needlelen) {
+    const unsigned char *h = haystack;
+    const unsigned char *n = needle;
+    size_t i, j;
+    for (i = 0; i <= haystacklen - needlelen; i++) {
+        for (j = 0; j < needlelen; j++) {
+            if (h[i + j] != n[j]) {
+                break;
+            }
+        }
+        if (j == needlelen) {
+            return (void *)&h[i];
+        }
+    }
+    return NULL;
+}
+
+
+static void destroy_session( uint8_t pid ) {
+	uint8_t i;
+	for( i=0; i<3; i++ ) {
+		if ( session[i].onlineSta && session[i].pid==pid ) {
+			session[i].onlineSta = 0;
+			session[i].dir = 0;
+			return;
+		}
+	}
+}
+static SESSION* find_sessoin_by_pid( uint8_t pid ) {
+	uint8_t i;
+	for( i=0; i<3; i++ ) {
+		if ( session[i].onlineSta && session[i].pid==pid ) {
+			return &session[i];
+		}
+	}
+	for( i=0; i<3; i++ ) {
+		if ( !session[i].onlineSta ) {
+			session[i].onlineSta = 1;
+			session[i].pid = pid;
+			return &session[i];
+		}
+	}
+	return NULL;
+}
+
+
+uint8_t cmd_main_fun( void ) {
+	SESSION *sessp;
+	uint8_t num;
+	if ( xQueueReceive( cmd_queueHandle, &sessp, 10 ) ) {
+		if ( buffCompareToBuff( "1", sessp->data, 1 ) ) {
+			wifi_tcp_send( "功能待开发...\r\n", strlen("功能待开发...\r\n"), sessp->pid, cmd_handle_taskHandle );
+		}
+		if ( buffCompareToBuff( "2", sessp->data, 1 ) ) {
+			wifi_tcp_send( "功能待开发...\r\n", strlen("功能待开发...\r\n"), sessp->pid, cmd_handle_taskHandle );
+		}
+		if ( buffCompareToBuff( "3", sessp->data, 1 ) ) {
+			wifi_tcp_send( "功能待开发...\r\n", strlen("功能待开发...\r\n"), sessp->pid, cmd_handle_taskHandle );
+		}
+	}
+	num = uxQueueMessagesWaiting( cmd_queueHandle );
+	return num;
+}
+uint8_t cmd_sub_1_fun( void ) {
+	SESSION *sessp;
+	uint8_t num;
+	if ( xQueueReceive( cmd_queueHandle, &sessp, 10 ) ) {
+		if ( buffCompareToBuff( "1", sessp->data, 1 ) ) {
+			wifi_tcp_send( "功能待开发...\r\n", strlen("功能待开发...\r\n"), sessp->pid, cmd_handle_taskHandle );
+		}
+		if ( buffCompareToBuff( "2", sessp->data, 1 ) ) {
+			wifi_tcp_send( "功能待开发...\r\n", strlen("功能待开发...\r\n"), sessp->pid, cmd_handle_taskHandle );
+		}
+		if ( buffCompareToBuff( "3", sessp->data, 1 ) ) {
+			wifi_tcp_send( "功能待开发...\r\n", strlen("功能待开发...\r\n"), sessp->pid, cmd_handle_taskHandle );
+		}
+	}
+	num = uxQueueMessagesWaiting( cmd_queueHandle );
+	return num;
+}
+uint8_t cmd_sub_2_fun( void ) {
+	SESSION *sessp;
+	uint8_t num;
+	if ( xQueueReceive( cmd_queueHandle, &sessp, 10 ) ) {
+		if ( buffCompareToBuff( "1", sessp->data, 1 ) ) {
+			wifi_tcp_send( "功能待开发...\r\n", strlen("功能待开发...\r\n"), sessp->pid, cmd_handle_taskHandle );
+		}
+		if ( buffCompareToBuff( "2", sessp->data, 1 ) ) {
+			wifi_tcp_send( "功能待开发...\r\n", strlen("功能待开发...\r\n"), sessp->pid, cmd_handle_taskHandle );
+		}
+		if ( buffCompareToBuff( "3", sessp->data, 1 ) ) {
+			wifi_tcp_send( "功能待开发...\r\n", strlen("功能待开发...\r\n"), sessp->pid, cmd_handle_taskHandle );
+		}
+	}
+	num = uxQueueMessagesWaiting( cmd_queueHandle );
+	return num;
+}
+uint8_t cmd_sub_3_fun( void ) {
+	SESSION *sessp;
+	uint8_t num;
+	if ( xQueueReceive( cmd_queueHandle, &sessp, 10 ) ) {
+		if ( buffCompareToBuff( "1", sessp->data, 1 ) ) {
+			wifi_tcp_send( "功能待开发...\r\n", strlen("功能待开发...\r\n"), sessp->pid, cmd_handle_taskHandle );
+		}
+		if ( buffCompareToBuff( "2", sessp->data, 1 ) ) {
+			wifi_tcp_send( "功能待开发...\r\n", strlen("功能待开发...\r\n"), sessp->pid, cmd_handle_taskHandle );
+		}
+		if ( buffCompareToBuff( "3", sessp->data, 1 ) ) {
+			wifi_tcp_send( "功能待开发...\r\n", strlen("功能待开发...\r\n"), sessp->pid, cmd_handle_taskHandle );
+		}
+	}
+	num = uxQueueMessagesWaiting( cmd_queueHandle );
+	return num;
+}
 
 
 

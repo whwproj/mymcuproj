@@ -29,8 +29,9 @@
 extern TaskHandle_t usart_wifi_TaskHandle;
 extern TaskHandle_t usart_debug_TaskHandle;
 extern TaskHandle_t led_taskHandle;
+extern TaskHandle_t cmd_handle_taskHandle;
 
-
+extern QueueHandle_t cmd_queueHandle;
 
 
 
