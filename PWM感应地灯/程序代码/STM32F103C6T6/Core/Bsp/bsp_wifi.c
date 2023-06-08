@@ -38,15 +38,15 @@ void wifi_init( void ) {
 	__HAL_UART_ENABLE_IT( &huart2, UART_IT_TC );//使能发送完毕中断
 	HAL_UART_AbortReceive( &huart2 );
 	
-	vTaskDelay(4000);
-//	HAL_UART_Receive_DMA( &huart2, tp, 512 );//启动DMA接收
-//	for ( ;; ) {
-//		if ( memmem( tp, 512, "ready", strlen("ready")) != NULL ) {
-//			HAL_UART_AbortReceive( &huart2 );
-//			vPortFree(tp);
-//			break;
-//		}
-//	}
+//	vTaskDelay(4000);
+	HAL_UART_Receive_DMA( &huart2, tp, 512 );//启动DMA接收
+	for ( ;; ) {
+		if ( memmem( tp, 512, "ready", strlen("ready")) != NULL ) {
+			HAL_UART_AbortReceive( &huart2 );
+			vPortFree(tp);
+			break;
+		}
+	}
 	
 	xTaskNotify( led_taskHandle, 1U<<LED_TURN_ON, eSetBits );//led常亮,检测wifi
 	vTaskDelay(10);

@@ -24,12 +24,14 @@
 #include "../Bsp/bsp_debug.h"
 #include "../Bsp/bsp_flash.h"
 #include "../Bsp/bsp_led.h"
+#include "../Bsp/bsp_pwm.h"
 
 
 extern TaskHandle_t usart_wifi_TaskHandle;
 extern TaskHandle_t usart_debug_TaskHandle;
 extern TaskHandle_t led_taskHandle;
 extern TaskHandle_t cmd_handle_taskHandle;
+extern TaskHandle_t pwm_taskHandle;
 
 extern QueueHandle_t cmd_queueHandle;
 

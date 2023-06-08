@@ -59,12 +59,14 @@ osThreadId usart_debug_TaskHandle;
 osThreadId led_taskHandle;
 osThreadId sleep_taskHandle;
 osThreadId cmd_handle_taskHandle;
+osThreadId pwm_taskHandle;
 
 void usart_wifi_TaskHandleFun(void const *argument);
 void usart_debug_TaskHandleFun(void const *argument);
 void led_taskFun(void const *argument);
 void sleep_taskFun(void const *argument);
 void cmd_handle_taskFun(void const *argument);
+void pwm_taskFun(void const *argument);
 
 /* USER CODE END FunctionPrototypes */
 
@@ -136,6 +138,9 @@ void MX_FREERTOS_Init(void) {
 	
 	osThreadDef(sleep_task, sleep_taskFun, osPriorityNormal, 0, 128);
 	sleep_taskHandle = osThreadCreate(osThread(sleep_task), NULL);
+	
+	osThreadDef(pwm_task, pwm_taskFun, osPriorityNormal, 0, 128);
+	pwm_taskHandle = osThreadCreate(osThread(pwm_task), NULL);
   /* USER CODE END RTOS_THREADS */
 
 }
@@ -159,7 +164,9 @@ void StartDefaultTask(void const * argument)
 		xTaskNotify( usart_debug_TaskHandle, 1U<<DEBUG_DEVICE_INIT, eSetBits );
 		//wifi初始化
 		xTaskNotify( usart_wifi_TaskHandle, 1U<<WIFI_DEVICE_INIT, eSetBits );
-		//wifi
+		//PWM
+		HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_2);   //开启定时器PWM输出
+		
 		vTaskDelete( defaultTaskHandle );
 		
   }
@@ -288,6 +295,27 @@ void cmd_handle_taskFun(void const * argument) {
 				xTaskNotify( cmd_handle_taskHandle, 1U<<CMD_SUB_3, eSetBits );
 			}
 		}
+  }
+}
+
+void pwm_taskFun(void const * argument) {
+	uint32_t newBits, oldBits;
+  for( ;; ) {
+		xTaskNotifyWait( pdFALSE, portMAX_DELAY, &newBits, portMAX_DELAY );
+		oldBits |= newBits;
+		if ( oldBits & (1U<<TURN_ON) ) {
+			oldBits &=~ (1U<<TURN_ON);
+			pwm_turn_on();
+		}
+		if ( oldBits & (1U<<TURN_OFF) ) {
+			oldBits &=~ (1U<<TURN_OFF);
+			pwm_turn_off();
+		}
+		if ( oldBits & (1U<<FLASHING) ) {//定时进入睡眠
+			oldBits &=~ (1U<<FLASHING);
+			pwm_flashing();
+		}
+		
   }
 }
 

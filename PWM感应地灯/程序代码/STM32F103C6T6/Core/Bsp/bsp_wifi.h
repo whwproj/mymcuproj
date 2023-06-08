@@ -31,7 +31,7 @@ extern SESSION session[];
 /*---- wifi task bits start ----------------*/
 #define WIFI_DEVICE_INIT 	0
 #define WIFI_PARSE_DATA 	1
-#define WIFI_SEND_OK			2
+#define WIFI_SEND_OK			31
 /*---- wifi task bits end ----------------*/
 
 /*---- sleep task bits start ----------------*/
