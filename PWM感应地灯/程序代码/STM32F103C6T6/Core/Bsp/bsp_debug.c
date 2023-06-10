@@ -24,6 +24,16 @@ void debug_parse_data( void ) {
 	//判断类型
 	if ( buffCompareToBuff( "连接4G中", (char *)ds.rxBuff, strlen("连接4G中") ) ) {
 		//xTaskNotify( TJC_ControlTaskHandle, 1U<<TJC_CON_WH_LTE_DISCON_TCP232, eSetBits );//连接4G中
+		
+	} else if ( buffCompareToBuff( "开灯", (char *)ds.rxBuff, strlen("开灯") ) ) {
+		xTaskNotify( pwm_taskHandle, 1U<<TURN_ON, eSetBits );
+	
+	} else if ( buffCompareToBuff( "关灯", (char *)ds.rxBuff, strlen("关灯") ) ) {
+		xTaskNotify( pwm_taskHandle, 1U<<TURN_OFF, eSetBits );
+	
+	} else if ( buffCompareToBuff( "闪烁", (char *)ds.rxBuff, strlen("闪烁") ) ) {
+		xTaskNotify( pwm_taskHandle, 1U<<FLASHING, eSetBits );
+		
 	} else {
 		HAL_UART_Transmit( &huart2, ds.rxBuff, ds.len, 0xffff );
 	}

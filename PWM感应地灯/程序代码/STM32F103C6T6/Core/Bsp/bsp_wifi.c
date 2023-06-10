@@ -5,8 +5,7 @@
 WIFI_STR wifi_str;
 SESSION session[3];
 
-
-char* defaultTips = "请输入数字执行相应命令:\r\n1.强制开关灯\r\n2.取消强制开关灯\r\n3.设置天黑时间\r\n4.设置天亮时间";
+char* defaultTips = "一.主页:\r\n请输入数字执行相应命令:\r\n1.开灯\r\n2.关灯\r\n3.闪烁\r\n4.自动检测\r\n5.参数设置";
 
 static int send_at_command_a_single_reply( char *cmd, char *target, int headTail, uint8_t idx );
 static void wifi_smartConfig( void );
@@ -27,7 +26,7 @@ void wifi_init( void ) {
 	memset( (void*)&ws, 0, sizeof( WIFI_STR ) );
 	vTaskDelay(100);
 	ws.rxBuff = pvPortMalloc( WIFI_BUFF_SIZE );
-	ws.txBuff = pvPortMalloc( WIFI_BUFF_SIZE );
+	ws.txBuff = pvPortMalloc( WIFI_TXBUFF_SIZE );
 	wifi_str.isConfig = 1;
 	vTaskDelay(100);
 	
@@ -38,15 +37,15 @@ void wifi_init( void ) {
 	__HAL_UART_ENABLE_IT( &huart2, UART_IT_TC );//使能发送完毕中断
 	HAL_UART_AbortReceive( &huart2 );
 	
-//	vTaskDelay(4000);
-	HAL_UART_Receive_DMA( &huart2, tp, 512 );//启动DMA接收
-	for ( ;; ) {
-		if ( memmem( tp, 512, "ready", strlen("ready")) != NULL ) {
-			HAL_UART_AbortReceive( &huart2 );
-			vPortFree(tp);
-			break;
-		}
-	}
+	vTaskDelay(2000);
+//	HAL_UART_Receive_DMA( &huart2, tp, 512 );//启动DMA接收
+//	for ( ;; ) {
+//		if ( memmem( tp, 512, "ready", strlen("ready")) != NULL ) {
+//			HAL_UART_AbortReceive( &huart2 );
+//			vPortFree(tp);
+//			break;
+//		}
+//	}
 	
 	xTaskNotify( led_taskHandle, 1U<<LED_TURN_ON, eSetBits );//led常亮,检测wifi
 	vTaskDelay(10);
@@ -54,7 +53,10 @@ void wifi_init( void ) {
 //	read_from_flash();
 //	param_str.startHour = 20;
 //	param_str.endMin = 8;
+//	memcpy( param_str.wifiPasswd, "12345678", strlen("12345678") );
+//	memcpy( param_str.wifiName, "Tenda_ECE950", strlen("Tenda_ECE950") );
 //	write_to_flash();
+	
 //	while(1) {
 //		ws.askConfig = 0;
 //		HAL_UART_Receive_DMA( &huart2, ws.rxBuff, WIFI_BUFF_SIZE );//启动DMA接收
@@ -64,7 +66,9 @@ void wifi_init( void ) {
 //		HAL_UART_Transmit( &huart1, ws.rxBuff, ws.len, portMAX_DELAY );
 //	}
 	send_at_command_a_single_reply("ATE0", "OK", -1, strlen("OK\r\n") );
-	
+
+//#define haswifi
+#ifdef haswifi
 	//查询连接状态和信息
 	if ( check_wifi_connect() == -1 ) {
 	//if ( send_at_command_a_single_reply("AT+CIPSTA?", "STATUS:2", 0, 0 ) == -1 ) {
@@ -83,7 +87,7 @@ void wifi_init( void ) {
 		send_at_command_a_single_reply("AT+CWAUTOCONN=1", "OK", -1, strlen("OK\r\n") );
 	}
 	while ( check_wifi_connect() == -1 ){;;}
-	
+#endif	
 	xTaskNotify( led_taskHandle, 1U<<LED_TURN_ON, eSetBits );//led常亮,配置wifi
 		
 	//SoftAP+Station 模式: AT+CWMODE=3
@@ -94,12 +98,14 @@ void wifi_init( void ) {
 
 	//设置服务器允许建立的最大连接数:		AT+CIPSERVERMAXCONN=3
 	send_at_command_a_single_reply("AT+CIPSERVERMAXCONN=3", "OK", -1, strlen("OK\r\n") );
-	
+
+#ifdef haswifi
 	//查询sntp服务器
 	send_at_command_a_single_reply("AT+CIPSNTPCFG=1,8,\"cn.ntp.org.cn\",\"ntp.sjtu.edu.cn\"", "OK", -1, strlen("OK\r\n") );
 	
 	//获取sntp时间
 	get_sntp_time();
+#endif
 	
 	//建立TCP服务器:		AT+CIPSERVER=1,8266
 	send_at_command_a_single_reply("AT+CIPSERVER=1,8266", "OK", -1, strlen("OK\r\n") );
@@ -123,7 +129,7 @@ static uint16_t str_to_u32 ( char* data ) {
 void wifi_parse_data( void ) {
 	uint8_t pos;
 	uint16_t timeout = 0;
-	uint32_t bit;
+	//uint32_t bit;
 	ws.len = WIFI_BUFF_SIZE - __HAL_DMA_GET_COUNTER(&hdma_usart2_rx);
 	//判断类型
 	if ( buffCompareToBuff( (char*)ws.rxBuff, "\r\n+IPD", 6 )!=NULL ) {
@@ -157,6 +163,7 @@ void wifi_parse_data( void ) {
 		timeout++;
 	}
 	memcpy( ws.sesp->data, &ws.rxBuff[pos], ws.dLen );
+	ws.sesp->dataLen = ws.dLen;
 	memset( ws.rxBuff, 0, WIFI_BUFF_SIZE );
 	HAL_UART_AbortReceive( &huart2 );
 	HAL_UART_Receive_DMA( &huart2, ws.rxBuff, WIFI_BUFF_SIZE );//启动DMA接收
@@ -315,7 +322,7 @@ static void wifi_smartConfig( void ) {
 			}
 			if ( cont == 0 ) break;
 			//ws.len = WIFI_BUFF_SIZE - __HAL_DMA_GET_COUNTER(&hdma_usart2_rx);
-			if ( strstr((char*)ws.rxBuff,"WIFI GOT IP") != NULL ) {
+			if ( strstr((char*)ws.rxBuff,"WIFI CONNECTED") != NULL ) {
 				HAL_UART_AbortReceive( &huart2 );
 				memset( param_str.wifiName, 0, 50 );
 				memset( param_str.wifiPasswd, 0, 30 );
@@ -498,30 +505,52 @@ uint8_t cmd_main_fun( void ) {
 	uint8_t num;
 	if ( xQueueReceive( cmd_queueHandle, &sessp, 10 ) ) {
 		if ( buffCompareToBuff( "1", sessp->data, 1 ) ) {
+			xTaskNotify( pwm_taskHandle, 1U<<TURN_ON, eSetBits );
+			wifi_tcp_send( "已发送开灯指令\r\n", strlen("已发送开灯指令\r\n"), sessp->pid, cmd_handle_taskHandle );
+		}
+		else if ( buffCompareToBuff( "2", sessp->data, 1 ) ) {
+			xTaskNotify( pwm_taskHandle, 1U<<TURN_OFF, eSetBits );
+			wifi_tcp_send( "已发送关灯指令\r\n", strlen("已发送关灯指令\r\n"), sessp->pid, cmd_handle_taskHandle );
+		}
+		else if ( buffCompareToBuff( "3", sessp->data, 1 ) ) {
+			xTaskNotify( pwm_taskHandle, 1U<<FLASHING, eSetBits );
+			wifi_tcp_send( "已发送闪烁指令\r\n", strlen("已发送闪烁指令\r\n"), sessp->pid, cmd_handle_taskHandle );
+		}
+		else if ( buffCompareToBuff( "4", sessp->data, 1 ) ) {
 			wifi_tcp_send( "功能待开发...\r\n", strlen("功能待开发...\r\n"), sessp->pid, cmd_handle_taskHandle );
 		}
-		if ( buffCompareToBuff( "2", sessp->data, 1 ) ) {
-			wifi_tcp_send( "功能待开发...\r\n", strlen("功能待开发...\r\n"), sessp->pid, cmd_handle_taskHandle );
+		else if ( buffCompareToBuff( "5", sessp->data, 1 ) ) {
+			wifi_tcp_send( "二.参数设置页:\r\n1.设置天黑时间\r\n2.设置天亮时间\r\n3.调节最高亮度\r\n按#号返回主菜单", strlen("二.参数设置页:\r\n1.设置天黑时间\r\n2.设置天亮时间\r\n3.调节最高亮度\r\n按#号返回主菜单"), sessp->pid, cmd_handle_taskHandle );
+			ws.sesp->dir = 1;
 		}
-		if ( buffCompareToBuff( "3", sessp->data, 1 ) ) {
-			wifi_tcp_send( "功能待开发...\r\n", strlen("功能待开发...\r\n"), sessp->pid, cmd_handle_taskHandle );
+		else {
+			wifi_tcp_send( defaultTips, strlen(defaultTips), sessp->pid, cmd_handle_taskHandle );
 		}
 	}
 	num = uxQueueMessagesWaiting( cmd_queueHandle );
 	return num;
 }
-uint8_t cmd_sub_1_fun( void ) {
+uint8_t cmd_sub_1_fun( void ) {//参数设置
 	SESSION *sessp;
 	uint8_t num;
+	//二.参数设置页:\r\n1.设置天黑时间\r\n2.设置天亮时间\r\n3.调节最高亮度\r\n按#号返回上一层菜单
 	if ( xQueueReceive( cmd_queueHandle, &sessp, 10 ) ) {
 		if ( buffCompareToBuff( "1", sessp->data, 1 ) ) {
 			wifi_tcp_send( "功能待开发...\r\n", strlen("功能待开发...\r\n"), sessp->pid, cmd_handle_taskHandle );
 		}
-		if ( buffCompareToBuff( "2", sessp->data, 1 ) ) {
+		else if ( buffCompareToBuff( "2", sessp->data, 1 ) ) {
 			wifi_tcp_send( "功能待开发...\r\n", strlen("功能待开发...\r\n"), sessp->pid, cmd_handle_taskHandle );
 		}
-		if ( buffCompareToBuff( "3", sessp->data, 1 ) ) {
-			wifi_tcp_send( "功能待开发...\r\n", strlen("功能待开发...\r\n"), sessp->pid, cmd_handle_taskHandle );
+		else if ( buffCompareToBuff( "3", sessp->data, 1 ) ) {
+			wifi_tcp_send( "三.调节最高亮度页:\r\n请输入数字调节最高亮度百分比 20 - 100 之间\r\n按下#号键返回上一层菜单", strlen("三.调节最高亮度页:\r\n请输入数字调节最高亮度百分比 20 - 100 之间\r\n按下#号键返回上一层菜单"), sessp->pid, cmd_handle_taskHandle );
+			ws.sesp->dir = 2;
+		}
+		else if ( buffCompareToBuff( "#", sessp->data, 1 ) || buffCompareToBuff( "＃", sessp->data, 1 ) ) {
+			wifi_tcp_send( defaultTips, strlen(defaultTips), sessp->pid, cmd_handle_taskHandle );
+			ws.sesp->dir = 0;
+		}
+		else {
+			wifi_tcp_send( "二.参数设置页:\r\n1.设置天黑时间\r\n2.设置天亮时间\r\n3.调节最高亮度\r\n按#号返回上一层菜单", strlen("二.参数设置页:\r\n1.设置天黑时间\r\n2.设置天亮时间\r\n3.调节最高亮度\r\n按#号返回上一层菜单"), sessp->pid, cmd_handle_taskHandle );
 		}
 	}
 	num = uxQueueMessagesWaiting( cmd_queueHandle );
@@ -529,16 +558,26 @@ uint8_t cmd_sub_1_fun( void ) {
 }
 uint8_t cmd_sub_2_fun( void ) {
 	SESSION *sessp;
-	uint8_t num;
+	uint8_t num, t;
+	char *str;
+	//三.调节最高亮度页:\r\n请输入数字调节最高亮度百分比 20 - 100 之间\r\n按下#号键返回上一层菜单
 	if ( xQueueReceive( cmd_queueHandle, &sessp, 10 ) ) {
-		if ( buffCompareToBuff( "1", sessp->data, 1 ) ) {
-			wifi_tcp_send( "功能待开发...\r\n", strlen("功能待开发...\r\n"), sessp->pid, cmd_handle_taskHandle );
+		sessp->data[ sessp->dataLen ] = 0;
+		t = ( uint8_t )str_to_u32( sessp->data );
+		if ( t >= 20 && t <= 100 ) {
+			pwm_str.maxBtnPer = t;
+			str = pvPortMalloc( 100 );
+			sprintf( str, "成功设置最大亮度为: %d%%", pwm_str.maxBtnPer );
+			wifi_tcp_send( str, strlen(str), sessp->pid, cmd_handle_taskHandle );
+			vPortFree( str );
+			wifi_tcp_send( "三.调节最高亮度页:\r\n请输入数字调节最高亮度百分比 20 - 100 之间\r\n按下#号键返回上一层菜单", strlen("三.调节最高亮度页:\r\n请输入数字调节最高亮度百分比 20 - 100 之间\r\n按下#号键返回上一层菜单"), sessp->pid, cmd_handle_taskHandle );
+		} 
+		else if ( buffCompareToBuff( "#", sessp->data, 1 ) || buffCompareToBuff( "＃", sessp->data, 1 ) ) {
+			wifi_tcp_send( "二.参数设置页:\r\n1.设置天黑时间\r\n2.设置天亮时间\r\n3.调节最高亮度\r\n按#号返回上一层菜单", strlen("二.参数设置页:\r\n1.设置天黑时间\r\n2.设置天亮时间\r\n3.调节最高亮度\r\n按#号返回上一层菜单"), sessp->pid, cmd_handle_taskHandle );
+			ws.sesp->dir = 1;
 		}
-		if ( buffCompareToBuff( "2", sessp->data, 1 ) ) {
-			wifi_tcp_send( "功能待开发...\r\n", strlen("功能待开发...\r\n"), sessp->pid, cmd_handle_taskHandle );
-		}
-		if ( buffCompareToBuff( "3", sessp->data, 1 ) ) {
-			wifi_tcp_send( "功能待开发...\r\n", strlen("功能待开发...\r\n"), sessp->pid, cmd_handle_taskHandle );
+		else {
+			wifi_tcp_send( "三.调节最高亮度页:\r\n请输入数字调节最高亮度百分比 20 - 100 之间\r\n按下#号键返回上一层菜单", strlen("三.调节最高亮度页:\r\n请输入数字调节最高亮度百分比 20 - 100 之间\r\n按下#号键返回上一层菜单"), sessp->pid, cmd_handle_taskHandle );
 		}
 	}
 	num = uxQueueMessagesWaiting( cmd_queueHandle );

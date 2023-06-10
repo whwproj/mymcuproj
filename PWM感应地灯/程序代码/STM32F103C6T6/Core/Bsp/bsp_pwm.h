@@ -6,6 +6,7 @@
 typedef struct _PWM_STR {
 	
 	uint8_t lightSta;//0:关 1:开 2:闪烁
+	uint8_t maxBtnPer;//最高亮度百分比 50~100
 
 } PWM_STR;
 

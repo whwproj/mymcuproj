@@ -157,15 +157,21 @@ void StartDefaultTask(void const * argument)
   /* USER CODE BEGIN StartDefaultTask */
   /* Infinite loop */
   for(;;)
-  {	
+  {
 		//参数初始化
+		pwm_str.maxBtnPer = 100;
+		
+		//PWM
+		HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_2);   //开启定时器PWM输出
+		
+//		__HAL_TIM_SetCompare(&htim2, TIM_CHANNEL_2, 1000 );//修改占空比
+//		while(1);
 		
 		//debug初始化
 		xTaskNotify( usart_debug_TaskHandle, 1U<<DEBUG_DEVICE_INIT, eSetBits );
 		//wifi初始化
 		xTaskNotify( usart_wifi_TaskHandle, 1U<<WIFI_DEVICE_INIT, eSetBits );
-		//PWM
-		HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_2);   //开启定时器PWM输出
+		
 		
 		vTaskDelete( defaultTaskHandle );
 		
@@ -311,7 +317,7 @@ void pwm_taskFun(void const * argument) {
 			oldBits &=~ (1U<<TURN_OFF);
 			pwm_turn_off();
 		}
-		if ( oldBits & (1U<<FLASHING) ) {//定时进入睡眠
+		if ( oldBits & (1U<<FLASHING) ) {
 			oldBits &=~ (1U<<FLASHING);
 			pwm_flashing();
 		}

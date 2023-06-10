@@ -7,6 +7,7 @@ typedef struct _SESSION {
 	uint8_t onlineSta;//0:offline 1:online
 	uint8_t pid;
 	uint8_t dir;//main:0 sub1:1...
+	uint8_t dataLen;
 	char data[128];
 } SESSION;
 
@@ -27,6 +28,7 @@ extern WIFI_STR wifi_str;
 extern SESSION session[];
 
 #define WIFI_BUFF_SIZE	256
+#define WIFI_TXBUFF_SIZE	384
 
 /*---- wifi task bits start ----------------*/
 #define WIFI_DEVICE_INIT 	0
