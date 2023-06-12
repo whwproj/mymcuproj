@@ -32,9 +32,10 @@ extern TaskHandle_t usart_debug_TaskHandle;
 extern TaskHandle_t led_taskHandle;
 extern TaskHandle_t cmd_handle_taskHandle;
 extern TaskHandle_t pwm_taskHandle;
+extern TaskHandle_t check_online_taskHandle;
 
 extern QueueHandle_t cmd_queueHandle;
-extern QueueHandle_t send_The_Right_Mutex;
+//extern QueueHandle_t send_The_Right_Mutex;
 
 
 

@@ -24,6 +24,7 @@ typedef struct _WIFI_STR {
 	uint8_t isConfig;
 	uint8_t askConfig;
 	uint8_t passDataStop;//1:暂停数据解析
+	//uint8_t communication;//0:wifi未在通信即wifi空闲,可查询状态 1:不可查询,避免数据混乱
 	uint8_t *txBuff;
 	uint8_t *rxBuff;
 	uint32_t len;
@@ -50,13 +51,20 @@ extern SESSION session[];
 #define WAKE_UP			1
 /*---- sleep task bits end ----------------*/
 
-/*---- sleep task bits start ----------------*/
+/*---- cmd task bits start ----------------*/
 #define CMD_MAIN		0
 #define CMD_SUB_1		1
 #define CMD_SUB_2		2
 #define CMD_SUB_3		3
-/*---- sleep task bits end ----------------*/
+/*---- cmd task bits end ----------------*/
 
+/*---- check task bits start ----------------*/
+#define TO_CHECK_ONLINE				0
+#define WIFI_IS_COMMUNICATION 1
+/*---- check task bits end ----------------*/
+
+uint32_t wifi_check_online( void );
+void wifi_to_reconfigure( void );
 void wifi_init( void );
 void wifi_parse_data( void );
 int check_turn_on_time( void );

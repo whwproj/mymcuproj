@@ -16,6 +16,7 @@ static void destroy_session( uint8_t pid );
 static SESSION* find_sessoin_by_pid( uint8_t pid );
 static int wifi_tcp_send( char* dat, uint16_t len, uint8_t pid, xTaskHandle xHandle );
 static void wait_for_dma_idle( xTaskHandle xHandle );
+static int send_command_check_res( char *cmd, char *resTrue, char *resFalse );
 		
 void wifi_init( void ) {
 	uint8_t *tp = pvPortMalloc( 512 );
@@ -123,6 +124,27 @@ static uint16_t str_to_u32 ( char* data ) {
 	return size;
 }
 
+uint32_t wifi_check_online( void ) {
+	
+	if ( send_command_check_res("AT+CIPMUX?", ":1", ":0") == -1 )
+		return pdFALSE;
+	
+	if ( send_command_check_res("AT+CIPSERVER?", ":0", ":1") == -1 )
+		return pdFALSE;
+	
+	return pdTRUE;
+}
+
+void wifi_to_reconfigure( void ) {
+	//启用多连接:	AT+CIPMUX=1
+	send_at_command_a_single_reply("AT+CIPMUX=1", "OK", -1, strlen("OK\r\n") );
+	
+	//建立TCP服务器:		AT+CIPSERVER=1,8266
+	send_at_command_a_single_reply("AT+CIPSERVER=1,8266", "OK", -1, strlen("OK\r\n") );
+
+	HAL_UART_AbortReceive( &huart2 );
+	HAL_UART_Receive_DMA( &huart2, ws.rxBuff, WIFI_BUFF_SIZE );//启动DMA接收
+}
 
 void wifi_parse_data( void ) {
 	uint8_t pos;
@@ -173,6 +195,9 @@ void wifi_parse_data( void ) {
 //	HAL_UART_Transmit( &huart1,debug_str.txBuff, strlen((char*)debug_str.txBuff), 0xffff );
 //	HAL_UART_Transmit( &huart1, ws.rxBuff+pos, ws.dLen, 0xffff );
 //	printf("\r\n");
+	
+	//接收到wifi通信数据,发送wifi正在通信的通知
+	xTaskNotify( check_online_taskHandle, 1U<<WIFI_IS_COMMUNICATION, eSetBits );
 	
 	xQueueSend( cmd_queueHandle, &ws.sesp, pdFALSE );
 	if ( ws.sesp->dir == 0 ) {//main
@@ -272,6 +297,28 @@ static int send_at_command_a_single_reply( char *cmd, char *target,
 				return 0;
 			}
 		}
+	}
+	return -1;
+}
+static int send_command_check_res( char *cmd, char *resTrue, char *resFalse ) {
+	uint8_t times = 5;
+	ws.askConfig = 0;
+	sprintf( (char*)ws.txBuff, "%s\r\n", cmd );
+	
+	while ( times-- ) { 
+		HAL_UART_AbortReceive( &huart2 );
+		memset( ws.rxBuff, 0, WIFI_BUFF_SIZE );
+		vTaskDelay(30);
+		HAL_UART_Receive_DMA( &huart2, ws.rxBuff, WIFI_BUFF_SIZE );//启用DMA接收
+		HAL_UART_Transmit( &huart2, ws.txBuff, strlen((char*)ws.txBuff), portMAX_DELAY );
+		while( !ws.askConfig ){;;} 
+		vTaskDelay(100);HAL_UART_AbortReceive( &huart2 );
+		if ( strstr((char*)ws.rxBuff, resTrue) != NULL ) {
+			return 0;
+		} else if ( strstr((char*)ws.rxBuff, resFalse) != NULL ) {
+			return -1;
+		}
+		vTaskDelay(500);
 	}
 	return -1;
 }

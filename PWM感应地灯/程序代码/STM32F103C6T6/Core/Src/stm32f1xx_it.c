@@ -276,16 +276,21 @@ void USART2_IRQHandler(void)
 		if ( wifi_str.isConfig ) {
 			wifi_str.askConfig = 1;
 		} else {
+			//wifi正在通信
+			//wifi_str.communication = 1;
 			if ( !wifi_str.passDataStop ) {
 				xTaskNotifyFromISR( usart_wifi_TaskHandle, 1U<<WIFI_PARSE_DATA, eSetBits, &phpt );
 				portYIELD_FROM_ISR( phpt );
-			}
+			}			
 		}
 		
 	}else if ( __HAL_UART_GET_FLAG(&huart2,UART_FLAG_TC) != RESET ) {
 		__HAL_UART_CLEAR_FLAG( &huart2, UART_FLAG_TC );
 		xTaskNotifyFromISR( usart_wifi_TaskHandle, 1U<<WIFI_SEND_OK, eSetBits, &phpt );//DMA发送完成通知
 		xTaskNotifyFromISR( cmd_handle_taskHandle, 1U<<WIFI_SEND_OK, eSetBits, &phpt );//DMA发送完成通知
+//		if ( !wifi_str.isConfig ) {
+//			wifi_str.communication = 0;//wifi一次通信完成
+//		}
 		portYIELD_FROM_ISR( phpt );
 	}
 	

@@ -53,7 +53,7 @@ osThreadId defaultTaskHandle;
 /* USER CODE BEGIN FunctionPrototypes */
 
 QueueHandle_t cmd_queueHandle;
-QueueHandle_t send_The_Right_Mutex;
+//QueueHandle_t send_The_Right_Mutex;
 
 osThreadId usart_wifi_TaskHandle;
 osThreadId usart_debug_TaskHandle;
@@ -61,6 +61,8 @@ osThreadId led_taskHandle;
 osThreadId sleep_taskHandle;
 osThreadId cmd_handle_taskHandle;
 osThreadId pwm_taskHandle;
+osThreadId check_online_taskHandle;
+
 
 void usart_wifi_TaskHandleFun(void const *argument);
 void usart_debug_TaskHandleFun(void const *argument);
@@ -68,6 +70,7 @@ void led_taskFun(void const *argument);
 void sleep_taskFun(void const *argument);
 void cmd_handle_taskFun(void const *argument);
 void pwm_taskFun(void const *argument);
+void check_online_taskFun(void const *argument);
 
 /* USER CODE END FunctionPrototypes */
 
@@ -103,8 +106,8 @@ void MX_FREERTOS_Init(void) {
 
   /* USER CODE BEGIN RTOS_MUTEX */
   /* add mutexes, ... */
-	send_The_Right_Mutex = xSemaphoreCreateMutex();
-	xSemaphoreGive( send_The_Right_Mutex );
+//	send_The_Right_Mutex = xSemaphoreCreateMutex();
+//	xSemaphoreGive( send_The_Right_Mutex );
   /* USER CODE END RTOS_MUTEX */
 
   /* USER CODE BEGIN RTOS_SEMAPHORES */
@@ -144,6 +147,9 @@ void MX_FREERTOS_Init(void) {
 	
 	osThreadDef(pwm_task, pwm_taskFun, osPriorityNormal, 0, 128);
 	pwm_taskHandle = osThreadCreate(osThread(pwm_task), NULL);
+	
+//	osThreadDef(check_online_task, check_online_taskFun, osPriorityNormal, 0, 128);
+//	check_online_taskHandle = osThreadCreate(osThread(check_online_task), NULL);
   /* USER CODE END RTOS_THREADS */
 
 }
@@ -324,9 +330,28 @@ void pwm_taskFun(void const * argument) {
 			oldBits &=~ (1U<<FLASHING);
 			pwm_flashing();
 		}
-		
   }
 }
 
+void check_online_taskFun(void const * argument) {
+	uint32_t newBits, oldBits;
+	vTaskDelay(1000);
+  for( ;; ) {
+		if ( wifi_str.isConfig == 0 ) {
+			vTaskDelay(5000);
+			xTaskNotify( check_online_taskHandle, pdFALSE, eSetBits );
+			xTaskNotifyWait( pdFALSE, 1U<<WIFI_IS_COMMUNICATION, &newBits, portMAX_DELAY );
+			if ( !(newBits & (1U<<WIFI_IS_COMMUNICATION)) ) {
+				//5s内无通信,检测wifi连接状态
+				wifi_str.isConfig = 1;
+				if ( wifi_check_online() == pdFALSE) {
+					wifi_to_reconfigure();
+				}
+				wifi_str.isConfig = 0;
+			}
+		}
+		vTaskDelay(1000);
+  }
+}
 /* USER CODE END Application */
 
