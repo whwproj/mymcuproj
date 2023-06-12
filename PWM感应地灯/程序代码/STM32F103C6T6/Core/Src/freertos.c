@@ -148,8 +148,8 @@ void MX_FREERTOS_Init(void) {
 	osThreadDef(pwm_task, pwm_taskFun, osPriorityNormal, 0, 128);
 	pwm_taskHandle = osThreadCreate(osThread(pwm_task), NULL);
 	
-//	osThreadDef(check_online_task, check_online_taskFun, osPriorityNormal, 0, 128);
-//	check_online_taskHandle = osThreadCreate(osThread(check_online_task), NULL);
+	osThreadDef(check_online_task, check_online_taskFun, osPriorityNormal, 0, 128);
+	check_online_taskHandle = osThreadCreate(osThread(check_online_task), NULL);
   /* USER CODE END RTOS_THREADS */
 
 }
@@ -204,6 +204,15 @@ void usart_wifi_TaskHandleFun(void const * argument) {
 			oldBits &=~ (1U<<WIFI_PARSE_DATA);
 			wifi_parse_data();
 		}
+		if ( oldBits & (1U<<WIFI_CHECK_ONLINE) ) {//xs内无通信,检测wifi连接状态
+			oldBits &=~ (1U<<WIFI_CHECK_ONLINE);
+			wifi_str.isConfig = 1;
+			if ( wifi_check_online() == pdFALSE) {
+				wifi_to_reconfigure();
+			}
+			wifi_str.isConfig = 0;
+		}
+		
   }
 }
 
@@ -335,22 +344,38 @@ void pwm_taskFun(void const * argument) {
 
 void check_online_taskFun(void const * argument) {
 	uint32_t newBits, oldBits;
+	uint8_t num=0,i;
 	vTaskDelay(1000);
   for( ;; ) {
+		vTaskDelay(1000);
 		if ( wifi_str.isConfig == 0 ) {
-			vTaskDelay(5000);
-			xTaskNotify( check_online_taskHandle, pdFALSE, eSetBits );
-			xTaskNotifyWait( pdFALSE, 1U<<WIFI_IS_COMMUNICATION, &newBits, portMAX_DELAY );
-			if ( !(newBits & (1U<<WIFI_IS_COMMUNICATION)) ) {
-				//5s内无通信,检测wifi连接状态
-				wifi_str.isConfig = 1;
-				if ( wifi_check_online() == pdFALSE) {
-					wifi_to_reconfigure();
+			if ( num++ > 5 ) {
+				num = 0;
+				xTaskNotify( check_online_taskHandle, pdFALSE, eSetBits );
+				xTaskNotifyWait( pdFALSE, 1U<<WIFI_IS_COMMUNICATION, &newBits, portMAX_DELAY );
+				if ( !(newBits & (1U<<WIFI_IS_COMMUNICATION)) ) {
+					xTaskNotify( usart_wifi_TaskHandle, 1U<<WIFI_CHECK_ONLINE, eSetBits );
+				} else {
+					wifi_str.checkOnlineNum = 0;
 				}
-				wifi_str.isConfig = 0;
+			}
+		} else {
+			num = 0;
+		}
+		for( i=0; i<2; i++ ) {
+			if ( session[i].onlineSta ) {
+				if ( session[i].heart > 0 ) {
+					session[i].heart--;
+				} else {
+					xTaskNotify( check_online_taskHandle, pdFALSE, eSetBits );
+					xTaskNotifyWait( pdFALSE, 1U<<NO_SESSION, &newBits, portMAX_DELAY );
+					if ( !(newBits & (1U<<NO_SESSION)) ) {
+						session[i].onlineSta = 0;
+						session[i].dir = 0;
+					}
+				}
 			}
 		}
-		vTaskDelay(1000);
   }
 }
 /* USER CODE END Application */

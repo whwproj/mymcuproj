@@ -17,6 +17,7 @@ typedef struct _SESSION {
 	uint8_t pid;
 	uint8_t dir;//main:0 sub1:1...
 	uint8_t dataLen;
+	uint8_t heart;//初始10 递减到0回话满则覆盖
 	char data[128];
 } SESSION;
 
@@ -29,6 +30,7 @@ typedef struct _WIFI_STR {
 	uint8_t *rxBuff;
 	uint32_t len;
 	uint16_t dLen;
+	uint8_t checkOnlineNum;
 	SESSION *sesp;
 } WIFI_STR;
 
@@ -40,9 +42,12 @@ extern SESSION session[];
 #define WIFI_BUFF_SIZE	256
 #define WIFI_TXBUFF_SIZE	384
 
+#define DEFAULT_HEART	60
+
 /*---- wifi task bits start ----------------*/
 #define WIFI_DEVICE_INIT 	0
 #define WIFI_PARSE_DATA 	1
+#define WIFI_CHECK_ONLINE 2
 #define WIFI_SEND_OK			31
 /*---- wifi task bits end ----------------*/
 
@@ -61,6 +66,7 @@ extern SESSION session[];
 /*---- check task bits start ----------------*/
 #define TO_CHECK_ONLINE				0
 #define WIFI_IS_COMMUNICATION 1
+#define NO_SESSION 						2
 /*---- check task bits end ----------------*/
 
 uint32_t wifi_check_online( void );
