@@ -3,6 +3,15 @@
 
 #include "../Bsp/common.h"
 
+#define PAGE_MENU_1 "一.主页:\r\n请输入数字执行相应命令:\r\n1.开灯\r\n"\
+										"2.关灯\r\n3.闪烁\r\n4.自动检测\r\n5.参数设置"
+										
+#define PAGE_MENU_2 "二.参数设置页:\r\n1.设置天黑时间\r\n"\
+										"2.设置天亮时间\r\n3.调节最高亮度\r\n按#号返回主菜单"
+										
+#define PAGE_MENU_3 "三.调节最高亮度页:\r\n请输入数字调节最高亮度百分比"\
+										"20 - 100 之间\r\n按下#号键返回上一层菜单"								
+
 typedef struct _SESSION {
 	uint8_t onlineSta;//0:offline 1:online
 	uint8_t pid;

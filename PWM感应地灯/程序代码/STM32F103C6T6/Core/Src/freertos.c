@@ -53,6 +53,7 @@ osThreadId defaultTaskHandle;
 /* USER CODE BEGIN FunctionPrototypes */
 
 QueueHandle_t cmd_queueHandle;
+QueueHandle_t send_The_Right_Mutex;
 
 osThreadId usart_wifi_TaskHandle;
 osThreadId usart_debug_TaskHandle;
@@ -102,6 +103,8 @@ void MX_FREERTOS_Init(void) {
 
   /* USER CODE BEGIN RTOS_MUTEX */
   /* add mutexes, ... */
+	send_The_Right_Mutex = xSemaphoreCreateMutex();
+	xSemaphoreGive( send_The_Right_Mutex );
   /* USER CODE END RTOS_MUTEX */
 
   /* USER CODE BEGIN RTOS_SEMAPHORES */

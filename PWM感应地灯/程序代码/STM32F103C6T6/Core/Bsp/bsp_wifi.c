@@ -5,8 +5,6 @@
 WIFI_STR wifi_str;
 SESSION session[3];
 
-char* defaultTips = "一.主页:\r\n请输入数字执行相应命令:\r\n1.开灯\r\n2.关灯\r\n3.闪烁\r\n4.自动检测\r\n5.参数设置";
-
 static int send_at_command_a_single_reply( char *cmd, char *target, int headTail, uint8_t idx );
 static void wifi_smartConfig( void );
 static int check_wifi_connect( void );
@@ -140,7 +138,7 @@ void wifi_parse_data( void ) {
 		
 	} else if ( strstr( (char*)ws.rxBuff, "CONNECT" )!=NULL ) {
 		ws.sesp = find_sessoin_by_pid( ws.rxBuff[0]-'0' );
-		wifi_tcp_send( defaultTips, strlen(defaultTips), ws.sesp->pid, usart_wifi_TaskHandle );
+		wifi_tcp_send( PAGE_MENU_1, strlen(PAGE_MENU_1), ws.sesp->pid, usart_wifi_TaskHandle );
 		
 	}else if ( strstr( (char*)ws.rxBuff, "CLOSED" )!=NULL ) {
 		destroy_session( ws.rxBuff[0]-'0' );
@@ -520,11 +518,11 @@ uint8_t cmd_main_fun( void ) {
 			wifi_tcp_send( "功能待开发...\r\n", strlen("功能待开发...\r\n"), sessp->pid, cmd_handle_taskHandle );
 		}
 		else if ( buffCompareToBuff( "5", sessp->data, 1 ) ) {
-			wifi_tcp_send( "二.参数设置页:\r\n1.设置天黑时间\r\n2.设置天亮时间\r\n3.调节最高亮度\r\n按#号返回主菜单", strlen("二.参数设置页:\r\n1.设置天黑时间\r\n2.设置天亮时间\r\n3.调节最高亮度\r\n按#号返回主菜单"), sessp->pid, cmd_handle_taskHandle );
+			wifi_tcp_send( PAGE_MENU_2, strlen(PAGE_MENU_2), sessp->pid, cmd_handle_taskHandle );
 			ws.sesp->dir = 1;
 		}
 		else {
-			wifi_tcp_send( defaultTips, strlen(defaultTips), sessp->pid, cmd_handle_taskHandle );
+			wifi_tcp_send( PAGE_MENU_1, strlen(PAGE_MENU_1), sessp->pid, cmd_handle_taskHandle );
 		}
 	}
 	num = uxQueueMessagesWaiting( cmd_queueHandle );
@@ -542,15 +540,15 @@ uint8_t cmd_sub_1_fun( void ) {//参数设置
 			wifi_tcp_send( "功能待开发...\r\n", strlen("功能待开发...\r\n"), sessp->pid, cmd_handle_taskHandle );
 		}
 		else if ( buffCompareToBuff( "3", sessp->data, 1 ) ) {
-			wifi_tcp_send( "三.调节最高亮度页:\r\n请输入数字调节最高亮度百分比 20 - 100 之间\r\n按下#号键返回上一层菜单", strlen("三.调节最高亮度页:\r\n请输入数字调节最高亮度百分比 20 - 100 之间\r\n按下#号键返回上一层菜单"), sessp->pid, cmd_handle_taskHandle );
+			wifi_tcp_send( PAGE_MENU_3, strlen(PAGE_MENU_3), sessp->pid, cmd_handle_taskHandle );
 			ws.sesp->dir = 2;
 		}
 		else if ( buffCompareToBuff( "#", sessp->data, 1 ) || buffCompareToBuff( "＃", sessp->data, 1 ) ) {
-			wifi_tcp_send( defaultTips, strlen(defaultTips), sessp->pid, cmd_handle_taskHandle );
+			wifi_tcp_send( PAGE_MENU_1, strlen(PAGE_MENU_1), sessp->pid, cmd_handle_taskHandle );
 			ws.sesp->dir = 0;
 		}
 		else {
-			wifi_tcp_send( "二.参数设置页:\r\n1.设置天黑时间\r\n2.设置天亮时间\r\n3.调节最高亮度\r\n按#号返回上一层菜单", strlen("二.参数设置页:\r\n1.设置天黑时间\r\n2.设置天亮时间\r\n3.调节最高亮度\r\n按#号返回上一层菜单"), sessp->pid, cmd_handle_taskHandle );
+			wifi_tcp_send( PAGE_MENU_2, strlen(PAGE_MENU_2), sessp->pid, cmd_handle_taskHandle );
 		}
 	}
 	num = uxQueueMessagesWaiting( cmd_queueHandle );
