@@ -61,6 +61,8 @@ void Error_Handler(void);
 #define NRF_IRQ_GPIO_Port GPIOC
 #define NRF_CE_Pin GPIO_PIN_5
 #define NRF_CE_GPIO_Port GPIOC
+#define NRF_CSN_Pin GPIO_PIN_6
+#define NRF_CSN_GPIO_Port GPIOC
 
 /* USER CODE BEGIN Private defines */
 

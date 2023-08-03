@@ -1,8 +1,7 @@
 #ifndef __BSP_NRF__H
 #define __BSP_NRF__H
-#include "stm32f10x.h"
-#include "bsp_usart.h"
-#include "bsp_led.h"
+
+#include "../common.h"
 
 //********************NRF24L01*********************** ************** 
 #define TX_PLOAD_WIDTH 32  // 20 uints TX payload 
@@ -26,7 +25,7 @@
 #define RF_SETUP 0x06 	// 发射速率、功耗功能设置 
 #define STATUS 0x07 		// 状态寄存器 
 #define OBSERVE_TX 0x08 // 发送监测功能 
-#define CD 0x09 				// 地址检测 
+#define RPD 0x09 				// 载波检测(功率检测>-65dBm输出高电平)
 #define RX_ADDR_P0 0x0A // 频道 0 接收数据地址 
 #define RX_ADDR_P1 0x0B // 频道 1 接收数据地址 
 #define RX_ADDR_P2 0x0C // 频道 2 接收数据地址 
@@ -41,56 +40,18 @@
 #define RX_PW_P4 0x15   // 接收频道 0 接收数据长度 
 #define RX_PW_P5 0x16   // 接收频道 0 接收数据长度 
 #define FIFO_STATUS 0x17// FIFO 栈入栈出状态寄存器设置 
-
-/*-----------------------------引脚配置------------------------------------*/
-//SPI1_GPIO参数
-#define SPI1_RCC						RCC_APB2PeriphClockCmd
-#define SPI1_CLK						RCC_APB2Periph_SPI1
-#define SPI_PORT						SPI1
-
-// \SCK MISO \MOSI \CSN
-#define SPI_GPIO_RCC				RCC_APB2PeriphClockCmd
-#define SPI_GPIO_CLK				RCC_APB2Periph_GPIOA
-#define SPI1_GPIO_PORT			GPIOA
-#define SPI1_SCK_GPIOx			GPIO_Pin_5
-#define SPI1_MISO_GPIOx			GPIO_Pin_6
-#define SPI1_MOSI_GPIOx			GPIO_Pin_7
-#define SPI_CSN_RCC					RCC_APB2PeriphClockCmd
-#define SPI_CSN_CLK					RCC_APB2Periph_GPIOC
-#define SPI_CSN_PORT				GPIOC
-#define SPI_CSN_GPIOx				GPIO_Pin_6 // 指南者
-//#define SPI_CSN_GPIOx				GPIO_Pin_4 // 最小系统板
-// \IRQ \CE
-#define NRF_IRQ_PORT				GPIOC			 // 指南者
-#define NRF_IRQ_GPIOx				GPIO_Pin_4 // 指南者
-#define IRQ_PortSourceGPIOx GPIO_PortSourceGPIOC // 指南者
-#define IRQ_PinSource_Pin		GPIO_PinSource4	// 指南者
-#define IRQ_EXTI_Lines			EXTI_Line4	// 指南者
-#define NRF_IRQHandler			EXTI4_IRQHandler  // 指南者
-#define NRF_CE_PORT					GPIOC			  // 指南者
-#define NRF_CE_GPIOx				GPIO_Pin_5  // 指南者 
-
-//#define NRF_IRQ_PORT				GPIOC			 // 最小系统板
-//#define NRF_IRQ_GPIOx				GPIO_Pin_4 // 最小系统板
-//#define IRQ_PortSourceGPIOx GPIO_PortSourceGPIOC // 最小系统板
-//#define IRQ_PinSource_Pin		GPIO_PinSource4	// 最小系统板
-//#define IRQ_EXTI_Lines			EXTI_Line4	// 最小系统板
-//#define NRF_IRQn						TIM4_IRQn		// 最小系统板
-//#define NRF_IRQHandler			EXTI4_IRQHandler  // 最小系统板
-//#define NRF_CE_PORT				GPIOA			 // 最小系统板
-//#define NRF_CE_GPIOx			GPIO_Pin_4 // 最小系统板
+#define DYNPD			0x1C	//动态载荷长度
+#define FEATURE		0x1D	//动态长度,自动确认,自动应答
 
 
 /*----------------------------位操作-----------------------------------*/
-#define CSN_Low						GPIOC->BRR = GPIO_Pin_6;
-#define CSN_High					GPIOC->BSRR = GPIO_Pin_6;
-#define SCK_Low						GPIOA->BRR = GPIO_Pin_5;
-#define SCK_High					GPIOA->BSRR = GPIO_Pin_5;
-#define CE_Low						GPIOC->BRR = GPIO_Pin_5;
-#define CE_High						GPIOC->BSRR = GPIO_Pin_5;
-#define IRQ_High					GPIOC->BRR = GPIO_Pin_4;
-#define IRQ_Low						GPIOC->BSRR = GPIO_Pin_4;
-#define TimeOut											10000
+#define CSN_Low()						NRF_CSN_GPIO_Port->BRR = NRF_CSN_Pin
+#define CSN_High()					NRF_CSN_GPIO_Port->BSRR = NRF_CSN_Pin
+#define CE_Low()						NRF_CE_GPIO_Port->BRR = NRF_CE_Pin
+#define CE_High()						NRF_CE_GPIO_Port->BSRR = NRF_CE_Pin
+#define IRQ_isHigh()			(NRF_IRQ_GPIO_Port->IDR)&NRF_IRQ_Pin
+#define IRQ_isLow()				!((NRF_IRQ_GPIO_Port->IDR)&NRF_IRQ_Pin)
+
 
 /*---------------------------应用函数---------------------------------*/
 void NRF_Init(void);

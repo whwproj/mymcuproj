@@ -1,37 +1,61 @@
 #ifndef __COMMON__H
 #define __COMMON__H
 
-/* LIB ------------------------------------------------------------*/
+/* Lib ------------------------------------------------------------*/
 #include <stdio.h>
 #include <string.h>
 #include <stdarg.h>
 #include <stdlib.h>
 
+/* Inc ------------------------------------------------------------*/
+//#include "../Inc/can.h"
+//#include "../Inc/tim.h"
+//#include "../Inc/rng.h"
+#include "../Inc/dma.h"
+#include "../Inc/gpio.h"
+#include "../Inc/main.h"
+#include "../Inc/spi.h"
+#include "../Inc/stm32f1xx_hal_conf.h"
+#include "../Inc/stm32f1xx_it.h"
+#include "../Inc/usart.h"
 
-/*---- Core -------------------------*/
+/* Tools ----------------------------------------------------------*/
+//#include "../Tools/base64.h"
+//#include "../Tools/cJSON.h"
+//#include "../Tools/crc.h"
+//#include "../Tools/mqtt.h"
+//#include "../Tools/http.h"
+//#include "../Tools/other.h"
+//#include "../Tools/base64.h"
+
+/* FreeRTOS -------------------------------------------------------*/
+#include "../Inc/FreeRTOSConfig.h"
 #include "FreeRTOS.h"
 #include "task.h"
-#include "main.h"
-#include "cmsis_os.h"
-//#include "dma.h"
-//#include "tim.h"
-#include "usart.h"
-#include "gpio.h"
+#include "queue.h"
+#include "semphr.h"
 
+/* MbedTLS --------------------------------------------------------*/
+//#include "../../MBEDTLS/APP/mbedtls.h"
+//#include "../../MBEDTLS/APP/mbedtls_config.h"
+//#include "mbedtls/platform.h"
 
-/*---- Bsp -------------------------*/
+/* Bsp ------------------------------------------------------------*/
 #include "../Bsp/bsp_debug.h"
 #include "../Bsp/bsp_nrf.h"
 
-extern TaskHandle_t usart_wifi_TaskHandle;
-extern TaskHandle_t usart_debug_TaskHandle;
-extern TaskHandle_t led_taskHandle;
-extern TaskHandle_t cmd_handle_taskHandle;
-extern TaskHandle_t pwm_taskHandle;
-extern TaskHandle_t check_online_taskHandle;
+/* TaskSizeDefine -------------------------------------------------*/
+#define InitTask_Size													128
+#define Debug_Task_Size												256
 
-extern QueueHandle_t cmd_queueHandle;
-//extern QueueHandle_t send_The_Right_Mutex;
+/* extern declaration ---------------------------------------------*/
+extern TaskHandle_t debug_Task_TaskHandle;
+
+
+
+
+
+
 
 
 

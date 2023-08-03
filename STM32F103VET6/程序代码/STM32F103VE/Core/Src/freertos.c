@@ -25,7 +25,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include <stdio.h>
+#include "../common.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -45,13 +45,13 @@
 
 /* Private variables ---------------------------------------------------------*/
 /* USER CODE BEGIN Variables */
-
+osThreadId debug_Task_TaskHandle;//串口调试
 /* USER CODE END Variables */
 osThreadId defaultTaskHandle;
 
 /* Private function prototypes -----------------------------------------------*/
 /* USER CODE BEGIN FunctionPrototypes */
-
+void debug_Task_TaskFun( void const *argument );//串口调试
 /* USER CODE END FunctionPrototypes */
 
 void StartDefaultTask(void const * argument);
@@ -104,9 +104,12 @@ void MX_FREERTOS_Init(void) {
   /* definition and creation of defaultTask */
   osThreadDef(defaultTask, StartDefaultTask, osPriorityNormal, 0, 128);
   defaultTaskHandle = osThreadCreate(osThread(defaultTask), NULL);
-	
+
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
+	;//串口调试
+	osThreadDef(debug_Task_Task, debug_Task_TaskFun, osPriorityNormal, 0, 128);
+  debug_Task_TaskHandle = osThreadCreate(osThread(debug_Task_Task), NULL);
   /* USER CODE END RTOS_THREADS */
 
 }
@@ -122,16 +125,31 @@ void StartDefaultTask(void const * argument)
 {
   /* USER CODE BEGIN StartDefaultTask */
   /* Infinite loop */
-  for(;;)
-  {
-    vTaskDelay(100);
-		
-  }
+	
+	//串口初始化
+	debug_init();
+	
+	
+  vTaskDelete( defaultTaskHandle );
   /* USER CODE END StartDefaultTask */
 }
 
 /* Private application code --------------------------------------------------*/
 /* USER CODE BEGIN Application */
+
+/*----- Debug串口接收处理任务 start ----------------------------------------*/
+void debug_Task_TaskFun ( void const * argument ) {
+	uint32_t newBits, oldBits = 0;
+  for ( ; ; ) {
+   xTaskNotifyWait( pdFALSE, portMAX_DELAY, &newBits, portMAX_DELAY );
+		oldBits |= newBits;
+		if ( oldBits & (1U<<DEBUG_PARSE_DATA) ) {//执行开关机的命令
+			oldBits &=~ (1U<<DEBUG_PARSE_DATA);
+			debug_parse_data_fun();
+		}
+  }
+}
+/*----- Debug串口接收处理任务 end ----------------------------------------*/
 
 /* USER CODE END Application */
 
