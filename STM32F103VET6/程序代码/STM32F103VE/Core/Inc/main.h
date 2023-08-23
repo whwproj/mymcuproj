@@ -53,16 +53,29 @@ extern "C" {
 void Error_Handler(void);
 
 /* USER CODE BEGIN EFP */
-
+//PB15 MOSI		PA7
+//PB14 MISO		PA6
+//PB13 SCK		PA5
+//PB8	 CE			PC5
+//PB9	 IRQ		PC4
+//PB12 CSN		PC6
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
-#define NRF_IRQ_Pin GPIO_PIN_4
-#define NRF_IRQ_GPIO_Port GPIOC
+#define SPI1_IRQ_Pin GPIO_PIN_4
+#define SPI1_IRQ_GPIO_Port GPIOC
+#define SPI1_IRQ_EXTI_IRQn EXTI4_IRQn
 #define NRF_CE_Pin GPIO_PIN_5
 #define NRF_CE_GPIO_Port GPIOC
+#define SPI2_CSN_Pin GPIO_PIN_12
+#define SPI2_CSN_GPIO_Port GPIOB
 #define NRF_CSN_Pin GPIO_PIN_6
 #define NRF_CSN_GPIO_Port GPIOC
+#define SPI2_CE_Pin GPIO_PIN_8
+#define SPI2_CE_GPIO_Port GPIOB
+#define SPI2_IRQ_Pin GPIO_PIN_9
+#define SPI2_IRQ_GPIO_Port GPIOB
+#define SPI2_IRQ_EXTI_IRQn EXTI9_5_IRQn
 
 /* USER CODE BEGIN Private defines */
 

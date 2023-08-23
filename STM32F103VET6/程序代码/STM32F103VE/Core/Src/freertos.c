@@ -46,12 +46,15 @@
 /* Private variables ---------------------------------------------------------*/
 /* USER CODE BEGIN Variables */
 osThreadId debug_Task_TaskHandle;//串口调试
+osThreadId NRF_rxTaskHandle;//NRF
+
 /* USER CODE END Variables */
 osThreadId defaultTaskHandle;
 
 /* Private function prototypes -----------------------------------------------*/
 /* USER CODE BEGIN FunctionPrototypes */
 void debug_Task_TaskFun( void const *argument );//串口调试
+void NRF_rxTaskFun( void const *argument );//nrf_rx
 /* USER CODE END FunctionPrototypes */
 
 void StartDefaultTask(void const * argument);
@@ -107,9 +110,12 @@ void MX_FREERTOS_Init(void) {
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
-	;//串口调试
-	osThreadDef(debug_Task_Task, debug_Task_TaskFun, osPriorityNormal, 0, 128);
+	//串口调试
+	osThreadDef(debug_Task_Task, debug_Task_TaskFun, osPriorityNormal, 0, Debug_TaskSize);
   debug_Task_TaskHandle = osThreadCreate(osThread(debug_Task_Task), NULL);
+	osThreadDef(NRF_rxTask, NRF_rxTaskFun, osPriorityNormal, 0, NRF_rxTaskSize);
+  NRF_rxTaskHandle = osThreadCreate(osThread(NRF_rxTask), NULL);
+	
   /* USER CODE END RTOS_THREADS */
 
 }
@@ -128,7 +134,8 @@ void StartDefaultTask(void const * argument)
 	
 	//串口初始化
 	debug_init();
-	
+	NRF_Init();
+	NRF2_Init();
 	
   vTaskDelete( defaultTaskHandle );
   /* USER CODE END StartDefaultTask */
@@ -141,15 +148,29 @@ void StartDefaultTask(void const * argument)
 void debug_Task_TaskFun ( void const * argument ) {
 	uint32_t newBits, oldBits = 0;
   for ( ; ; ) {
-   xTaskNotifyWait( pdFALSE, portMAX_DELAY, &newBits, portMAX_DELAY );
+		xTaskNotifyWait( pdFALSE, portMAX_DELAY, &newBits, portMAX_DELAY );
 		oldBits |= newBits;
-		if ( oldBits & (1U<<DEBUG_PARSE_DATA) ) {//执行开关机的命令
+		if ( oldBits & (1U<<DEBUG_PARSE_DATA) ) {//解析串口
 			oldBits &=~ (1U<<DEBUG_PARSE_DATA);
 			debug_parse_data_fun();
 		}
   }
 }
 /*----- Debug串口接收处理任务 end ----------------------------------------*/
+
+/*----- nrf24 start ----------------------------------------*/
+void NRF_rxTaskFun ( void const * argument ) {
+	uint32_t newBits, oldBits = 0;
+  for ( ; ; ) {
+		xTaskNotifyWait( pdFALSE, portMAX_DELAY, &newBits, portMAX_DELAY );
+		oldBits |= newBits;
+		if ( oldBits & (1U<<NRF_RX_EVENT) ) {
+			oldBits &=~ (1U<<NRF_RX_EVENT);
+			nrf_receive_data();
+		}
+  }
+}
+/*----- nrf24 end ----------------------------------------*/
 
 /* USER CODE END Application */
 

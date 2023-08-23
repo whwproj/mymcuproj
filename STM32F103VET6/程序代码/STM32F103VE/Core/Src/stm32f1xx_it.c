@@ -24,6 +24,7 @@
 #include "task.h"
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include "../common.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -59,6 +60,7 @@
 /* External variables --------------------------------------------------------*/
 extern DMA_HandleTypeDef hdma_usart1_rx;
 extern DMA_HandleTypeDef hdma_usart1_tx;
+extern UART_HandleTypeDef huart1;
 /* USER CODE BEGIN EV */
 
 /* USER CODE END EV */
@@ -184,6 +186,25 @@ void SysTick_Handler(void)
 /******************************************************************************/
 
 /**
+  * @brief This function handles EXTI line4 interrupt.
+  */
+void EXTI4_IRQHandler(void)
+{
+  /* USER CODE BEGIN EXTI4_IRQn 0 */
+	BaseType_t phpt;
+  /* USER CODE END EXTI4_IRQn 0 */
+  //HAL_GPIO_EXTI_IRQHandler(SPI1_IRQ_Pin);
+  /* USER CODE BEGIN EXTI4_IRQn 1 */
+	if(__HAL_GPIO_EXTI_GET_IT(SPI1_IRQ_Pin) != RESET) {
+		__HAL_GPIO_EXTI_CLEAR_IT(SPI1_IRQ_Pin);//清除中断标志
+		HAL_NVIC_DisableIRQ(EXTI4_IRQn);
+		xTaskNotifyFromISR( NRF_rxTaskHandle, 1U<<NRF_RX_EVENT, eSetBits, &phpt );
+		portYIELD_FROM_ISR(phpt);
+	}
+	/* USER CODE END EXTI4_IRQn 1 */
+}
+
+/**
   * @brief This function handles DMA1 channel4 global interrupt.
   */
 void DMA1_Channel4_IRQHandler(void)
@@ -209,6 +230,44 @@ void DMA1_Channel5_IRQHandler(void)
   /* USER CODE BEGIN DMA1_Channel5_IRQn 1 */
 
   /* USER CODE END DMA1_Channel5_IRQn 1 */
+}
+
+/**
+  * @brief This function handles EXTI line[9:5] interrupts.
+  */
+void EXTI9_5_IRQHandler(void)
+{
+  /* USER CODE BEGIN EXTI9_5_IRQn 0 */
+
+  /* USER CODE END EXTI9_5_IRQn 0 */
+  HAL_GPIO_EXTI_IRQHandler(SPI2_IRQ_Pin);
+  /* USER CODE BEGIN EXTI9_5_IRQn 1 */
+
+  /* USER CODE END EXTI9_5_IRQn 1 */
+}
+
+/**
+  * @brief This function handles USART1 global interrupt.
+  */
+void USART1_IRQHandler(void)
+{
+  /* USER CODE BEGIN USART1_IRQn 0 */
+	BaseType_t phpt;
+  /* USER CODE END USART1_IRQn 0 */
+  HAL_UART_IRQHandler(&huart1);
+  /* USER CODE BEGIN USART1_IRQn 1 */
+	if((__HAL_UART_GET_FLAG(&huart1,UART_FLAG_IDLE) != RESET))
+	{
+		__HAL_UART_CLEAR_IDLEFLAG(&huart1);  //清除空闲状态标志
+		xTaskNotifyFromISR( debug_Task_TaskHandle, 1U<<DEBUG_PARSE_DATA, eSetBits, &phpt );
+		portYIELD_FROM_ISR( phpt );
+		
+	}else if ( __HAL_UART_GET_FLAG(&huart1,UART_FLAG_TC) != RESET ) {
+		__HAL_UART_CLEAR_FLAG( &huart1, UART_FLAG_TC );
+		xTaskNotifyFromISR( debug_Task_TaskHandle, 1U<<DEBUG_SEND_OK, eSetBits, &phpt );//DMA发送完成通知
+		portYIELD_FROM_ISR( phpt );
+	}
+  /* USER CODE END USART1_IRQn 1 */
 }
 
 /* USER CODE BEGIN 1 */

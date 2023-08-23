@@ -23,23 +23,41 @@ void debug_parse_data_fun( void ) {
 	ds.len = DEBUG_BUFF_SIZE - __HAL_DMA_GET_COUNTER(&hdma_usart1_rx);
 	//判断类型
 	//if ( buffCompareToBuff( "连接4G中", (char *)ds.rxBuff, strlen("连接4G中") ) ) {
-	if ( strstr( "连接4G中", (char *)ds.rxBuff ) != NULL ) {
+	if ( strstr( (char *)ds.rxBuff, "连接4G中" ) != NULL ) {
 		//xTaskNotify( TJC_ControlTaskHandle, 1U<<TJC_CON_WH_LTE_DISCON_TCP232, eSetBits );//连接4G中
 		
-	} else if ( strstr( "开灯", (char *)ds.rxBuff ) != NULL ) {
+	} else if ( strstr( (char *)ds.rxBuff, "开灯" ) != NULL ) {
 		//xTaskNotify( pwm_taskHandle, 1U<<TURN_ON, eSetBits );
 	
-	} else if ( strstr( "关灯", (char *)ds.rxBuff ) != NULL ) {
+	} else if ( strstr( (char *)ds.rxBuff, "关灯" ) != NULL ) {
 		//xTaskNotify( pwm_taskHandle, 1U<<TURN_OFF, eSetBits );
 	
-	} else if ( strstr( "闪烁", (char *)ds.rxBuff ) != NULL ) {
+	} else if ( strstr( (char *)ds.rxBuff, "闪烁" ) != NULL ) {
 		//xTaskNotify( pwm_taskHandle, 1U<<FLASHING, eSetBits );
 		
-	} else if ( strstr( "tx", (char *)ds.rxBuff ) != NULL ) {
+	} else if ( strstr( (char *)ds.rxBuff, "clear reg" ) != NULL ) {
+		SPI_RW_Reg(NRF_WRITE_REG + STATUS, 0xf0);//0xFF空指令
+		printf("clear reg ok\r\n");
+
+	} else if ( strstr( (char *)ds.rxBuff, "clear fifo" ) != NULL ) {
+		SPI_RW_Reg(FLUSH_RX,NOP);
+		printf("clear fifo ok\r\n");
 		
+	} else if ( strstr( (char *)ds.rxBuff, "reg" ) != NULL ) {
+		uint8_t sta = SPI_RW_Reg(NRF_READ_REG + STATUS, 0xff);//0xFF空指令
+		printf("sta: %02X\r\n", sta);
+		
+	} else if ( strstr( (char *)ds.rxBuff, "gpio" ) != NULL ) {
+		uint8_t temp = HAL_GPIO_ReadPin( SPI1_IRQ_GPIO_Port, SPI1_IRQ_Pin );
+		printf("temp: %d\r\n", temp);
+		
+	} else if ( strstr( (char *)ds.rxBuff, "nrf2" ) != NULL ) {
+		Tx2_Mode();
+		//xTaskNotify( NRF_rxTaskHandle, 1U<<NRF_RX_EVENT, eSetBits );
 	} else {
-		//HAL_UART_Transmit( &huart2, ds.rxBuff, ds.len, 0xffff );
+	
 	}
+	memset( ds.rxBuff, 0, DEBUG_BUFF_SIZE );
 	HAL_UART_Receive_DMA( &huart1, ds.rxBuff, DEBUG_BUFF_SIZE );//启动DMA接收
 }
 

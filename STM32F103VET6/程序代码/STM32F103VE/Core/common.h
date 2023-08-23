@@ -46,10 +46,14 @@
 
 /* TaskSizeDefine -------------------------------------------------*/
 #define InitTask_Size													128
-#define Debug_Task_Size												256
+#define Debug_TaskSize												256
+#define NRF_rxTaskSize												256
+
 
 /* extern declaration ---------------------------------------------*/
 extern TaskHandle_t debug_Task_TaskHandle;
+extern TaskHandle_t NRF_rxTaskHandle;
+
 
 
 
