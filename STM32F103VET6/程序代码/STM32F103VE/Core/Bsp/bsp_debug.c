@@ -36,23 +36,39 @@ void debug_parse_data_fun( void ) {
 		//xTaskNotify( pwm_taskHandle, 1U<<FLASHING, eSetBits );
 		
 	} else if ( strstr( (char *)ds.rxBuff, "clear reg" ) != NULL ) {
-		SPI_RW_Reg(NRF_WRITE_REG + STATUS, 0xf0);//0xFF¿ÕÖ¸Áî
+		SPI_RW_Reg(NRF_WRITE_REG + STATUS, 0xf0, &hspi1 );//0xFF¿ÕÖ¸Áî
 		printf("clear reg ok\r\n");
 
 	} else if ( strstr( (char *)ds.rxBuff, "clear fifo" ) != NULL ) {
-		SPI_RW_Reg(FLUSH_RX,NOP);
+		SPI_RW_Reg( FLUSH_RX,NOP, &hspi1 );
 		printf("clear fifo ok\r\n");
 		
 	} else if ( strstr( (char *)ds.rxBuff, "reg" ) != NULL ) {
-		uint8_t sta = SPI_RW_Reg(NRF_READ_REG + STATUS, 0xff);//0xFF¿ÕÖ¸Áî
+		uint8_t sta = SPI_RW_Reg(NRF_READ_REG + STATUS, 0xff, &hspi1 );//0xFF¿ÕÖ¸Áî
 		printf("sta: %02X\r\n", sta);
 		
 	} else if ( strstr( (char *)ds.rxBuff, "gpio" ) != NULL ) {
 		uint8_t temp = HAL_GPIO_ReadPin( SPI1_IRQ_GPIO_Port, SPI1_IRQ_Pin );
 		printf("temp: %d\r\n", temp);
-		
+	
+} else if ( strstr( (char *)ds.rxBuff, "2clear re" ) != NULL ) {
+	SPI_RW_Reg(NRF_WRITE_REG + STATUS, 0xf0, &hspi2 );//0xFF¿ÕÖ¸Áî
+	printf("clear reg ok\r\n");
+
+} else if ( strstr( (char *)ds.rxBuff, "2clear fif" ) != NULL ) {
+	SPI_RW_Reg( FLUSH_RX,NOP, &hspi2 );
+	printf("clear fifo ok\r\n");
+	
+} else if ( strstr( (char *)ds.rxBuff, "2re" ) != NULL ) {
+	uint8_t sta = SPI_RW_Reg(NRF_READ_REG + STATUS, 0xff, &hspi2 );//0xFF¿ÕÖ¸Áî
+	printf("sta: %02X\r\n", sta);
+	
+} else if ( strstr( (char *)ds.rxBuff, "2gpi" ) != NULL ) {
+	uint8_t temp = HAL_GPIO_ReadPin( SPI2_IRQ_GPIO_Port, SPI2_IRQ_Pin );
+	printf("temp: %d\r\n", temp);
+	
 	} else if ( strstr( (char *)ds.rxBuff, "nrf2" ) != NULL ) {
-		Tx2_Mode();
+		nrf2_send_data();
 		//xTaskNotify( NRF_rxTaskHandle, 1U<<NRF_RX_EVENT, eSetBits );
 	} else {
 	

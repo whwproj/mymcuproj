@@ -134,8 +134,7 @@ void StartDefaultTask(void const * argument)
 	
 	//´®¿Ú³õÊ¼»¯
 	debug_init();
-	NRF_Init();
-	NRF2_Init();
+	nrf_init();
 	
   vTaskDelete( defaultTaskHandle );
   /* USER CODE END StartDefaultTask */
@@ -166,7 +165,7 @@ void NRF_rxTaskFun ( void const * argument ) {
 		oldBits |= newBits;
 		if ( oldBits & (1U<<NRF_RX_EVENT) ) {
 			oldBits &=~ (1U<<NRF_RX_EVENT);
-			nrf_receive_data();
+			nrf1_receive_data();
 		}
   }
 }
