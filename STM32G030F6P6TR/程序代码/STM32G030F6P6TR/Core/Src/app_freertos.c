@@ -25,7 +25,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "../common.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -45,13 +45,13 @@
 
 /* Private variables ---------------------------------------------------------*/
 /* USER CODE BEGIN Variables */
-
+osThreadId debugTaskHandle;
 /* USER CODE END Variables */
 osThreadId defaultTaskHandle;
 
 /* Private function prototypes -----------------------------------------------*/
 /* USER CODE BEGIN FunctionPrototypes */
-
+void debugTaskFun(void const * argument);
 /* USER CODE END FunctionPrototypes */
 
 void StartDefaultTask(void const * argument);
@@ -91,6 +91,8 @@ void MX_FREERTOS_Init(void) {
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
+	osThreadDef(debugTask, debugTaskFun, osPriorityNormal, 0, debugTaskSize);
+  debugTaskHandle = osThreadCreate(osThread(debugTask), NULL);
   /* USER CODE END RTOS_THREADS */
 
 }
@@ -108,13 +110,28 @@ void StartDefaultTask(void const * argument)
   /* Infinite loop */
   for(;;)
   {
-    osDelay(1);
+    //AT命令使能引脚 1:进入AT
+		HAL_GPIO_WritePin( BLT_CDS_GPIO_Port, BLT_CDS_Pin, GPIO_PIN_SET );
+		//AT命令使能引脚 0:退出AT
+		//HAL_GPIO_WritePin( BLT_CDS_GPIO_Port, BLT_CDS_Pin, GPIO_PIN_RESET );
+
+		//睡眠引脚 0:退出睡眠
+		HAL_GPIO_WritePin( BLT_BRTS_GPIO_Port, BLT_BRTS_Pin, GPIO_PIN_RESET );
+		
+		vTaskDelete( defaultTaskHandle );
   }
   /* USER CODE END StartDefaultTask */
 }
 
 /* Private application code --------------------------------------------------*/
 /* USER CODE BEGIN Application */
-
+void debugTaskFun(void const * argument)
+{
+  for(;;)
+  {
+    //printf("STM32G030F6 Test\r\n");
+		vTaskDelay(2000);
+  }
+}
 /* USER CODE END Application */
 
