@@ -136,7 +136,12 @@ void StartDefaultTask(void const * argument)
 	debug_init();
 	nrf_init();
 	
-  vTaskDelete( defaultTaskHandle );
+  //vTaskDelete( defaultTaskHandle );
+	while( 1 ) {
+		vTaskDelay(3000);
+		nrf2_send_data();
+	}
+	
   /* USER CODE END StartDefaultTask */
 }
 

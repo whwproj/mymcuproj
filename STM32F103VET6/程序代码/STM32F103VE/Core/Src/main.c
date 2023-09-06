@@ -19,7 +19,6 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "cmsis_os.h"
-#include "crc.h"
 #include "dma.h"
 #include "spi.h"
 #include "usart.h"
@@ -94,7 +93,6 @@ int main(void)
   MX_USART1_UART_Init();
   MX_SPI1_Init();
   MX_SPI2_Init();
-  MX_CRC_Init();
   /* USER CODE BEGIN 2 */
 
   /* USER CODE END 2 */

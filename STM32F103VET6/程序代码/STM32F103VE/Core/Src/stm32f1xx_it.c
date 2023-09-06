@@ -196,7 +196,7 @@ void EXTI4_IRQHandler(void)
   //HAL_GPIO_EXTI_IRQHandler(SPI1_IRQ_Pin);
   /* USER CODE BEGIN EXTI4_IRQn 1 */
 	if(__HAL_GPIO_EXTI_GET_IT(SPI1_IRQ_Pin) != RESET) {
-		__HAL_GPIO_EXTI_CLEAR_IT(SPI1_IRQ_Pin);//����жϱ�־
+		__HAL_GPIO_EXTI_CLEAR_IT(SPI1_IRQ_Pin);//����жϱ��?
 		HAL_NVIC_DisableIRQ(EXTI4_IRQn);
 		xTaskNotifyFromISR( NRF_rxTaskHandle, 1U<<NRF_RX_EVENT, eSetBits, &phpt );
 		portYIELD_FROM_ISR(phpt);
@@ -258,13 +258,13 @@ void USART1_IRQHandler(void)
   /* USER CODE BEGIN USART1_IRQn 1 */
 	if((__HAL_UART_GET_FLAG(&huart1,UART_FLAG_IDLE) != RESET))
 	{
-		__HAL_UART_CLEAR_IDLEFLAG(&huart1);  //�������״̬��־
+		__HAL_UART_CLEAR_IDLEFLAG(&huart1);  //�������״̬���?
 		xTaskNotifyFromISR( debug_Task_TaskHandle, 1U<<DEBUG_PARSE_DATA, eSetBits, &phpt );
 		portYIELD_FROM_ISR( phpt );
 		
 	}else if ( __HAL_UART_GET_FLAG(&huart1,UART_FLAG_TC) != RESET ) {
 		__HAL_UART_CLEAR_FLAG( &huart1, UART_FLAG_TC );
-		xTaskNotifyFromISR( debug_Task_TaskHandle, 1U<<DEBUG_SEND_OK, eSetBits, &phpt );//DMA�������֪ͨ
+		xTaskNotifyFromISR( debug_Task_TaskHandle, 1U<<DEBUG_SEND_OK, eSetBits, &phpt );//DMA�������ͨ�?
 		portYIELD_FROM_ISR( phpt );
 	}
   /* USER CODE END USART1_IRQn 1 */
