@@ -7,15 +7,15 @@
 
   <Targets>
     <Target>
-      <TargetName>STM32G030F6P6TR</TargetName>
+      <TargetName>Circular_Base</TargetName>
       <ToolsetNumber>0x4</ToolsetNumber>
       <ToolsetName>ARM-ADS</ToolsetName>
       <pCCUsed>5060183::V5.06 update 2 (build 183)::ARMCC</pCCUsed>
       <TargetOption>
         <TargetCommonOption>
-          <Device>STM32G030F6Px</Device>
+          <Device>STM32L031G6Ux</Device>
           <Vendor>STMicroelectronics</Vendor>
-          <PackID>Keil.STM32G0xx_DFP.1.4.0</PackID>
+          <PackID>Keil.STM32L0xx_DFP.2.2.0</PackID>
           <PackURL>http://www.keil.com/pack/</PackURL>
           <Cpu>IRAM(0x20000000-0x20001FFF) IROM(0x8000000-0x8007FFF) CLOCK(8000000) CPUTYPE("Cortex-M0+") TZ</Cpu>
           <FlashUtilSpec></FlashUtilSpec>
@@ -32,7 +32,7 @@
           <SLE66CMisc></SLE66CMisc>
           <SLE66AMisc></SLE66AMisc>
           <SLE66LinkerMisc></SLE66LinkerMisc>
-          <SFDFile>$$Device:STM32G030F6Px$CMSIS\SVD\STM32G030.svd</SFDFile>
+          <SFDFile>$$Device:STM32L031G6Ux$CMSIS\SVD\STM32L0x1.svd</SFDFile>
           <bCustSvd>0</bCustSvd>
           <UseEnv>0</UseEnv>
           <BinPath></BinPath>
@@ -47,8 +47,8 @@
             <NotGenerated>0</NotGenerated>
             <InvalidFlash>1</InvalidFlash>
           </TargetStatus>
-          <OutputDirectory>STM32G030F6P6TR\</OutputDirectory>
-          <OutputName>STM32G030F6P6TR</OutputName>
+          <OutputDirectory>Circular_Base\</OutputDirectory>
+          <OutputName>Circular_Base</OutputName>
           <CreateExecutable>1</CreateExecutable>
           <CreateLib>0</CreateLib>
           <CreateHexFile>1</CreateHexFile>
@@ -186,7 +186,7 @@
             <hadIRAM2>0</hadIRAM2>
             <hadIROM2>0</hadIROM2>
             <StupSel>8</StupSel>
-            <useUlib>1</useUlib>
+            <useUlib>0</useUlib>
             <EndSel>0</EndSel>
             <uLtcg>0</uLtcg>
             <nSecure>0</nSecure>
@@ -203,7 +203,7 @@
             <Ro2Chk>0</Ro2Chk>
             <Ro3Chk>0</Ro3Chk>
             <Ir1Chk>1</Ir1Chk>
-            <Ir2Chk>0</Ir2Chk>
+            <Ir2Chk>1</Ir2Chk>
             <Ra1Chk>0</Ra1Chk>
             <Ra2Chk>0</Ra2Chk>
             <Ra3Chk>0</Ra3Chk>
@@ -310,7 +310,7 @@
           </ArmAdsMisc>
           <Cads>
             <interw>1</interw>
-            <Optim>1</Optim>
+            <Optim>4</Optim>
             <oTime>0</oTime>
             <SplitLS>0</SplitLS>
             <OneElfS>1</OneElfS>
@@ -332,9 +332,9 @@
             <v6WtE>0</v6WtE>
             <VariousControls>
               <MiscControls></MiscControls>
-              <Define>USE_HAL_DRIVER,STM32G030xx</Define>
+              <Define>USE_HAL_DRIVER,STM32L031xx</Define>
               <Undefine></Undefine>
-              <IncludePath>../Core/Inc;../Drivers/STM32G0xx_HAL_Driver/Inc;../Drivers/STM32G0xx_HAL_Driver/Inc/Legacy;../Middlewares/Third_Party/FreeRTOS/Source/include;../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS;../Middlewares/Third_Party/FreeRTOS/Source/portable/RVDS/ARM_CM0;../Drivers/CMSIS/Device/ST/STM32G0xx/Include;../Drivers/CMSIS/Include</IncludePath>
+              <IncludePath>../Core/Inc;../Drivers/STM32L0xx_HAL_Driver/Inc;../Drivers/STM32L0xx_HAL_Driver/Inc/Legacy;../Middlewares/Third_Party/FreeRTOS/Source/include;../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS;../Middlewares/Third_Party/FreeRTOS/Source/portable/RVDS/ARM_CM0;../Drivers/CMSIS/Device/ST/STM32L0xx/Include;../Drivers/CMSIS/Include</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -403,9 +403,9 @@
               <FilePath>../Core/Src/gpio.c</FilePath>
             </File>
             <File>
-              <FileName>app_freertos.c</FileName>
+              <FileName>freertos.c</FileName>
               <FileType>1</FileType>
-              <FilePath>../Core/Src/app_freertos.c</FilePath>
+              <FilePath>../Core/Src/freertos.c</FilePath>
             </File>
             <File>
               <FileName>adc.c</FileName>
@@ -418,6 +418,16 @@
               <FilePath>../Core/Src/dma.c</FilePath>
             </File>
             <File>
+              <FileName>i2c.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>../Core/Src/i2c.c</FilePath>
+            </File>
+            <File>
+              <FileName>usart.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>../Core/Src/usart.c</FilePath>
+            </File>
+            <File>
               <FileName>spi.c</FileName>
               <FileType>1</FileType>
               <FilePath>../Core/Src/spi.c</FilePath>
@@ -428,19 +438,19 @@
               <FilePath>../Core/Src/tim.c</FilePath>
             </File>
             <File>
-              <FileName>usart.c</FileName>
+              <FileName>stm32l0xx_it.c</FileName>
               <FileType>1</FileType>
-              <FilePath>../Core/Src/usart.c</FilePath>
+              <FilePath>../Core/Src/stm32l0xx_it.c</FilePath>
             </File>
             <File>
-              <FileName>stm32g0xx_it.c</FileName>
+              <FileName>stm32l0xx_hal_msp.c</FileName>
               <FileType>1</FileType>
-              <FilePath>../Core/Src/stm32g0xx_it.c</FilePath>
+              <FilePath>../Core/Src/stm32l0xx_hal_msp.c</FilePath>
             </File>
             <File>
-              <FileName>stm32g0xx_hal_msp.c</FileName>
+              <FileName>stm32l0xx_hal_timebase_tim.c</FileName>
               <FileType>1</FileType>
-              <FilePath>../Core/Src/stm32g0xx_hal_msp.c</FilePath>
+              <FilePath>../Core/Src/stm32l0xx_hal_timebase_tim.c</FilePath>
             </File>
           </Files>
         </Group>
@@ -448,129 +458,119 @@
           <GroupName>Application/MDK-ARM</GroupName>
           <Files>
             <File>
-              <FileName>startup_stm32g030xx.s</FileName>
+              <FileName>startup_stm32l031xx.s</FileName>
               <FileType>2</FileType>
-              <FilePath>startup_stm32g030xx.s</FilePath>
+              <FilePath>startup_stm32l031xx.s</FilePath>
             </File>
           </Files>
         </Group>
         <Group>
-          <GroupName>Drivers/STM32G0xx_HAL_Driver</GroupName>
+          <GroupName>Drivers/STM32L0xx_HAL_Driver</GroupName>
           <Files>
             <File>
-              <FileName>stm32g0xx_hal_adc.c</FileName>
+              <FileName>stm32l0xx_hal_adc.c</FileName>
               <FileType>1</FileType>
-              <FilePath>../Drivers/STM32G0xx_HAL_Driver/Src/stm32g0xx_hal_adc.c</FilePath>
+              <FilePath>../Drivers/STM32L0xx_HAL_Driver/Src/stm32l0xx_hal_adc.c</FilePath>
             </File>
             <File>
-              <FileName>stm32g0xx_hal_adc_ex.c</FileName>
+              <FileName>stm32l0xx_hal_adc_ex.c</FileName>
               <FileType>1</FileType>
-              <FilePath>../Drivers/STM32G0xx_HAL_Driver/Src/stm32g0xx_hal_adc_ex.c</FilePath>
+              <FilePath>../Drivers/STM32L0xx_HAL_Driver/Src/stm32l0xx_hal_adc_ex.c</FilePath>
             </File>
             <File>
-              <FileName>stm32g0xx_ll_adc.c</FileName>
+              <FileName>stm32l0xx_hal.c</FileName>
               <FileType>1</FileType>
-              <FilePath>../Drivers/STM32G0xx_HAL_Driver/Src/stm32g0xx_ll_adc.c</FilePath>
+              <FilePath>../Drivers/STM32L0xx_HAL_Driver/Src/stm32l0xx_hal.c</FilePath>
             </File>
             <File>
-              <FileName>stm32g0xx_hal_rcc.c</FileName>
+              <FileName>stm32l0xx_hal_i2c.c</FileName>
               <FileType>1</FileType>
-              <FilePath>../Drivers/STM32G0xx_HAL_Driver/Src/stm32g0xx_hal_rcc.c</FilePath>
+              <FilePath>../Drivers/STM32L0xx_HAL_Driver/Src/stm32l0xx_hal_i2c.c</FilePath>
             </File>
             <File>
-              <FileName>stm32g0xx_hal_rcc_ex.c</FileName>
+              <FileName>stm32l0xx_hal_i2c_ex.c</FileName>
               <FileType>1</FileType>
-              <FilePath>../Drivers/STM32G0xx_HAL_Driver/Src/stm32g0xx_hal_rcc_ex.c</FilePath>
+              <FilePath>../Drivers/STM32L0xx_HAL_Driver/Src/stm32l0xx_hal_i2c_ex.c</FilePath>
             </File>
             <File>
-              <FileName>stm32g0xx_ll_rcc.c</FileName>
+              <FileName>stm32l0xx_hal_rcc.c</FileName>
               <FileType>1</FileType>
-              <FilePath>../Drivers/STM32G0xx_HAL_Driver/Src/stm32g0xx_ll_rcc.c</FilePath>
+              <FilePath>../Drivers/STM32L0xx_HAL_Driver/Src/stm32l0xx_hal_rcc.c</FilePath>
             </File>
             <File>
-              <FileName>stm32g0xx_hal_flash.c</FileName>
+              <FileName>stm32l0xx_hal_rcc_ex.c</FileName>
               <FileType>1</FileType>
-              <FilePath>../Drivers/STM32G0xx_HAL_Driver/Src/stm32g0xx_hal_flash.c</FilePath>
+              <FilePath>../Drivers/STM32L0xx_HAL_Driver/Src/stm32l0xx_hal_rcc_ex.c</FilePath>
             </File>
             <File>
-              <FileName>stm32g0xx_hal_flash_ex.c</FileName>
+              <FileName>stm32l0xx_hal_flash_ramfunc.c</FileName>
               <FileType>1</FileType>
-              <FilePath>../Drivers/STM32G0xx_HAL_Driver/Src/stm32g0xx_hal_flash_ex.c</FilePath>
+              <FilePath>../Drivers/STM32L0xx_HAL_Driver/Src/stm32l0xx_hal_flash_ramfunc.c</FilePath>
             </File>
             <File>
-              <FileName>stm32g0xx_hal_gpio.c</FileName>
+              <FileName>stm32l0xx_hal_flash.c</FileName>
               <FileType>1</FileType>
-              <FilePath>../Drivers/STM32G0xx_HAL_Driver/Src/stm32g0xx_hal_gpio.c</FilePath>
+              <FilePath>../Drivers/STM32L0xx_HAL_Driver/Src/stm32l0xx_hal_flash.c</FilePath>
             </File>
             <File>
-              <FileName>stm32g0xx_hal_dma.c</FileName>
+              <FileName>stm32l0xx_hal_flash_ex.c</FileName>
               <FileType>1</FileType>
-              <FilePath>../Drivers/STM32G0xx_HAL_Driver/Src/stm32g0xx_hal_dma.c</FilePath>
+              <FilePath>../Drivers/STM32L0xx_HAL_Driver/Src/stm32l0xx_hal_flash_ex.c</FilePath>
             </File>
             <File>
-              <FileName>stm32g0xx_hal_dma_ex.c</FileName>
+              <FileName>stm32l0xx_hal_gpio.c</FileName>
               <FileType>1</FileType>
-              <FilePath>../Drivers/STM32G0xx_HAL_Driver/Src/stm32g0xx_hal_dma_ex.c</FilePath>
+              <FilePath>../Drivers/STM32L0xx_HAL_Driver/Src/stm32l0xx_hal_gpio.c</FilePath>
             </File>
             <File>
-              <FileName>stm32g0xx_ll_dma.c</FileName>
+              <FileName>stm32l0xx_hal_dma.c</FileName>
               <FileType>1</FileType>
-              <FilePath>../Drivers/STM32G0xx_HAL_Driver/Src/stm32g0xx_ll_dma.c</FilePath>
+              <FilePath>../Drivers/STM32L0xx_HAL_Driver/Src/stm32l0xx_hal_dma.c</FilePath>
             </File>
             <File>
-              <FileName>stm32g0xx_hal_pwr.c</FileName>
+              <FileName>stm32l0xx_hal_pwr.c</FileName>
               <FileType>1</FileType>
-              <FilePath>../Drivers/STM32G0xx_HAL_Driver/Src/stm32g0xx_hal_pwr.c</FilePath>
+              <FilePath>../Drivers/STM32L0xx_HAL_Driver/Src/stm32l0xx_hal_pwr.c</FilePath>
             </File>
             <File>
-              <FileName>stm32g0xx_hal_pwr_ex.c</FileName>
+              <FileName>stm32l0xx_hal_pwr_ex.c</FileName>
               <FileType>1</FileType>
-              <FilePath>../Drivers/STM32G0xx_HAL_Driver/Src/stm32g0xx_hal_pwr_ex.c</FilePath>
+              <FilePath>../Drivers/STM32L0xx_HAL_Driver/Src/stm32l0xx_hal_pwr_ex.c</FilePath>
             </File>
             <File>
-              <FileName>stm32g0xx_hal_cortex.c</FileName>
+              <FileName>stm32l0xx_hal_cortex.c</FileName>
               <FileType>1</FileType>
-              <FilePath>../Drivers/STM32G0xx_HAL_Driver/Src/stm32g0xx_hal_cortex.c</FilePath>
+              <FilePath>../Drivers/STM32L0xx_HAL_Driver/Src/stm32l0xx_hal_cortex.c</FilePath>
             </File>
             <File>
-              <FileName>stm32g0xx_hal.c</FileName>
+              <FileName>stm32l0xx_hal_exti.c</FileName>
               <FileType>1</FileType>
-              <FilePath>../Drivers/STM32G0xx_HAL_Driver/Src/stm32g0xx_hal.c</FilePath>
+              <FilePath>../Drivers/STM32L0xx_HAL_Driver/Src/stm32l0xx_hal_exti.c</FilePath>
             </File>
             <File>
-              <FileName>stm32g0xx_hal_exti.c</FileName>
+              <FileName>stm32l0xx_hal_uart.c</FileName>
               <FileType>1</FileType>
-              <FilePath>../Drivers/STM32G0xx_HAL_Driver/Src/stm32g0xx_hal_exti.c</FilePath>
+              <FilePath>../Drivers/STM32L0xx_HAL_Driver/Src/stm32l0xx_hal_uart.c</FilePath>
             </File>
             <File>
-              <FileName>stm32g0xx_hal_spi.c</FileName>
+              <FileName>stm32l0xx_hal_uart_ex.c</FileName>
               <FileType>1</FileType>
-              <FilePath>../Drivers/STM32G0xx_HAL_Driver/Src/stm32g0xx_hal_spi.c</FilePath>
+              <FilePath>../Drivers/STM32L0xx_HAL_Driver/Src/stm32l0xx_hal_uart_ex.c</FilePath>
             </File>
             <File>
-              <FileName>stm32g0xx_hal_spi_ex.c</FileName>
+              <FileName>stm32l0xx_hal_spi.c</FileName>
               <FileType>1</FileType>
-              <FilePath>../Drivers/STM32G0xx_HAL_Driver/Src/stm32g0xx_hal_spi_ex.c</FilePath>
+              <FilePath>../Drivers/STM32L0xx_HAL_Driver/Src/stm32l0xx_hal_spi.c</FilePath>
             </File>
             <File>
-              <FileName>stm32g0xx_hal_tim.c</FileName>
+              <FileName>stm32l0xx_hal_tim.c</FileName>
               <FileType>1</FileType>
-              <FilePath>../Drivers/STM32G0xx_HAL_Driver/Src/stm32g0xx_hal_tim.c</FilePath>
+              <FilePath>../Drivers/STM32L0xx_HAL_Driver/Src/stm32l0xx_hal_tim.c</FilePath>
             </File>
             <File>
-              <FileName>stm32g0xx_hal_tim_ex.c</FileName>
+              <FileName>stm32l0xx_hal_tim_ex.c</FileName>
               <FileType>1</FileType>
-              <FilePath>../Drivers/STM32G0xx_HAL_Driver/Src/stm32g0xx_hal_tim_ex.c</FilePath>
-            </File>
-            <File>
-              <FileName>stm32g0xx_hal_uart.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>../Drivers/STM32G0xx_HAL_Driver/Src/stm32g0xx_hal_uart.c</FilePath>
-            </File>
-            <File>
-              <FileName>stm32g0xx_hal_uart_ex.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>../Drivers/STM32G0xx_HAL_Driver/Src/stm32g0xx_hal_uart_ex.c</FilePath>
+              <FilePath>../Drivers/STM32L0xx_HAL_Driver/Src/stm32l0xx_hal_tim_ex.c</FilePath>
             </File>
           </Files>
         </Group>
@@ -578,9 +578,9 @@
           <GroupName>Drivers/CMSIS</GroupName>
           <Files>
             <File>
-              <FileName>system_stm32g0xx.c</FileName>
+              <FileName>system_stm32l0xx.c</FileName>
               <FileType>1</FileType>
-              <FilePath>../Core/Src/system_stm32g0xx.c</FilePath>
+              <FilePath>../Core/Src/system_stm32l0xx.c</FilePath>
             </File>
           </Files>
         </Group>
@@ -639,8 +639,24 @@
             </File>
           </Files>
         </Group>
+        <Group>
+          <GroupName>::CMSIS</GroupName>
+        </Group>
       </Groups>
     </Target>
   </Targets>
+
+  <RTE>
+    <apis/>
+    <components>
+      <component Cclass="CMSIS" Cgroup="CORE" Cvendor="ARM" Cversion="4.3.0" condition="CMSIS Core">
+        <package name="CMSIS" schemaVersion="1.3" url="http://www.keil.com/pack/" vendor="ARM" version="4.5.0"/>
+        <targetInfos>
+          <targetInfo name="Circular_Base"/>
+        </targetInfos>
+      </component>
+    </components>
+    <files/>
+  </RTE>
 
 </Project>
