@@ -111,12 +111,16 @@ void StartDefaultTask(void const * argument)
   for(;;)
   {
     //AT命令使能引脚 1:进入AT
-		HAL_GPIO_WritePin( BLT_CDS_GPIO_Port, BLT_CDS_Pin, GPIO_PIN_SET );
+		//HAL_GPIO_WritePin( BLT_CDS_GPIO_Port, BLT_CDS_Pin, GPIO_PIN_SET );
 		//AT命令使能引脚 0:退出AT
-		//HAL_GPIO_WritePin( BLT_CDS_GPIO_Port, BLT_CDS_Pin, GPIO_PIN_RESET );
+		HAL_GPIO_WritePin( BLT_CDS_GPIO_Port, BLT_CDS_Pin, GPIO_PIN_RESET );
 
 		//睡眠引脚 0:退出睡眠
-		HAL_GPIO_WritePin( BLT_BRTS_GPIO_Port, BLT_BRTS_Pin, GPIO_PIN_RESET );
+		//HAL_GPIO_WritePin( BLT_BRTS_GPIO_Port, BLT_BRTS_Pin, GPIO_PIN_RESET );
+		HAL_GPIO_WritePin( BLT_BRTS_GPIO_Port, BLT_BRTS_Pin, GPIO_PIN_SET );
+		
+		debug_init();
+		nrf_init();
 		
 		vTaskDelete( defaultTaskHandle );
   }
@@ -127,10 +131,23 @@ void StartDefaultTask(void const * argument)
 /* USER CODE BEGIN Application */
 void debugTaskFun(void const * argument)
 {
+	uint32_t newBits, oldBits = 0;
+	vTaskDelay(2000);
   for(;;)
   {
     //printf("STM32G030F6 Test\r\n");
-		vTaskDelay(2000);
+		//vTaskDelay(2000);
+//		xTaskNotifyWait( pdFALSE, portMAX_DELAY, &newBits, portMAX_DELAY );
+//		oldBits |= newBits;
+//		if ( oldBits & (1U<<DEBUG_PARSE_DATA) ) {//解析串口
+//			oldBits &=~ (1U<<DEBUG_PARSE_DATA);
+//			debug_parse_data_fun();
+//		}
+		
+//		vTaskDelay(4000);
+//		nrf_send_data();
+		vTaskDelay(100);
+		receive();
   }
 }
 /* USER CODE END Application */
