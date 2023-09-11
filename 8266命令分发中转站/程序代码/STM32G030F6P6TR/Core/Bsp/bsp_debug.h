@@ -1,7 +1,7 @@
 #ifndef __BSP_DEBUG__H
 #define __BSP_DEBUG__H
 
-#include "../common.h"
+#include "common.h"
 
 typedef struct _DEBUG_STR {
 	uint8_t isConfig;
@@ -21,11 +21,13 @@ extern DEBUG_STR debug_str;
 #define DEBUG_DEVICE_INIT 0
 #define DEBUG_PARSE_DATA 	1
 #define DEBUG_SEND_OK 		2
+
 /*---- debug task bits end ----------------*/
 
+
 void debug_init( void );
-void debug_parse_data_fun( void );
-//BaseType_t buffCompareToBuff(char *buff1, char *buff2, uint16_t len);
+void debug_parse_data( void );
+BaseType_t buffCompareToBuff(char *buff1, char *buff2, uint16_t len);
 
 
 

@@ -22,6 +22,7 @@
 
 /*---- Bsp -------------------------*/
 #include "../Bsp/bsp_debug.h"
+#include "../Bsp/bsp_wifi.h"
 #include "../Bsp/bsp_nrf.h"
 
 

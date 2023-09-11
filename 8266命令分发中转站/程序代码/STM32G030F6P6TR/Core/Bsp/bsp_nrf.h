@@ -245,28 +245,16 @@ typedef struct {
 } NRF24L01_TypeDef;
 
 
-
-uint8_t SPI_RW_Reg( uint8_t reg, uint8_t value );//读取寄存器
-uint8_t SPI_Write_Buf( uint8_t reg, uint8_t *pBuf, uint8_t len );//多字节写入
-uint8_t SPI_Read_Buf( uint8_t reg, uint8_t *pBuf, uint8_t len );//多字节读取
-uint8_t Nrf24l01_Init( NRF24L01_TypeDef *nrf );
-void Tx_Mode( void );
-void Rx_Mode( void );
+uint8_t SPI_RW_Reg( uint8_t reg, uint8_t value, SPI_HandleTypeDef *hspi );//读取寄存器
+uint8_t SPI_Write_Buf( uint8_t reg, uint8_t *pBuf, uint8_t len, SPI_HandleTypeDef *hspi );//多字节写入
+uint8_t SPI_Read_Buf( uint8_t reg, uint8_t *pBuf, uint8_t len, SPI_HandleTypeDef *hspi );//多字节读取
+uint8_t Nrf24l01_Init( NRF24L01_TypeDef* nrf, SPI_HandleTypeDef *hspi );
+void Tx_Mode( SPI_HandleTypeDef *hspi );
+void Rx_Mode( SPI_HandleTypeDef *hspi );
 
 void nrf_init(void);
-void nrf_receive_data(void);//接收数据
-void nrf_send_data(void);
-
-void receive(void);
-//void NRF_TX_ITRPT(void);
-//void CleanStatus(uint8_t temp); // 清除标志位
-//uint8_t ReadStatus(void);	// 读取标志位
-//void ReadSuccess(void); // 接收数据成功操作
-//void SendMax(void);	// 发送次数最大操作
-//void SendDatAndSuccess(void);	// 发送数据或检测成功
-//void NRF2_Init(void);
-//void Tx2_Mode( void );
-
+void nrf1_receive_data(void);//接收数据
+void nrf2_send_data(void);
 
 #endif /*__BSP_NRF__H*/
 
