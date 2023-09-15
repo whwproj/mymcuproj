@@ -1,0 +1,10 @@
+//配置STATION模式
+AT+CWMODE=1
+//连接WIFI
+AT+CWJAP="UFI-Dev","Ufidev888"
+//建立TCP多连接
+AT+CIPMUX=1
+//多连接
+AT+CIPSTART=0,"TCP","www.baidu.com",80
+AT+CIPSTART=1,"TCP","server.natappfree.cc",37572
+

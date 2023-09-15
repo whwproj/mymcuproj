@@ -12,6 +12,11 @@
 #define PAGE_MENU_3 "三.调节最高亮度页:\r\n请输入数字调节最高亮度百分比"\
 										"20 - 100 之间\r\n按下#号键返回上一层菜单"								
 
+#define WIFI_NAME		"MI"
+#define WIFI_PASSWD	"wuhanwei"
+#define WIFI_NAME2		"Tenda_ECE950_5G"
+#define WIFI_PASSWD2	"12345678"
+
 typedef struct _SESSION {
 	uint8_t onlineSta;//0:offline 1:online
 	uint8_t pid;
@@ -34,13 +39,11 @@ typedef struct _WIFI_STR {
 	SESSION *sesp;
 } WIFI_STR;
 
-
-
 extern WIFI_STR wifi_str;
 extern SESSION session[];
 
-#define WIFI_BUFF_SIZE	256
-#define WIFI_TXBUFF_SIZE	384
+#define WIFI_RXBUFF_SIZE	256
+#define WIFI_TXBUFF_SIZE	256
 
 #define DEFAULT_HEART	60
 

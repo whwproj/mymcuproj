@@ -1,7 +1,7 @@
 #ifndef __BSP_DEBUG__H
 #define __BSP_DEBUG__H
 
-#include "common.h"
+#include "../common.h"
 
 typedef struct _DEBUG_STR {
 	uint8_t isConfig;

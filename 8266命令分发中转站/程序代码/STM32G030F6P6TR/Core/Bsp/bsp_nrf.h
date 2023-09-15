@@ -56,8 +56,8 @@
 
 
 /*---------------------------- 位操作 -----------------------------------*/
-#define CSN_Low()						NRF_CSN_GPIO_Port->BRR = NRF_CSN_Pin
-#define CSN_High()					NRF_CSN_GPIO_Port->BSRR = NRF_CSN_Pin
+#define CSN_Low()						NRF_CS_GPIO_Port->BRR = NRF_CS_Pin
+#define CSN_High()					NRF_CS_GPIO_Port->BSRR = NRF_CS_Pin
 #define CE_Low()						NRF_CE_GPIO_Port->BRR = NRF_CE_Pin
 #define CE_High()						NRF_CE_GPIO_Port->BSRR = NRF_CE_Pin
 #define IRQ_isHigh()				(NRF_IRQ_GPIO_Port->IDR)&NRF_IRQ_Pin
@@ -245,16 +245,16 @@ typedef struct {
 } NRF24L01_TypeDef;
 
 
-uint8_t SPI_RW_Reg( uint8_t reg, uint8_t value, SPI_HandleTypeDef *hspi );//读取寄存器
-uint8_t SPI_Write_Buf( uint8_t reg, uint8_t *pBuf, uint8_t len, SPI_HandleTypeDef *hspi );//多字节写入
-uint8_t SPI_Read_Buf( uint8_t reg, uint8_t *pBuf, uint8_t len, SPI_HandleTypeDef *hspi );//多字节读取
-uint8_t Nrf24l01_Init( NRF24L01_TypeDef* nrf, SPI_HandleTypeDef *hspi );
-void Tx_Mode( SPI_HandleTypeDef *hspi );
-void Rx_Mode( SPI_HandleTypeDef *hspi );
+uint8_t SPI_RW_Reg( uint8_t reg, uint8_t value );//读取寄存器
+uint8_t SPI_Write_Buf( uint8_t reg, uint8_t *pBuf, uint8_t len );//多字节写入
+uint8_t SPI_Read_Buf( uint8_t reg, uint8_t *pBuf, uint8_t len );//多字节读取
+uint8_t Nrf24l01_Init( NRF24L01_TypeDef* nrf );
+void Tx_Mode( void );
+void Rx_Mode( void );
 
-void nrf_init(void);
-void nrf1_receive_data(void);//接收数据
-void nrf2_send_data(void);
+void nrf_init( void );
+void nrf1_receive_data( void );//接收数据
+void nrf2_send_data( void );
 
 #endif /*__BSP_NRF__H*/
 
