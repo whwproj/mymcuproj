@@ -6,5 +6,5 @@ AT+CWJAP="UFI-Dev","Ufidev888"
 AT+CIPMUX=1
 //多连接
 AT+CIPSTART=0,"TCP","www.baidu.com",80
-AT+CIPSTART=1,"TCP","server.natappfree.cc",37572
+AT+CIPSTART=1,"TCP","server.natappfree.cc",35209
 
