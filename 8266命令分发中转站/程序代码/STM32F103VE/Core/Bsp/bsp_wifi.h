@@ -3,12 +3,12 @@
 
 #include "../common.h"
 
-#define WIFI_NAME		"UFI-Dev"
-#define WIFI_PASSWD	"Ufidev888"
-//#define WIFI_NAME		"MI"
-//#define WIFI_PASSWD	"wuhanwei"
-#define WIFI_NAME2		"Tenda_ECE950_5G"
-#define WIFI_PASSWD2	"12345678"
+//#define WIFI_NAME0		"UFI-Dev"
+//#define WIFI_PASSWD0	"Ufidev888"
+#define WIFI_NAME0		"Tenda_ECE950_5G"
+#define WIFI_PASSWD0	"12345678"
+#define WIFI_NAME1		"MI"
+#define WIFI_PASSWD1	"wuhanwei"
 
 #define WIFIHUART huart3
 #define WIFI_HDMA_HUART_RX 	hdma_usart3_rx
@@ -20,7 +20,7 @@
 #define TCP_URL_0	"anvntlw.iot.gz.baidubce.com"
 #define TCP_PORT_0	1883
 #define TCP_URL_1	"server.natappfree.cc"
-#define TCP_PORT_1	35427
+#define TCP_PORT_1	36017
 
 typedef struct _SESSION {
 	uint8_t onlineSta;//0:offline 1:online
@@ -38,13 +38,20 @@ typedef struct _WIFI_STR {
 	//uint8_t communication;//0:wifiδ��ͨ�ż�wifi����,�ɲ�ѯ״̬ 1:���ɲ�ѯ,�������ݻ���
 	uint8_t *txBuff;
 	uint8_t *rxBuff;
-	uint32_t len;
 	uint16_t dLen;
+	uint16_t tLen;
 	uint8_t checkOnlineNum;
 	SESSION *sesp;
 	uint8_t tcp0_errnum;//tcp0重连次数,3次则重启设备
 	uint8_t tcp1_errnum;//tcp1重连次数
+	uint8_t heartBeatTime;//mqtt������
+	
 } WIFI_STR;
+
+typedef struct _TCP_DATA {
+	uint8_t data[256];
+	uint16_t len;
+} TCP_DATA;
 
 extern WIFI_STR wifi_str;
 extern SESSION session[];
@@ -60,7 +67,10 @@ extern SESSION session[];
 #define WIFI_PARSE_DATA 		1
 #define WIFI_CONNECT_TCP0_	2
 #define WIFI_CONNECT_TCP1_	3
-#define WIFI_SEND_OK				4
+#define WIFI_TCP0_SEND			4
+#define WIFI_TCP1_SEND			5
+#define WIFI_SEND_HEART			6
+#define WIFI_SEND_OK				7
 
 //*****	wifi_control_task_fun 
 #define WIFI_CONNECT_TCP0_DELAY	0
@@ -101,8 +111,12 @@ uint8_t cmd_sub_3_fun( void );
 
 void esp_connect_tcp0 ( void );//连接TCP0
 void esp_connect_tcp1 ( void );//连接TCP1
-void wifi_init( void );//WIFI初始化
-void wifi_data_parse( void );//解析WIFI数据
+void wifi_tcp0_send_data( void );
+void wifi_tcp1_send_data( void );
+void wifi_mqtt_heart( void );
+void mqtt_connect( void );//建立mqtt连接
+void wifi_init( void );//WIFI��ʼ��
+UBaseType_t wifi_mqtt_data_parse( void );//����mqtt����
 #endif /*__BSP_WIFI__H*/
 
 

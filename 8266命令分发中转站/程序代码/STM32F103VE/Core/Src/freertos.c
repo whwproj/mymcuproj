@@ -49,6 +49,13 @@ TaskHandle_t Debug_TaskHandle;
 TaskHandle_t wifi_control_taskHandle;
 TaskHandle_t wifi_tcp_connect_taskHandle;
 
+QueueHandle_t TcpData_QueueHandle;//数据消息队列
+QueueHandle_t Mqtt_Ask_And_Heartbeat_QueueHandle;//mqtt应答以及心跳消息队列
+
+//QueueHandle_t communication_Mutex;//信号�?,�?通道多tcp,隔离回话信号�?
+QueueHandle_t TcpRxCache_Mutex;//获取接收缓存空间信号�?
+//QueueHandle_t TcpTxCache_Mutex;//获取发�?�缓存空间信号量
+QueueHandle_t TxSend_Mutex;//发�?�数据信号量
 /* USER CODE END Variables */
 osThreadId defaultTaskHandle;
 
@@ -96,6 +103,7 @@ void MX_FREERTOS_Init(void) {
 
   /* USER CODE BEGIN RTOS_SEMAPHORES */
   /* add semaphores, ... */
+	
   /* USER CODE END RTOS_SEMAPHORES */
 
   /* USER CODE BEGIN RTOS_TIMERS */
@@ -104,6 +112,17 @@ void MX_FREERTOS_Init(void) {
 
   /* USER CODE BEGIN RTOS_QUEUES */
   /* add queues, ... */
+	//communication_Mutex = xSemaphoreCreateMutex();//接收数据和AT指令抢占的信号量
+	//xSemaphoreGive( communication_Mutex );
+	TcpRxCache_Mutex = xSemaphoreCreateMutex();//获取发�?�缓存空间信号量
+	xSemaphoreGive( TcpRxCache_Mutex );
+	TxSend_Mutex = xSemaphoreCreateMutex();//发�?�数据信号量
+	xSemaphoreGive( TxSend_Mutex );
+	//TcpRxCache_QueueHandle = xSemaphoreCreateMutex();//获取接收缓存空间信号�?
+	//xSemaphoreGive( TcpRxCache_QueueHandle );
+
+  TcpData_QueueHandle = xQueueCreate( 2,  sizeof( TCP_DATA* ) );
+	Mqtt_Ask_And_Heartbeat_QueueHandle = xQueueCreate( 6, 4 );//mqtt应答以及心跳消息队列
   /* USER CODE END RTOS_QUEUES */
 
   /* Create the thread(s) */
@@ -141,6 +160,7 @@ void StartDefaultTask(void const * argument)
   for(;;)
   {
 		debug_init();
+		printf("init");
 		xTaskNotify( wifi_control_taskHandle, 1U<<WIFI_DEVICE_INIT, eSetBits );
 		vTaskDelete( defaultTaskHandle );
   }
@@ -188,7 +208,15 @@ void wifi_control_task_fun(void const * argument) {
 		}
     if ( oldBits & (1U<<WIFI_PARSE_DATA) ) {
 			oldBits &=~ (1U<<WIFI_PARSE_DATA);
-			wifi_data_parse();
+			wifi_mqtt_data_parse();
+		}
+		if ( oldBits & (1U<<WIFI_TCP0_SEND) ) {
+			oldBits &=~ (1U<<WIFI_TCP0_SEND);
+			wifi_tcp0_send_data();
+		}
+		if ( oldBits & (1U<<WIFI_SEND_HEART) ) {
+			oldBits &=~ (1U<<WIFI_SEND_HEART);
+			wifi_mqtt_heart();
 		}
 		if ( oldBits & (1U<<WIFI_SEND_OK) ) {
 			oldBits &=~ (1U<<WIFI_SEND_OK);

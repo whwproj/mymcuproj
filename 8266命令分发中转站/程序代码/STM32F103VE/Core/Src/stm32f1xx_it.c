@@ -56,6 +56,7 @@
 /* USER CODE END 0 */
 
 /* External variables --------------------------------------------------------*/
+extern TIM_HandleTypeDef htim2;
 extern DMA_HandleTypeDef hdma_usart1_rx;
 extern DMA_HandleTypeDef hdma_usart1_tx;
 extern DMA_HandleTypeDef hdma_usart2_rx;
@@ -254,6 +255,20 @@ void DMA1_Channel7_IRQHandler(void)
 }
 
 /**
+  * @brief This function handles TIM2 global interrupt.
+  */
+void TIM2_IRQHandler(void)
+{
+  /* USER CODE BEGIN TIM2_IRQn 0 */
+
+  /* USER CODE END TIM2_IRQn 0 */
+  HAL_TIM_IRQHandler(&htim2);
+  /* USER CODE BEGIN TIM2_IRQn 1 */
+
+  /* USER CODE END TIM2_IRQn 1 */
+}
+
+/**
   * @brief This function handles USART1 global interrupt.
   */
 void USART1_IRQHandler(void)
@@ -301,6 +316,10 @@ void USART3_IRQHandler(void)
 			xTaskNotifyFromISR( wifi_control_taskHandle, 1U<<WIFI_PARSE_DATA, eSetBits, &phpt );
 			portYIELD_FROM_ISR( phpt );
 		}
+	} else if ( __HAL_UART_GET_FLAG( &huart3, UART_FLAG_TC ) != RESET ) {
+		__HAL_UART_CLEAR_FLAG( &huart3, UART_FLAG_TC );
+		xTaskNotifyFromISR( wifi_control_taskHandle, 1U<<WIFI_SEND_OK, eSetBits, &phpt );//DMA发送完成中断
+		portYIELD_FROM_ISR( phpt );
 	}
   /* USER CODE END USART3_IRQn 1 */
 }

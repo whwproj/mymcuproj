@@ -20,6 +20,7 @@
 #include "main.h"
 #include "cmsis_os.h"
 #include "dma.h"
+#include "tim.h"
 #include "usart.h"
 #include "gpio.h"
 
@@ -93,6 +94,7 @@ int main(void)
   MX_USART1_UART_Init();
   MX_USART3_UART_Init();
   MX_USART2_UART_Init();
+  MX_TIM2_Init();
   /* USER CODE BEGIN 2 */
 
   /* USER CODE END 2 */
@@ -168,10 +170,16 @@ void SystemClock_Config(void)
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
   /* USER CODE BEGIN Callback 0 */
-
+	BaseType_t phpt;
   /* USER CODE END Callback 0 */
-  if (htim->Instance == TIM8) {
-    HAL_IncTick();
+  if (htim->Instance == TIM2) {
+    //HAL_IncTick();
+		//1s中断一次
+		w_str.heartBeatTime++;
+		if ( w_str.heartBeatTime%5 == 0 ) {
+			//发送心跳
+			
+		}
   }
   /* USER CODE BEGIN Callback 1 */
 
