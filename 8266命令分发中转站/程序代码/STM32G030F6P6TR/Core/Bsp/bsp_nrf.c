@@ -1,16 +1,16 @@
 #include "../Bsp/bsp_nrf.h"
 
 uint8_t Long;
-//uint8_t TX_ADDRESS[5] = {0x34,0x43,0x10,0x10,0x01}; //±æµÿµÿ÷∑ 
-//uint8_t RX_ADDRESS[5] = {0x34,0x43,0x10,0x10,0x01}; //Ω” ’µÿ÷∑
-uint8_t TX_ADDRESS[5] = {0xA3,0xA3,0xA3,0xA3,0xA3}; //±æµÿµÿ÷∑ 
-uint8_t RX_ADDRESS[5] = {0xA3,0xA3,0xA3,0xA3,0xA3}; //Ω” ’µÿ÷∑
-uint8_t tx_buf[]={"’‚ «¿¥◊‘G030F6P6µƒœ˚œ¢\r\n"};
+//uint8_t TX_ADDRESS[5] = {0x34,0x43,0x10,0x10,0x01}; //Êú¨Âú∞Âú∞ÂùÄ 
+//uint8_t RX_ADDRESS[5] = {0x34,0x43,0x10,0x10,0x01}; //Êé•Êî∂Âú∞ÂùÄ
+uint8_t TX_ADDRESS[5] = {0xA3,0xA3,0xA3,0xA3,0xA3}; //Êú¨Âú∞Âú∞ÂùÄ 
+uint8_t RX_ADDRESS[5] = {0xA3,0xA3,0xA3,0xA3,0xA3}; //Êé•Êî∂Âú∞ÂùÄ
+uint8_t tx_buf[]={"ËøôÊòØÊù•Ëá™G030F6P6ÁöÑÊ∂àÊÅØ\r\n"};
 uint8_t rx_buf[224];
 
 void NRF2_Init(void);
 	
-uint8_t SPI_RW_Reg( uint8_t reg, uint8_t value ) {//∂¡–¥ºƒ¥Ê∆˜
+uint8_t SPI_RW_Reg( uint8_t reg, uint8_t value ) {//ËØªÂÜôÂØÑÂ≠òÂô®
 	uint8_t status; 
 	CSN_Low();
 	HAL_SPI_Transmit( &hspi1, &reg, 1, 100 );
@@ -19,7 +19,7 @@ uint8_t SPI_RW_Reg( uint8_t reg, uint8_t value ) {//∂¡–¥ºƒ¥Ê∆˜
 	return(status);
 } 
 
-uint8_t SPI_Write_Buf( uint8_t reg, uint8_t *pBuf, uint8_t len ) {//∂‡◊÷Ω⁄–¥»Î
+uint8_t SPI_Write_Buf( uint8_t reg, uint8_t *pBuf, uint8_t len ) {//Â§öÂ≠óËäÇÂÜôÂÖ•
 	uint8_t status; 
 	CSN_Low();
 	HAL_SPI_TransmitReceive( &hspi1, &reg, &status, 1, 100 );
@@ -28,7 +28,7 @@ uint8_t SPI_Write_Buf( uint8_t reg, uint8_t *pBuf, uint8_t len ) {//∂‡◊÷Ω⁄–¥»Î
 	return(status);  
 }  
 
-uint8_t SPI_Read_Buf( uint8_t reg, uint8_t *pBuf, uint8_t len ) {//∂‡◊÷Ω⁄∂¡»°
+uint8_t SPI_Read_Buf( uint8_t reg, uint8_t *pBuf, uint8_t len ) {//Â§öÂ≠óËäÇËØªÂèñ
 	uint8_t status; 
 	CSN_Low();
 	HAL_SPI_TransmitReceive( &hspi1, &reg, &status, 1, 100 );
@@ -44,24 +44,24 @@ uint8_t Nrf24l01_Init( NRF24L01_TypeDef *nrf ) {
 	vTaskDelay(100);
 	CE_Low();
 	vTaskDelay(100);
-	SPI_RW_Reg( FLUSH_TX, NOP );//«Âø’FIFO
-	SPI_RW_Reg( FLUSH_RX, NOP );//«Âø’FIFO
-	SPI_RW_Reg( NRF_WRITE_REG + CONFIG, nrf->CONFIG_ );//CONFIG π§◊˜ƒ£ Ω≈‰÷√ºƒ¥Ê∆˜
+	SPI_RW_Reg( FLUSH_TX, NOP );//Ê∏ÖÁ©∫FIFO
+	SPI_RW_Reg( FLUSH_RX, NOP );//Ê∏ÖÁ©∫FIFO
+	SPI_RW_Reg( NRF_WRITE_REG + CONFIG, nrf->CONFIG_ );//CONFIG Â∑•‰ΩúÊ®°ÂºèÈÖçÁΩÆÂØÑÂ≠òÂô®
 	i = SPI_RW_Reg( NRF_READ_REG+CONFIG, NOP );
-	SPI_RW_Reg( NRF_WRITE_REG + EN_AA, nrf->EN_AA_ );//EN_AA  πƒ‹◊‘∂Ø»∑»œπ¶ƒ‹(Enhanced ShockBurst)
-	SPI_RW_Reg( NRF_WRITE_REG + EN_RXADDR, nrf->EN_RXADDR_ );//EN_RXADDR  πƒ‹Ω” ’Õ®µ¿(0~5)
-	SPI_RW_Reg( NRF_WRITE_REG + SETUP_AW, nrf->SETUP_AW_ );//SETUP_AW …Ë÷√µÿ÷∑øÌ∂»[3-5]byte
-	SPI_RW_Reg( NRF_WRITE_REG + SETUP_RETR, nrf->SETUP_RETR_ );//SETUP_RETR …Ë÷√◊‘∂Ø÷ÿ¥´
-	SPI_RW_Reg( NRF_WRITE_REG + RF_CH, nrf->RF_CH_ );//RF_CH …‰∆µ∆µ¬ 
-	SPI_RW_Reg( NRF_WRITE_REG + RF_SETUP, nrf->RF_SETUP_ );//RF_SETUP …‰∆µ…Ë÷√ºƒ¥Ê∆˜
-	SPI_RW_Reg( NRF_WRITE_REG + STATUS, nrf->STATUS_ );//STATUS ÷–∂œ◊¥Ã¨ºƒ¥Ê∆˜
-	SPI_Write_Buf( NRF_WRITE_REG + RX_ADDR_P0, nrf->RX_ADDR_P0_, nrf->SETUP_AW_+2 );//≈‰÷√ ˝æ›Õ®µ¿0µÿ÷∑
-	SPI_Write_Buf( NRF_WRITE_REG + RX_ADDR_P1, nrf->RX_ADDR_P1_, nrf->SETUP_AW_+2 );//≈‰÷√ ˝æ›Õ®µ¿1µÿ÷∑
-	SPI_Write_Buf( NRF_WRITE_REG + RX_ADDR_P2, nrf->RX_ADDR_P2_, nrf->SETUP_AW_+2 );//≈‰÷√ ˝æ›Õ®µ¿2µÿ÷∑
-	SPI_Write_Buf( NRF_WRITE_REG + RX_ADDR_P3, nrf->RX_ADDR_P3_, nrf->SETUP_AW_+2 );//≈‰÷√ ˝æ›Õ®µ¿3µÿ÷∑
-	SPI_Write_Buf( NRF_WRITE_REG + RX_ADDR_P4, nrf->RX_ADDR_P4_, nrf->SETUP_AW_+2 );//≈‰÷√ ˝æ›Õ®µ¿4µÿ÷∑
-	SPI_Write_Buf( NRF_WRITE_REG + RX_ADDR_P5, nrf->RX_ADDR_P5_, nrf->SETUP_AW_+2 );//≈‰÷√ ˝æ›Õ®µ¿5µÿ÷∑
-	SPI_Write_Buf( NRF_WRITE_REG + TX_ADDR, nrf->TX_ADDR_, nrf->SETUP_AW_+2 );//≈‰÷√TX∂À∑¢ÀÕµÿ÷∑
+	SPI_RW_Reg( NRF_WRITE_REG + EN_AA, nrf->EN_AA_ );//EN_AA ‰ΩøËÉΩËá™Âä®Á°ÆËÆ§ÂäüËÉΩ(Enhanced ShockBurst)
+	SPI_RW_Reg( NRF_WRITE_REG + EN_RXADDR, nrf->EN_RXADDR_ );//EN_RXADDR ‰ΩøËÉΩÊé•Êî∂ÈÄöÈÅì(0~5)
+	SPI_RW_Reg( NRF_WRITE_REG + SETUP_AW, nrf->SETUP_AW_ );//SETUP_AW ËÆæÁΩÆÂú∞ÂùÄÂÆΩÂ∫¶[3-5]byte
+	SPI_RW_Reg( NRF_WRITE_REG + SETUP_RETR, nrf->SETUP_RETR_ );//SETUP_RETR ËÆæÁΩÆËá™Âä®Èáç‰º†
+	SPI_RW_Reg( NRF_WRITE_REG + RF_CH, nrf->RF_CH_ );//RF_CH Â∞ÑÈ¢ëÈ¢ëÁéá
+	SPI_RW_Reg( NRF_WRITE_REG + RF_SETUP, nrf->RF_SETUP_ );//RF_SETUP Â∞ÑÈ¢ëËÆæÁΩÆÂØÑÂ≠òÂô®
+	SPI_RW_Reg( NRF_WRITE_REG + STATUS, nrf->STATUS_ );//STATUS ‰∏≠Êñ≠Áä∂ÊÄÅÂØÑÂ≠òÂô®
+	SPI_Write_Buf( NRF_WRITE_REG + RX_ADDR_P0, nrf->RX_ADDR_P0_, nrf->SETUP_AW_+2 );//ÈÖçÁΩÆÊï∞ÊçÆÈÄöÈÅì0Âú∞ÂùÄ
+	SPI_Write_Buf( NRF_WRITE_REG + RX_ADDR_P1, nrf->RX_ADDR_P1_, nrf->SETUP_AW_+2 );//ÈÖçÁΩÆÊï∞ÊçÆÈÄöÈÅì1Âú∞ÂùÄ
+	SPI_Write_Buf( NRF_WRITE_REG + RX_ADDR_P2, nrf->RX_ADDR_P2_, nrf->SETUP_AW_+2 );//ÈÖçÁΩÆÊï∞ÊçÆÈÄöÈÅì2Âú∞ÂùÄ
+	SPI_Write_Buf( NRF_WRITE_REG + RX_ADDR_P3, nrf->RX_ADDR_P3_, nrf->SETUP_AW_+2 );//ÈÖçÁΩÆÊï∞ÊçÆÈÄöÈÅì3Âú∞ÂùÄ
+	SPI_Write_Buf( NRF_WRITE_REG + RX_ADDR_P4, nrf->RX_ADDR_P4_, nrf->SETUP_AW_+2 );//ÈÖçÁΩÆÊï∞ÊçÆÈÄöÈÅì4Âú∞ÂùÄ
+	SPI_Write_Buf( NRF_WRITE_REG + RX_ADDR_P5, nrf->RX_ADDR_P5_, nrf->SETUP_AW_+2 );//ÈÖçÁΩÆÊï∞ÊçÆÈÄöÈÅì5Âú∞ÂùÄ
+	SPI_Write_Buf( NRF_WRITE_REG + TX_ADDR, nrf->TX_ADDR_, nrf->SETUP_AW_+2 );//ÈÖçÁΩÆTXÁ´ØÂèëÈÄÅÂú∞ÂùÄ
 	memset(rx_buf, 0, nrf->SETUP_AW_+2);
 	SPI_Read_Buf( TX_ADDR, rx_buf, nrf->SETUP_AW_+2 );
 	for ( i=0; i<nrf->SETUP_AW_+2; i++ ) {
@@ -69,14 +69,14 @@ uint8_t Nrf24l01_Init( NRF24L01_TypeDef *nrf ) {
 			return pdFALSE;
 		}
 	}
-	if ( !(nrf->DYNPD_&DPL_P0) ) SPI_RW_Reg(NRF_WRITE_REG + RX_PW_P0, nrf->RX_PW_P0_ );//…Ë÷√ ˝æ›Õ®µ¿0æ≤Ã¨”––ß‘ÿ∫…≥§∂»
-	if ( !(nrf->DYNPD_&DPL_P1) ) SPI_RW_Reg(NRF_WRITE_REG + RX_PW_P1, nrf->RX_PW_P1_ );//…Ë÷√ ˝æ›Õ®µ¿1æ≤Ã¨”––ß‘ÿ∫…≥§∂»
-	if ( !(nrf->DYNPD_&DPL_P2) ) SPI_RW_Reg(NRF_WRITE_REG + RX_PW_P2, nrf->RX_PW_P2_ );//…Ë÷√ ˝æ›Õ®µ¿2æ≤Ã¨”––ß‘ÿ∫…≥§∂»
-	if ( !(nrf->DYNPD_&DPL_P3) ) SPI_RW_Reg(NRF_WRITE_REG + RX_PW_P3, nrf->RX_PW_P3_ );//…Ë÷√ ˝æ›Õ®µ¿3æ≤Ã¨”––ß‘ÿ∫…≥§∂»
-	if ( !(nrf->DYNPD_&DPL_P4) ) SPI_RW_Reg(NRF_WRITE_REG + RX_PW_P4, nrf->RX_PW_P4_ );//…Ë÷√ ˝æ›Õ®µ¿4æ≤Ã¨”––ß‘ÿ∫…≥§∂»
-	if ( !(nrf->DYNPD_&DPL_P5) ) SPI_RW_Reg(NRF_WRITE_REG + RX_PW_P5, nrf->RX_PW_P5_ );//…Ë÷√ ˝æ›Õ®µ¿5æ≤Ã¨”––ß‘ÿ∫…≥§∂»
-	SPI_RW_Reg( NRF_WRITE_REG + DYNPD, nrf->DYNPD_ );//DYNPD ≈‰÷√∂ØÃ¨≥§∂»(RX∂À)
-	SPI_RW_Reg( NRF_WRITE_REG + FEATURE, nrf->FEATURE_ );//FEATURE ≈‰÷√∂ØÃ¨≥§∂»(TX∂À)
+	if ( !(nrf->DYNPD_&DPL_P0) ) SPI_RW_Reg(NRF_WRITE_REG + RX_PW_P0, nrf->RX_PW_P0_ );//ËÆæÁΩÆÊï∞ÊçÆÈÄöÈÅì0ÈùôÊÄÅÊúâÊïàËΩΩËç∑ÈïøÂ∫¶
+	if ( !(nrf->DYNPD_&DPL_P1) ) SPI_RW_Reg(NRF_WRITE_REG + RX_PW_P1, nrf->RX_PW_P1_ );//ËÆæÁΩÆÊï∞ÊçÆÈÄöÈÅì1ÈùôÊÄÅÊúâÊïàËΩΩËç∑ÈïøÂ∫¶
+	if ( !(nrf->DYNPD_&DPL_P2) ) SPI_RW_Reg(NRF_WRITE_REG + RX_PW_P2, nrf->RX_PW_P2_ );//ËÆæÁΩÆÊï∞ÊçÆÈÄöÈÅì2ÈùôÊÄÅÊúâÊïàËΩΩËç∑ÈïøÂ∫¶
+	if ( !(nrf->DYNPD_&DPL_P3) ) SPI_RW_Reg(NRF_WRITE_REG + RX_PW_P3, nrf->RX_PW_P3_ );//ËÆæÁΩÆÊï∞ÊçÆÈÄöÈÅì3ÈùôÊÄÅÊúâÊïàËΩΩËç∑ÈïøÂ∫¶
+	if ( !(nrf->DYNPD_&DPL_P4) ) SPI_RW_Reg(NRF_WRITE_REG + RX_PW_P4, nrf->RX_PW_P4_ );//ËÆæÁΩÆÊï∞ÊçÆÈÄöÈÅì4ÈùôÊÄÅÊúâÊïàËΩΩËç∑ÈïøÂ∫¶
+	if ( !(nrf->DYNPD_&DPL_P5) ) SPI_RW_Reg(NRF_WRITE_REG + RX_PW_P5, nrf->RX_PW_P5_ );//ËÆæÁΩÆÊï∞ÊçÆÈÄöÈÅì5ÈùôÊÄÅÊúâÊïàËΩΩËç∑ÈïøÂ∫¶
+	SPI_RW_Reg( NRF_WRITE_REG + DYNPD, nrf->DYNPD_ );//DYNPD ÈÖçÁΩÆÂä®ÊÄÅÈïøÂ∫¶(RXÁ´Ø)
+	SPI_RW_Reg( NRF_WRITE_REG + FEATURE, nrf->FEATURE_ );//FEATURE ÈÖçÁΩÆÂä®ÊÄÅÈïøÂ∫¶(TXÁ´Ø)
 	CE_High();
 	return pdTRUE;
 }
@@ -108,7 +108,7 @@ void nrf_init(void) {
 	nrf.SETUP_RETR_ = AUTO_RETRANSMIT_DELAY_US(500) | AUTO_RETRANSMIT_COUNT(5);
 	nrf.RF_CH_ = 2;//2402MHz
 	nrf.RF_SETUP_ = RF_DR_1Mbps|RF_PWR_0dB;
-	nrf.STATUS_ = RX_DR|TX_DS|MAX_RT;//«Âø’±Í÷æ
+	nrf.STATUS_ = RX_DR|TX_DS|MAX_RT;//Ê∏ÖÁ©∫Ê†áÂøó
 	memcpy( nrf.RX_ADDR_P0_, TX_ADDRESS, 5 );
 	memcpy( nrf.TX_ADDR_, TX_ADDRESS, 5 );
 	nrf.RX_PW_P0_ = 32;
@@ -116,16 +116,16 @@ void nrf_init(void) {
 	nrf.FEATURE_ = 0;
 	
 	if ( Nrf24l01_Init( &nrf ) != pdTRUE ) {
-		printf("***spi1 nrf24l01 ≥ı ºªØ ß∞‹!\r\n");
+		printf("***spi1 nrf24l01 ÂàùÂßãÂåñÂ§±Ë¥•!\r\n");
 	} else {
-		printf("nrf1 ≥ı ºªØ≥…π¶!\r\n");
+		printf("nrf1 ÂàùÂßãÂåñÊàêÂäü!\r\n");
 	}
 	
 }
 
 void nrf_receive_data(void) {
 	uint8_t sta;//,temp;
-	sta = SPI_RW_Reg( NRF_READ_REG + STATUS, NOP );//0xFFø’÷∏¡Ó
+	sta = SPI_RW_Reg( NRF_READ_REG + STATUS, NOP );//0xFFÁ©∫Êåá‰ª§
 	if ( sta & RX_DR ) {
 		SPI_Read_Buf( RD_RX_PLOAD, rx_buf, RX_PLOAD_WIDTH );
 		printf("%s\n",rx_buf);
@@ -142,10 +142,10 @@ void nrf_send_data( void ) {
 void receive( void ) {
 	uint8_t sta;
 	//if ( HAL_GPIO_ReadPin( NRF_IRQ_GPIO_Port, NRF_IRQ_Pin ) == GPIO_PIN_SET ) {
-		sta = SPI_RW_Reg( NRF_READ_REG + STATUS, NOP );//0xFFø’÷∏¡Ó
+		sta = SPI_RW_Reg( NRF_READ_REG + STATUS, NOP );//0xFFÁ©∫Êåá‰ª§
 		if ( sta & RX_DR ) {
 			SPI_Read_Buf( RD_RX_PLOAD, rx_buf, RX_PLOAD_WIDTH );
-			printf(" ’µΩNRF ˝æ›: %s\r\n",rx_buf);
+			printf("Êî∂Âà∞NRFÊï∞ÊçÆ: %s\r\n",rx_buf);
 			//SPI_RW_Reg(FLUSH_RX,NOP);
 			SPI_RW_Reg( NRF_WRITE_REG + STATUS, sta );
 		}

@@ -27,24 +27,24 @@ typedef struct _SESSION {
 	uint8_t pid;
 	uint8_t dir;//main:0 sub1:1...
 	uint8_t dataLen;
-	uint8_t heart;//��ʼ10 �ݼ���0�ػ����򸲸�
+	uint8_t heart;//锟斤拷始10 锟捷硷拷锟斤拷0锟截伙拷锟斤拷锟津覆革拷
 	char data[128];
 } SESSION;
 
 typedef struct _WIFI_STR {
 	uint8_t isConfig;
 	uint8_t askConfig;
-	uint8_t passDataStop;//1:��ͣ���ݽ���
-	//uint8_t communication;//0:wifiδ��ͨ�ż�wifi����,�ɲ�ѯ״̬ 1:���ɲ�ѯ,�������ݻ���
+	uint8_t passDataStop;//1:锟斤拷停锟斤拷锟捷斤拷锟斤拷
+	//uint8_t communication;//0:wifi未锟斤拷通锟脚硷拷wifi锟斤拷锟斤拷,锟缴诧拷询状态 1:锟斤拷锟缴诧拷询,锟斤拷锟斤拷锟斤拷锟捷伙拷锟斤拷
 	uint8_t *txBuff;
 	uint8_t *rxBuff;
 	uint16_t dLen;
 	uint16_t tLen;
 	uint8_t checkOnlineNum;
 	SESSION *sesp;
-	uint8_t tcp0_errnum;//tcp0重连次数,3次则重启设备
-	uint8_t tcp1_errnum;//tcp1重连次数
-	uint8_t heartBeatTime;//mqtt������
+	uint8_t tcp0_errnum;//tcp0閲嶈繛娆℃暟,3娆″垯閲嶅惎璁惧
+	uint8_t tcp1_errnum;//tcp1閲嶈繛娆℃暟
+	uint8_t heartBeatTime;//mqtt心跳包
 	
 } WIFI_STR;
 
@@ -109,14 +109,14 @@ uint8_t cmd_sub_2_fun( void );
 uint8_t cmd_sub_3_fun( void );
 
 
-void esp_connect_tcp0 ( void );//连接TCP0
-void esp_connect_tcp1 ( void );//连接TCP1
+void esp_connect_tcp0 ( void );//杩炴帴TCP0
+void esp_connect_tcp1 ( void );//杩炴帴TCP1
 void wifi_tcp0_send_data( void );
 void wifi_tcp1_send_data( void );
 void wifi_mqtt_heart( void );
-void mqtt_connect( void );//建立mqtt连接
-void wifi_init( void );//WIFI��ʼ��
-UBaseType_t wifi_mqtt_data_parse( void );//����mqtt����
+void mqtt_connect( void );//寤虹珛mqtt杩炴帴
+void wifi_init( void );//WIFI初始化
+UBaseType_t wifi_mqtt_data_parse( void );//解析mqtt数据
 #endif /*__BSP_WIFI__H*/
 
 
