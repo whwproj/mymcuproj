@@ -64,8 +64,8 @@ static int send_at_commond( char* cmd, char* reply, uint16_t timeout_10ms ) {
 void esp_connect_tcp0 ( void ) {
 	uint16_t i;	
 	if ( w_str.tcp0_errnum++>2 && w_str.tcp1_errnum>2 ) {//重启设备
-		__set_FAULTMASK(1);//重启
-		NVIC_SystemReset();
+		//__set_FAULTMASK(1);
+		NVIC_SystemReset();//重启
 	}
 	printf("TCP0 连接中...\r\n");
 	//xSemaphoreTake( communication_Mutex, portMAX_DELAY );//获取信号量
@@ -107,7 +107,7 @@ void esp_connect_tcp0 ( void ) {
 void esp_connect_tcp1 ( void ) {
 	uint16_t i;
 	if ( w_str.tcp1_errnum++>2 && w_str.tcp0_errnum>2 ) {//重启设备
-		__set_FAULTMASK(1);//重启
+		//__set_FAULTMASK(1);
 		NVIC_SystemReset();
 	}
 	//xSemaphoreTake( communication_Mutex, portMAX_DELAY );//获取信号量
@@ -150,10 +150,10 @@ void esp_connect_tcp1 ( void ) {
 void wifi_init( void ) {
 
 	//复位ESP
-	HAL_GPIO_WritePin( WIFI_EN_GPIO_Port, WIFI_EN_Pin, GPIO_PIN_SET );
-	HAL_GPIO_WritePin( WIFI_RST_GPIO_Port, WIFI_RST_Pin, GPIO_PIN_RESET );
+	HAL_GPIO_WritePin( ESP_EN_GPIO_Port, ESP_EN_Pin, GPIO_PIN_SET );
+	HAL_GPIO_WritePin( ESP_RST_GPIO_Port, ESP_RST_Pin, GPIO_PIN_RESET );
 	vTaskDelay( 100 );
-	HAL_GPIO_WritePin( WIFI_RST_GPIO_Port, WIFI_RST_Pin, GPIO_PIN_SET );
+	HAL_GPIO_WritePin( ESP_RST_GPIO_Port, ESP_RST_Pin, GPIO_PIN_SET );
 	vTaskDelay( 2000 );
 	
 	memset( &w_str, 0, sizeof( WIFI_STR ) );	
@@ -181,13 +181,13 @@ void wifi_init( void ) {
 	esp_connect_tcp1();
 	esp_connect_tcp0();
 	//mqtt建立连接
-	mqtt_connect();
+	//mqtt_connect();
 	
 	HAL_UART_DMAStop( &WIFIHUART );
 	HAL_UART_Receive_DMA( &WIFIHUART, w_str.rxBuff, WIFI_RXBUFF_SIZE );
 	
 //debug
-#if 0
+#if 1
 	w_str.isConfig = 1;
 	for ( int i=1; i>0; ) {
 		w_str.askConfig = 0;
@@ -196,11 +196,12 @@ void wifi_init( void ) {
 		while( w_str.askConfig==0 ) { vTaskDelay(10); } vTaskDelay(20);
 		HAL_UART_AbortReceive( &WIFIHUART );
 		w_str.dLen = WIFI_RXBUFF_SIZE - __HAL_DMA_GET_COUNTER( &WIFI_HDMA_HUART_RX );
-		HAL_UART_Transmit( &huart1, w_str.rxBuff, w_str.dLen, 1000 );
+		HAL_UART_Transmit( &DEBUG_HUART, w_str.rxBuff, w_str.dLen, 1000 );
 	}
 #endif
 }
 
+#if 0
 //解析WIFI数据
 void wifi_data_classification( void ) {
 	uint16_t len;
@@ -354,7 +355,7 @@ void mqtt_connect( void ) {
 	}
 }
 
-
+#endif
 
 
 

@@ -21,8 +21,11 @@ void debug_parse_data_fun( void ) {
 	
 	if ( strstr( (char *)ds.rxBuff, "debug" ) != NULL ) {
 		printf("debug\r\n");
-	} 
-	
+		
+	} else if ( strstr( (char *)ds.rxBuff, "esp:" ) != NULL ) {
+		HAL_UART_Transmit( &huart1, &ds.rxBuff[4], ds.len-4, 1000 );
+	}
+
 //	else if ( strstr( (char *)ds.rxBuff, "clear reg" ) != NULL ) {
 //		SPI_RW_Reg(NRF_WRITE_REG + STATUS, 0xf0 );//0xFF空指令
 //		printf("clear reg ok\r\n");
@@ -30,15 +33,15 @@ void debug_parse_data_fun( void ) {
 //	} else if ( strstr( (char *)ds.rxBuff, "clear fifo" ) != NULL ) {
 //		SPI_RW_Reg( FLUSH_RX,NOP );
 //		printf("clear fifo ok\r\n");
-//		
+//
 //	} else if ( strstr( (char *)ds.rxBuff, "reg" ) != NULL ) {
 //		uint8_t sta = SPI_RW_Reg(NRF_READ_REG + STATUS, 0xff );//0xFF空指令
 //		printf("sta: %02X\r\n", sta);
-//		
+//
 //	} else if ( strstr( (char *)ds.rxBuff, "gpio" ) != NULL ) {
 //		uint8_t temp = HAL_GPIO_ReadPin( NRF_IRQ_GPIO_Port, NRF_IRQ_Pin );
 //		printf("temp: %d\r\n", temp);
-//	
+//
 //	}
 	memset( ds.rxBuff, 0, DEBUG_BUFF_SIZE );
 	HAL_UART_Receive_DMA( &DEBUG_HUART, ds.rxBuff, DEBUG_BUFF_SIZE );//启动DMA接收

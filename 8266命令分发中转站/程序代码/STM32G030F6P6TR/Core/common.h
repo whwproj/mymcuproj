@@ -1,6 +1,8 @@
 #ifndef __COMMON__H
 #define __COMMON__H
 
+//#define WIFIDEBUG
+
 
 /* LIB ------------------------------------------------------------*/
 #include <stdio.h>
@@ -26,11 +28,13 @@
 #include "../Bsp/bsp_nrf.h"
 
 
-#define 	debugTaskSize					128
-
+#define 	debugTaskSize								128
+#define 	wifi_control_taskSize				128
+#define 	wifi_tcp_connect_taskSize		128
 
 extern TaskHandle_t debugTaskHandle;
-
+extern TaskHandle_t wifi_control_taskHandle;
+extern TaskHandle_t wifi_tcp_connect_taskHandle;
 
 #endif /*__COMMON__H*/
 

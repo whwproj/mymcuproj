@@ -3,10 +3,13 @@
 
 #include "../common.h"
 
-//#define WIFI_NAME0		"UFI-Dev"
-//#define WIFI_PASSWD0	"Ufidev888"
-#define WIFI_NAME0		"Tenda_ECE950_5G"
-#define WIFI_PASSWD0	"12345678"
+
+
+	
+#define WIFI_NAME0		"UFI-Dev"
+#define WIFI_PASSWD0	"Ufidev888"
+//#define WIFI_NAME0		"Tenda_ECE950_5G"
+//#define WIFI_PASSWD0	"12345678"
 #define WIFI_NAME1		"MI"
 #define WIFI_PASSWD1	"wuhanwei"
 

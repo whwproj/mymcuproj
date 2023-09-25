@@ -95,7 +95,9 @@ int main(void)
   MX_ADC1_Init();
   MX_SPI1_Init();
   MX_TIM1_Init();
+	#ifndef WIFIDEBUG
   MX_USART1_UART_Init();
+	#endif
   MX_USART2_UART_Init();
   /* USER CODE BEGIN 2 */
 
