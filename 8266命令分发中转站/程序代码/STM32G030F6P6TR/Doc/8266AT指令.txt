@@ -8,3 +8,7 @@ AT+CIPMUX=1
 AT+CIPSTART=0,"TCP","www.baidu.com",80
 AT+CIPSTART=1,"TCP","server.natappfree.cc",35209
 
+
+AT+CIPSTART=1,"TCP","server.natappfree.cc",35427
+
+AT+CIPSTART=0,"TCP","anvntlw.iot.gz.baidubce.com",1883

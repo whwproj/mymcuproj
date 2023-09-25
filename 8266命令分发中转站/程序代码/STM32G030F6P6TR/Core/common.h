@@ -32,8 +32,6 @@
 extern TaskHandle_t debugTaskHandle;
 
 
-
-
 #endif /*__COMMON__H*/
 
 

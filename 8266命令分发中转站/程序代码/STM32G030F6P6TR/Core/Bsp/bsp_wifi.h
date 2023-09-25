@@ -3,41 +3,55 @@
 
 #include "../common.h"
 
-#define PAGE_MENU_1 "一.主页:\r\n请输入数字执行相应命令:\r\n1.开灯\r\n"\
-										"2.关灯\r\n3.闪烁\r\n4.自动检测\r\n5.参数设置"
-										
-#define PAGE_MENU_2 "二.参数设置页:\r\n1.设置天黑时间\r\n"\
-										"2.设置天亮时间\r\n3.调节最高亮度\r\n按#号返回主菜单"
-										
-#define PAGE_MENU_3 "三.调节最高亮度页:\r\n请输入数字调节最高亮度百分比"\
-										"20 - 100 之间\r\n按下#号键返回上一层菜单"								
+//#define WIFI_NAME0		"UFI-Dev"
+//#define WIFI_PASSWD0	"Ufidev888"
+#define WIFI_NAME0		"Tenda_ECE950_5G"
+#define WIFI_PASSWD0	"12345678"
+#define WIFI_NAME1		"MI"
+#define WIFI_PASSWD1	"wuhanwei"
 
-#define WIFI_NAME		"MI"
-#define WIFI_PASSWD	"wuhanwei"
-#define WIFI_NAME2		"Tenda_ECE950_5G"
-#define WIFI_PASSWD2	"12345678"
+#define WIFIHUART huart1
+#define WIFI_HDMA_HUART_RX 	hdma_usart1_rx
+#define WIFI_HDMA_HUART_TX 	hdma_usart1_tx
+
+#define mqtt_User_Name "thingidp@anvntlw|esp8266|0|MD5"
+#define mqtt_passwd		"fcbfa8ffddfca54945ca549955cfa2cc"
+
+#define TCP_URL_0	"anvntlw.iot.gz.baidubce.com"
+#define TCP_PORT_0	1883
+#define TCP_URL_1	"server.natappfree.cc"
+#define TCP_PORT_1	36017
 
 typedef struct _SESSION {
 	uint8_t onlineSta;//0:offline 1:online
 	uint8_t pid;
 	uint8_t dir;//main:0 sub1:1...
 	uint8_t dataLen;
-	uint8_t heart;//初始10 递减到0回话满则覆盖
+	uint8_t heart;//锟斤拷始10 锟捷硷拷锟斤拷0锟截伙拷锟斤拷锟津覆革拷
 	char data[128];
 } SESSION;
 
 typedef struct _WIFI_STR {
 	uint8_t isConfig;
 	uint8_t askConfig;
-	uint8_t passDataStop;//1:暂停数据解析
-	//uint8_t communication;//0:wifi未在通信即wifi空闲,可查询状态 1:不可查询,避免数据混乱
+	uint8_t passDataStop;//1:锟斤拷停锟斤拷锟捷斤拷锟斤拷
+	//uint8_t communication;//0:wifi未锟斤拷通锟脚硷拷wifi锟斤拷锟斤拷,锟缴诧拷询状态 1:锟斤拷锟缴诧拷询,锟斤拷锟斤拷锟斤拷锟捷伙拷锟斤拷
 	uint8_t *txBuff;
 	uint8_t *rxBuff;
-	uint32_t len;
 	uint16_t dLen;
+	uint16_t tLen;
 	uint8_t checkOnlineNum;
 	SESSION *sesp;
+	uint8_t tcp0_errnum;//tcp0閲嶈繛娆℃暟,3娆″垯閲嶅惎璁惧
+	uint8_t tcp1_errnum;//tcp1閲嶈繛娆℃暟
+	uint8_t heartBeatTime;//mqtt心跳包
+	
 } WIFI_STR;
+
+typedef struct _TCP_DATA {
+	uint8_t data[256];
+	uint16_t len;
+} TCP_DATA;
 
 extern WIFI_STR wifi_str;
 extern SESSION session[];
@@ -48,10 +62,20 @@ extern SESSION session[];
 #define DEFAULT_HEART	60
 
 /*---- wifi task bits start ----------------*/
-#define WIFI_DEVICE_INIT 	0
-#define WIFI_PARSE_DATA 	1
-#define WIFI_CHECK_ONLINE 2
-#define WIFI_SEND_OK			31
+//*****	wifi_control_task_fun
+#define WIFI_DEVICE_INIT 		0
+#define WIFI_PARSE_DATA 		1
+#define WIFI_CONNECT_TCP0_	2
+#define WIFI_CONNECT_TCP1_	3
+#define WIFI_TCP0_SEND			4
+#define WIFI_TCP1_SEND			5
+#define WIFI_SEND_HEART			6
+#define WIFI_SEND_OK				7
+
+//*****	wifi_control_task_fun 
+#define WIFI_CONNECT_TCP0_DELAY	0
+#define WIFI_CONNECT_TCP1_DELAY	1
+
 /*---- wifi task bits end ----------------*/
 
 /*---- sleep task bits start ----------------*/
@@ -72,15 +96,27 @@ extern SESSION session[];
 #define NO_SESSION 						2
 /*---- check task bits end ----------------*/
 
+
+extern WIFI_STR w_str;
+
 uint32_t wifi_check_online( void );
 void wifi_to_reconfigure( void );
-void wifi_init( void );
 void wifi_parse_data( void );
 int check_turn_on_time( void );
 uint8_t cmd_main_fun( void );
 uint8_t cmd_sub_1_fun( void );
 uint8_t cmd_sub_2_fun( void );
 uint8_t cmd_sub_3_fun( void );
+
+
+void esp_connect_tcp0 ( void );//杩炴帴TCP0
+void esp_connect_tcp1 ( void );//杩炴帴TCP1
+void wifi_tcp0_send_data( void );
+void wifi_tcp1_send_data( void );
+void wifi_mqtt_heart( void );
+void mqtt_connect( void );//寤虹珛mqtt杩炴帴
+void wifi_init( void );//WIFI初始化
+UBaseType_t wifi_mqtt_data_parse( void );//解析mqtt数据
 #endif /*__BSP_WIFI__H*/
 
 
