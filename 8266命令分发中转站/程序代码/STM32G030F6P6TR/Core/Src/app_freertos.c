@@ -116,6 +116,7 @@ void StartDefaultTask(void const * argument)
   {
 		debug_init();
 		//nrf_init();
+		printf("init ok\r\n");
 		vTaskDelete( defaultTaskHandle );
   }
   /* USER CODE END StartDefaultTask */
@@ -124,11 +125,11 @@ void StartDefaultTask(void const * argument)
 /* Private application code --------------------------------------------------*/
 /* USER CODE BEGIN Application */
 /*--------------- DEBUG ----------------*/
-void debugTaskFun(void const * argument)
-{
+void debugTaskFun(void const * argument) {
 	uint32_t newBits, oldBits = 0;
+	xTaskNotify( debugTaskHandle, 1U<<DEBUG_SEND_OK, eSetBits );
   for(;;) {
-		xTaskNotifyWait( pdFALSE, portMAX_DELAY, &newBits, portMAX_DELAY );
+		xTaskNotifyWait( pdFALSE, ~(1U<<DEBUG_SEND_OK), &newBits, portMAX_DELAY );
 		oldBits |= newBits;
 		if ( oldBits & (1U<<DEBUG_PARSE_DATA) ) {
 			oldBits &=~ (1U<<DEBUG_PARSE_DATA);
