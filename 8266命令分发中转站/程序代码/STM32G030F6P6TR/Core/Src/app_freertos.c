@@ -122,7 +122,7 @@ void StartDefaultTask(void const * argument)
 		//复位ESP
 		HAL_GPIO_WritePin( ESP_EN_GPIO_Port, ESP_EN_Pin, GPIO_PIN_SET );
 		HAL_GPIO_WritePin( ESP_RST_GPIO_Port, ESP_RST_Pin, GPIO_PIN_RESET );
-		vTaskDelay( 100 );
+		vTaskDelay( 500 );
 		HAL_GPIO_WritePin( ESP_RST_GPIO_Port, ESP_RST_Pin, GPIO_PIN_SET );
 		vTaskDelay( 2000 );
 #else

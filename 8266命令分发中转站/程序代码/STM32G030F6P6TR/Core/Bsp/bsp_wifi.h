@@ -52,7 +52,7 @@ typedef struct _WIFI_STR {
 } WIFI_STR;
 
 typedef struct _TCP_DATA {
-	uint8_t data[256];
+	char* data;
 	uint16_t len;
 } TCP_DATA;
 
