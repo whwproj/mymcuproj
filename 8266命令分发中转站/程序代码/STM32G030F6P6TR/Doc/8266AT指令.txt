@@ -12,3 +12,16 @@ AT+CIPSTART=1,"TCP","server.natappfree.cc",35209
 AT+CIPSTART=1,"TCP","server.natappfree.cc",35427
 
 AT+CIPSTART=0,"TCP","anvntlw.iot.gz.baidubce.com",1883
+
+//建立TCP服务器
+AT+CIPMUX=1
+AT+CIPSERVER=1,333
+
+log:
+	OK
+	AT+CIPSERVER=1,333
+	
+	OK
+	0,CONNECT
+
+	+IPD,0,3:123
