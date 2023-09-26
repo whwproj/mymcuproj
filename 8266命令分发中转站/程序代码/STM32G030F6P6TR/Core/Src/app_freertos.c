@@ -126,6 +126,9 @@ void StartDefaultTask(void const * argument)
 		HAL_GPIO_WritePin( ESP_RST_GPIO_Port, ESP_RST_Pin, GPIO_PIN_SET );
 		vTaskDelay( 2000 );
 #else
+		HAL_TIM_Base_Start_IT( &htim3 );
+		HAL_TIM_Base_Start( &htim3 );
+		led_init();
 		debug_init();
 		wifi_init();
 		printf("init ok\r\n");

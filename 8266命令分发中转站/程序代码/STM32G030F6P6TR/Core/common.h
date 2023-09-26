@@ -26,9 +26,10 @@
 #include "../Bsp/bsp_debug.h"
 #include "../Bsp/bsp_wifi.h"
 #include "../Bsp/bsp_nrf.h"
+#include "../Bsp/bsp_led.h"
 
 
-#define 	debugTaskSize								128
+#define 	debugTaskSize								256
 #define 	wifi_control_taskSize				128
 #define 	wifi_tcp_connect_taskSize		128
 

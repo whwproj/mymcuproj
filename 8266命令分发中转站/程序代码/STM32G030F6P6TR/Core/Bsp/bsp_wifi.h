@@ -78,10 +78,10 @@ typedef struct _TCP_DATA {
 } TCP_DATA;
 
 extern WIFI_STR wifi_str;
-extern SESSION session[];
+//extern SESSION session[];
 
 #define WIFI_RXBUFF_SIZE	256
-#define WIFI_TXBUFF_SIZE	512
+#define WIFI_TXBUFF_SIZE	256
 
 #define DEFAULT_HEART	60
 

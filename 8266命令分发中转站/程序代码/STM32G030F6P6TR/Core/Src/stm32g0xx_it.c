@@ -56,6 +56,7 @@
 /* USER CODE END 0 */
 
 /* External variables --------------------------------------------------------*/
+extern TIM_HandleTypeDef htim3;
 extern DMA_HandleTypeDef hdma_usart1_rx;
 extern DMA_HandleTypeDef hdma_usart1_tx;
 extern DMA_HandleTypeDef hdma_usart2_rx;
@@ -166,6 +167,20 @@ void DMA1_Ch4_5_DMAMUX1_OVR_IRQHandler(void)
 }
 
 /**
+  * @brief This function handles TIM3 global interrupt.
+  */
+void TIM3_IRQHandler(void)
+{
+  /* USER CODE BEGIN TIM3_IRQn 0 */
+
+  /* USER CODE END TIM3_IRQn 0 */
+  HAL_TIM_IRQHandler(&htim3);
+  /* USER CODE BEGIN TIM3_IRQn 1 */
+
+  /* USER CODE END TIM3_IRQn 1 */
+}
+
+/**
   * @brief This function handles TIM14 global interrupt.
   */
 void TIM14_IRQHandler(void)
@@ -190,7 +205,7 @@ void USART1_IRQHandler(void)
   HAL_UART_IRQHandler(&huart1);
   /* USER CODE BEGIN USART1_IRQn 1 */
 	if((__HAL_UART_GET_FLAG(&huart1,UART_FLAG_IDLE) != RESET)) {
-		__HAL_UART_CLEAR_IDLEFLAG(&huart1);  //清除空闲状态标志
+		__HAL_UART_CLEAR_IDLEFLAG(&huart1);  //清除空闲状�?�标�?
 		if ( w_str.isConfig ) {
 			w_str.askConfig = 1;
 		} else {
@@ -199,7 +214,7 @@ void USART1_IRQHandler(void)
 		}
 	} else if ( __HAL_UART_GET_FLAG( &huart1, UART_FLAG_TC ) != RESET ) {
 		__HAL_UART_CLEAR_FLAG( &huart1, UART_FLAG_TC );
-		xTaskNotifyFromISR( wifi_control_taskHandle, 1U<<WIFI_SEND_OK, eSetBits, &phpt );//DMA发送完成中断
+		xTaskNotifyFromISR( wifi_control_taskHandle, 1U<<WIFI_SEND_OK, eSetBits, &phpt );//DMA发�?�完成中�?
 		portYIELD_FROM_ISR( phpt );
 	}
   /* USER CODE END USART1_IRQn 1 */
@@ -216,12 +231,12 @@ void USART2_IRQHandler(void)
   HAL_UART_IRQHandler(&huart2);
   /* USER CODE BEGIN USART2_IRQn 1 */
 	if((__HAL_UART_GET_FLAG(&huart2,UART_FLAG_IDLE) != RESET)) {
-		__HAL_UART_CLEAR_IDLEFLAG(&huart2);  //清除空闲状态
-		xTaskNotifyFromISR( debugTaskHandle, 1U<<DEBUG_PARSE_DATA, eSetBits, &phpt );//DMA发送完成通知
+		__HAL_UART_CLEAR_IDLEFLAG(&huart2);  //清除空闲状�??
+		xTaskNotifyFromISR( debugTaskHandle, 1U<<DEBUG_PARSE_DATA, eSetBits, &phpt );//DMA发�?�完成�?�知
 		portYIELD_FROM_ISR( phpt );
 		
 	} else if ( __HAL_UART_GET_FLAG(&huart2,UART_FLAG_TC) != RESET ) {
-		xTaskNotifyFromISR( debugTaskHandle, 1U<<DEBUG_SEND_OK, eSetBits, &phpt );//DMA发送完成通知
+		xTaskNotifyFromISR( debugTaskHandle, 1U<<DEBUG_SEND_OK, eSetBits, &phpt );//DMA发�?�完成�?�知
 		portYIELD_FROM_ISR( phpt );
 	}
   /* USER CODE END USART2_IRQn 1 */

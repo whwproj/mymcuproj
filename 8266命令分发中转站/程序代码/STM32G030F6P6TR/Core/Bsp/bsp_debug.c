@@ -24,6 +24,33 @@ void debug_parse_data_fun( void ) {
 		
 	} else if ( strstr( (char *)ds.rxBuff, "esp:" ) != NULL ) {
 		HAL_UART_Transmit( &huart1, &ds.rxBuff[4], ds.len-4, 1000 );
+		
+	} else if ( strstr( (char *)ds.rxBuff, "nled_on" ) != NULL ) {
+		led_nrf_flicker_on();
+		
+	} else if ( strstr( (char *)ds.rxBuff, "cled_on" ) != NULL ) {
+		led_con_flicker_on();
+		
+	} else if ( strstr( (char *)ds.rxBuff, "nled_off" ) != NULL ) {
+		led_nrf_flicker_off();
+		
+	} else if ( strstr( (char *)ds.rxBuff, "cled_off" ) != NULL ) {
+		led_con_flicker_off();
+		
+	} else if ( strstr( (char *)ds.rxBuff, "nled_speed:" ) != NULL ) {
+		if ( led_nrf_speed_set(ds.rxBuff[strlen("nled_speed:")]-'0') == 0 ) {
+			printf("nled_speed设置成功\r\n");
+		} else {
+			printf("nled_speed设置失败\r\n");
+		}
+		
+	} else if ( strstr( (char *)ds.rxBuff, "cled_speed:" ) != NULL ) {
+		if ( led_con_speed_set(ds.rxBuff[strlen("cled_speed:")]-'0') == 0 ) {
+			printf("cled_speed设置成功\r\n");
+		} else {
+			printf("cled_speed设置失败\r\n");
+		}
+		
 	}
 
 //	else if ( strstr( (char *)ds.rxBuff, "clear reg" ) != NULL ) {

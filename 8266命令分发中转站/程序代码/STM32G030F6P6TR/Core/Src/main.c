@@ -91,14 +91,15 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
-	#ifndef WIFIDEBUG
+  #ifndef WIFIDEBUG
   MX_DMA_Init();
   MX_ADC1_Init();
   MX_SPI1_Init();
   MX_TIM1_Init();
   MX_USART1_UART_Init();
   MX_USART2_UART_Init();
-	#endif
+  MX_TIM3_Init();
+  #endif
   /* USER CODE BEGIN 2 */
 
   /* USER CODE END 2 */
@@ -187,7 +188,11 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
     HAL_IncTick();
   }
   /* USER CODE BEGIN Callback 1 */
-
+	if (htim->Instance == TIM1) {
+  }
+	if (htim->Instance == TIM3) {
+		led_tim_callback();
+  }
   /* USER CODE END Callback 1 */
 }
 
