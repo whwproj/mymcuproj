@@ -3,9 +3,6 @@
 
 #include "../common.h"
 
-
-
-	
 #define WIFI_NAME0		"UFI-Dev"
 #define WIFI_PASSWD0	"Ufidev888"
 //#define WIFI_NAME0		"Tenda_ECE950_5G"
@@ -25,6 +22,30 @@
 #define TCP_URL_1	"server.natappfree.cc"
 #define TCP_PORT_1	36017
 
+//#define HTML 	"HTTP/1.1 200 OK\r\n"\
+//							"Content-Type: text/html\r\n"\
+//							"Content-Length: 217\r\n"\
+//							"Connection: keep-alive\r\n"\
+//							"Accept-Ranges: bytes\r\n"\
+//							"\r\n"\
+//							"<!DOCTYPE html><html><head><meta charset=\"utf-8\">"\
+//							"</head><body><form action=\"/\"><input type=\"text\" value=\"wifi名称\"><br />"\
+//							"<input type=\"text\" value=\"wifi密码\"><br />"\
+//							"<input type=\"submit\" value=\"提交\"></form></html>"
+#define HTML "<!DOCTYPE html>"\
+"<html>"\
+	"<head>"\
+		"<meta charset=\"utf-8\">"\
+		"<meta name=\"viewport\"content=\"width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=0\">"\
+	"</head>"\
+	"<body><div style=\"display:block;margin:50px auto; width:180px;\">"\
+		"<form action=\"/locahost\" method=\"POST\">"\
+			"<input type=\"text\" id=\"wname\" placeholder=\"wifi名称\"><br />"\
+			"<input type=\"text\" id=\"wpswd\" placeholder=\"wifi密码\"><br />"\
+			"<input type=\"submit\" value=\"保存\"></form>"\
+		"</div>"\
+"</html>"
+							
 typedef struct _SESSION {
 	uint8_t onlineSta;//0:offline 1:online
 	uint8_t pid;
@@ -60,7 +81,7 @@ extern WIFI_STR wifi_str;
 extern SESSION session[];
 
 #define WIFI_RXBUFF_SIZE	256
-#define WIFI_TXBUFF_SIZE	256
+#define WIFI_TXBUFF_SIZE	512
 
 #define DEFAULT_HEART	60
 
@@ -74,6 +95,7 @@ extern SESSION session[];
 #define WIFI_TCP1_SEND			5
 #define WIFI_SEND_HEART			6
 #define WIFI_SEND_OK				7
+#define WIFI_DATA_CLASS			8
 
 //*****	wifi_control_task_fun 
 #define WIFI_CONNECT_TCP0_DELAY	0
@@ -120,6 +142,9 @@ void wifi_mqtt_heart( void );
 void mqtt_connect( void );//寤虹珛mqtt杩炴帴
 void wifi_init( void );//WIFI初始化
 UBaseType_t wifi_mqtt_data_parse( void );//解析mqtt数据
+
+void wifi_data_classification( void );//wifi数据分类
+
 #endif /*__BSP_WIFI__H*/
 
 

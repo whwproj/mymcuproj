@@ -1,7 +1,7 @@
 #ifndef __COMMON__H
 #define __COMMON__H
 
-#define WIFIDEBUG
+//#define WIFIDEBUG
 
 
 /* LIB ------------------------------------------------------------*/
@@ -37,7 +37,6 @@ extern TaskHandle_t wifi_control_taskHandle;
 extern TaskHandle_t wifi_tcp_connect_taskHandle;
 
 #endif /*__COMMON__H*/
-
 
 
 

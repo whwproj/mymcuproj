@@ -194,7 +194,7 @@ void USART1_IRQHandler(void)
 		if ( w_str.isConfig ) {
 			w_str.askConfig = 1;
 		} else {
-			xTaskNotifyFromISR( wifi_control_taskHandle, 1U<<WIFI_PARSE_DATA, eSetBits, &phpt );
+			xTaskNotifyFromISR( wifi_control_taskHandle, 1U<<WIFI_DATA_CLASS, eSetBits, &phpt );
 			portYIELD_FROM_ISR( phpt );
 		}
 	} else if ( __HAL_UART_GET_FLAG( &huart1, UART_FLAG_TC ) != RESET ) {

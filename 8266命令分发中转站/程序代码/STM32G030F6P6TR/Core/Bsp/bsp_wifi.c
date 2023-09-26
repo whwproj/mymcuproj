@@ -38,9 +38,10 @@ static int connect_wifi( const char* const wifiName, const char* const wifiPassw
 static int send_at_commond( char* cmd, char* reply, uint16_t timeout_10ms ) {
 	//xSemaphoreTake( communication_Mutex, portMAX_DELAY );//获取信号量
 	w_str.isConfig = 1;
+	HAL_UART_AbortTransmit( &WIFIHUART );
 	memset( w_str.rxBuff, 0, WIFI_RXBUFF_SIZE );
-	sprintf( (char*)w_str.txBuff, "%s", cmd );
 	HAL_UART_Receive_DMA( &WIFIHUART, w_str.rxBuff, WIFI_RXBUFF_SIZE );
+	sprintf( (char*)w_str.txBuff, "%s", cmd );
 	HAL_UART_Transmit( &WIFIHUART, w_str.txBuff, strlen((char*)w_str.txBuff), portMAX_DELAY );
 	for ( ; strstr( (void*)w_str.rxBuff, reply )==NULL && timeout_10ms>0; timeout_10ms-- ) {
 		vTaskDelay(10);
@@ -146,60 +147,86 @@ void esp_connect_tcp1 ( void ) {
 	w_str.isConfig = 0;
 }
 
-#if 0
+#if 1
 //解析WIFI数据
 void wifi_data_classification( void ) {
 	uint16_t len;
 	char *str;
 	TCP_DATA *tcpd;
 	//xSemaphoreTake( communication_Mutex, portMAX_DELAY );//获取信号量
-	if ( strstr( (char*)w_str.rxBuff, "+IPD,0," ) != NULL ) {//TCP0消息(MQTT)
-		str = strstr( (char*)w_str.rxBuff, "+IPD,0," ) + 7;
-		for ( ; *str>='0'&&*str<='9'; str++ ) {
-			len *= 10;
-			len += (*str-'0');
-		} str++;
-		//寻找空闲缓存空间
-		for( int i=0; pdTRUE; i++ ) {
-			if ( i==3 ) i=0;
-			if ( tcp_data[i].len == 0 ) {
-				tcpd = &tcp_data[i];
-				break;
+	if ( strstr( (char*)w_str.rxBuff, "+STA_CONNECTED:" ) ) {
+		printf("设备WIFI连接AP\r\n");
+		
+	} else if ( strstr( (char*)w_str.rxBuff, "0,CONNECT" ) ) {
+		printf("TCP建立连接\r\n");
+		vTaskDelay(100);
+		if ( strstr( (char*)w_str.rxBuff, "+IPD,0," ) != NULL ) {
+			if ( strstr( (char*)w_str.rxBuff, "GET" ) != NULL ) {
+				printf("send html\r\n");
+				sprintf( (char*)w_str.txBuff, "%s", (char*)&HTML );
+				w_str.tLen = strlen( (char*)&HTML );
+				wifi_tcp0_send_data();
 			}
-			vTaskDelay(100);
 		}
-		tcpd->data = pvPortMalloc( len );
-		tcpd->len = len;
-		memcpy( tcpd->data, str, len );
-		xQueueSend( TcpData_QueueHandle, &tcpd, portMAX_DELAY );
+			
+	} else if ( strstr( (char*)w_str.rxBuff, "+IPD,0," ) != NULL ) {//TCP0消息(MQTT)
+		printf("IPD 0,----- html\r\n");
+		//str = strstr( (char*)w_str.rxBuff, "+IPD,0," ) + 7;
+		//if ( strstr((char*)w_str.rxBuff, ":GET / HTTP/1.1") != NULL ) {		
+			sprintf( (char*)w_str.txBuff, "%s", (char*)&HTML );
+			w_str.tLen = strlen( (char*)&HTML );//358;
+			//HAL_UART_Transmit( &WIFIHUART, (const uint8_t *)HTML, 358, 500 );
+			wifi_tcp0_send_data();
+		//}
 		
-	} else if ( strstr( (char*)w_str.rxBuff, "+IPD,1," ) != NULL ) {//TCP1消息
-		//+IPD,1,5:11111
-		str = strstr( (char*)w_str.rxBuff, "+IPD,1," ) + 7;
-		for ( ; *str>='0' && *str<='9'; str++ ) {
-			len *= 10;
-			len += (*str-'0');
-		} str++;
-		printf("TCP1>>>>>>>>>\r\n");
-		HAL_UART_Transmit( &huart1, (uint8_t *)str, len, 1000 );
-		printf("\r\n<<<<<<<<<<<<\r\n");
+//		for ( ; *str>='0'&&*str<='9'; str++ ) {
+//			len *= 10;
+//			len += (*str-'0');
+//		} str++;
+//		//寻找空闲缓存空间
+//		for( int i=0; pdTRUE; i++ ) {
+//			if ( i==3 ) i=0;
+//			if ( tcp_data[i].len == 0 ) {
+//				tcpd = &tcp_data[i];
+//				break;
+//			}
+//			vTaskDelay(100);
+//		}
+//		tcpd->data = pvPortMalloc( len );
+//		tcpd->len = len;
+//		memcpy( tcpd->data, str, len );
+//		xQueueSend( TcpData_QueueHandle, &tcpd, portMAX_DELAY );
 		
-	} else if ( strstr( (char*)w_str.rxBuff, "0,CLOSED" ) != NULL ) {//TCP0断开连接
-		printf("tcp0 断线 5s后重连...\r\n");
-		xTaskNotify( wifi_tcp_connect_taskHandle, 1U<<WIFI_CONNECT_TCP0_DELAY, eSetBits );
-		
-	} else if ( strstr( (char*)w_str.rxBuff, "1,CLOSED" ) != NULL ) {//TCP1断开连接
-		printf("tcp1 断线 5s后重连...\r\n");
-		xTaskNotify( wifi_tcp_connect_taskHandle, 1U<<WIFI_CONNECT_TCP1_DELAY, eSetBits );
+//	} else if ( strstr( (char*)w_str.rxBuff, "+IPD,1," ) != NULL ) {//TCP1消息
+//		//+IPD,1,5:11111
+//		str = strstr( (char*)w_str.rxBuff, "+IPD,1," ) + 7;
+//		for ( ; *str>='0' && *str<='9'; str++ ) {
+//			len *= 10;
+//			len += (*str-'0');
+//		} str++;
+//		printf("TCP1>>>>>>>>>\r\n");
+//		HAL_UART_Transmit( &huart1, (uint8_t *)str, len, 1000 );
+//		printf("\r\n<<<<<<<<<<<<\r\n");
+//		
+//	} else if ( strstr( (char*)w_str.rxBuff, "0,CLOSED" ) != NULL ) {//TCP0断开连接
+//		printf("tcp0 断线 5s后重连...\r\n");
+//		xTaskNotify( wifi_tcp_connect_taskHandle, 1U<<WIFI_CONNECT_TCP0_DELAY, eSetBits );
+//		
+//	} else if ( strstr( (char*)w_str.rxBuff, "1,CLOSED" ) != NULL ) {//TCP1断开连接
+//		printf("tcp1 断线 5s后重连...\r\n");
+//		xTaskNotify( wifi_tcp_connect_taskHandle, 1U<<WIFI_CONNECT_TCP1_DELAY, eSetBits );
+//	}
+
 	}
-	
 	HAL_UART_AbortReceive( &WIFIHUART );
 	len = WIFI_RXBUFF_SIZE - __HAL_DMA_GET_COUNTER( &WIFI_HDMA_HUART_RX );
 	memset( w_str.rxBuff, 0, len );
 	HAL_UART_Receive_DMA( &WIFIHUART, w_str.rxBuff, WIFI_RXBUFF_SIZE );
 	
 }
+#endif
 
+#if 0
 //解析mqtt数据
 UBaseType_t wifi_mqtt_data_parse( void ) {
 	uint8_t i, retain, ask[4];
@@ -254,29 +281,6 @@ UBaseType_t wifi_mqtt_data_parse( void ) {
 }
 
 
-void wifi_tcp0_send_data( void ) {
-	char temp[17];
-	//关闭中断
-	__HAL_UART_DISABLE_IT( &WIFIHUART, UART_IT_IDLE );
-	__HAL_UART_DISABLE_IT( &WIFIHUART, UART_IT_TC );
-	
-	sprintf( temp, "AT+CIPSEND=0,%d", w_str.tLen );
-	HAL_UART_Transmit( &WIFIHUART, (uint8_t*)temp, strlen(temp), portMAX_DELAY );
-	HAL_UART_AbortReceive( &WIFIHUART );
-	memset( w_str.rxBuff, 0, WIFI_RXBUFF_SIZE );
-	HAL_UART_Receive_DMA( &WIFIHUART, w_str.rxBuff, WIFI_RXBUFF_SIZE );
-	while( strstr( (char*)w_str.rxBuff, "OK\r\n>" ) == NULL );
-	HAL_UART_Transmit( &WIFIHUART, w_str.txBuff, w_str.tLen, portMAX_DELAY );
-	while( strstr( (char*)w_str.rxBuff, "SEND OK" ) == NULL );
-	HAL_UART_AbortReceive( &WIFIHUART );
-	memset( w_str.rxBuff, 0, WIFI_RXBUFF_SIZE );
-	HAL_UART_Receive_DMA( &WIFIHUART, w_str.rxBuff, WIFI_RXBUFF_SIZE );
-	//释放信号量
-	xSemaphoreGive( TxSend_Mutex );
-	
-	__HAL_UART_ENABLE_IT( &WIFIHUART, UART_IT_IDLE );
-	__HAL_UART_ENABLE_IT( &WIFIHUART, UART_IT_TC );
-}
 
 void wifi_mqtt_heart( void ) {
 	//获取信号量
@@ -301,9 +305,33 @@ void mqtt_connect( void ) {
 		return pdFAIL;//订阅失败
 	}
 }
-
 #endif
 
+
+void wifi_tcp0_send_data( void ) {
+	char temp[17];
+	//关闭中断
+	__HAL_UART_DISABLE_IT( &WIFIHUART, UART_IT_IDLE );
+	__HAL_UART_DISABLE_IT( &WIFIHUART, UART_IT_TC );
+	
+	sprintf( temp, "AT+CIPSEND=0,%d\r\n", w_str.tLen );
+	HAL_UART_AbortReceive( &WIFIHUART );
+	memset( w_str.rxBuff, 0, WIFI_RXBUFF_SIZE );
+	HAL_UART_Receive_DMA( &WIFIHUART, w_str.rxBuff, WIFI_RXBUFF_SIZE );
+	HAL_UART_Transmit( &WIFIHUART, (uint8_t*)temp, strlen(temp), portMAX_DELAY );
+	while( strstr( (char*)w_str.rxBuff, "OK\r\n>" ) == NULL );
+	HAL_UART_Transmit( &WIFIHUART, w_str.txBuff, w_str.tLen, portMAX_DELAY );
+	while( strstr( (char*)w_str.rxBuff, "SEND OK" ) == NULL );
+	printf("SEND OK\r\n");
+	HAL_UART_AbortReceive( &WIFIHUART );
+	memset( w_str.rxBuff, 0, WIFI_RXBUFF_SIZE );
+	HAL_UART_Receive_DMA( &WIFIHUART, w_str.rxBuff, WIFI_RXBUFF_SIZE );
+	//释放信号量
+	//xSemaphoreGive( TxSend_Mutex );
+	
+	__HAL_UART_ENABLE_IT( &WIFIHUART, UART_IT_IDLE );
+	__HAL_UART_ENABLE_IT( &WIFIHUART, UART_IT_TC );
+}
 
 //WIFI初始化
 void wifi_init( void ) {
@@ -312,7 +340,7 @@ void wifi_init( void ) {
 	HAL_GPIO_WritePin( ESP_RST_GPIO_Port, ESP_RST_Pin, GPIO_PIN_RESET );
 	vTaskDelay( 100 );
 	HAL_GPIO_WritePin( ESP_RST_GPIO_Port, ESP_RST_Pin, GPIO_PIN_SET );
-	vTaskDelay( 500 );
+	vTaskDelay( 3000 );
 	
 	memset( &w_str, 0, sizeof( WIFI_STR ) );	
 	//DMA初始化
@@ -323,30 +351,44 @@ void wifi_init( void ) {
 	__HAL_UART_ENABLE_IT( &WIFIHUART, UART_IT_IDLE );
 	__HAL_UART_ENABLE_IT( &WIFIHUART, UART_IT_TC );
 	HAL_UART_DMAStop( &WIFIHUART );
-	HAL_UART_Receive_DMA( &WIFIHUART, w_str.rxBuff, WIFI_RXBUFF_SIZE );
+	//HAL_UART_Receive_DMA( &WIFIHUART, w_str.rxBuff, WIFI_RXBUFF_SIZE );
 	
-	//连接wifi
-	if ( connect_wifi( WIFI_NAME0, WIFI_PASSWD0 ) != 0 ) {
-		if ( connect_wifi( WIFI_NAME1, WIFI_PASSWD1 ) != 0 ) {
-			//连接失败,转入AP模式配置WIFI
-			printf("wifi err\r\n");
-		}
+//	//连接wifi
+//	if ( connect_wifi( WIFI_NAME0, WIFI_PASSWD0 ) != 0 ) {
+//		if ( connect_wifi( WIFI_NAME1, WIFI_PASSWD1 ) != 0 ) {
+//			//连接失败,转入AP模式配置WIFI
+//			printf("wifi err\r\n");
+//		}
+//	}
+	
+	//station+AP
+	if ( send_at_commond( "AT+CWMODE=2\r\n", "OK", 50 ) == 0 ) {
+		printf("station+AP ok\r\n");
 	}
-	//station模式
-	send_at_commond( "AT+CWMODE=1\r\n", "OK", 50 );
 	//开启多连接
-	send_at_commond( "AT+CIPMUX=1\r\n", "OK", 50 );
-	//连接TCP
-	esp_connect_tcp1();
-	esp_connect_tcp0();
-	//mqtt建立连接
-	//mqtt_connect();
+	if ( send_at_commond( "AT+CIPMUX=1\r\n", "OK", 50 ) == 0 ) {
+		printf("开启多连接 ok\r\n");
+	}
+	//建立服务器TCP
+	if ( send_at_commond( "AT+CIPSERVER=1,8266\r\n", "OK", 50 ) == 0 ) {
+		printf("建立服务器TCP ok \r\n");
+	}
+	
+//	//station模式
+//	send_at_commond( "AT+CWMODE=1\r\n", "OK", 50 );
+//	//开启多连接
+//	send_at_commond( "AT+CIPMUX=1\r\n", "OK", 50 );
+//	//连接TCP
+//	esp_connect_tcp1();
+//	esp_connect_tcp0();
+//	//mqtt建立连接
+//	//mqtt_connect();
 	
 	HAL_UART_DMAStop( &WIFIHUART );
 	HAL_UART_Receive_DMA( &WIFIHUART, w_str.rxBuff, WIFI_RXBUFF_SIZE );
 	
 //debug
-#if 1
+#if 0
 	w_str.isConfig = 1;
 	for ( int i=1; i>0; ) {
 		w_str.askConfig = 0;

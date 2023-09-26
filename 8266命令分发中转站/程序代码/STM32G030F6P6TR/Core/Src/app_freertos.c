@@ -160,7 +160,7 @@ void wifi_control_task_fun(void const * argument) {
 		oldBits |= newBits;
 		if ( oldBits & (1U<<WIFI_DEVICE_INIT) ) {
 			oldBits &=~ (1U<<WIFI_DEVICE_INIT);
-			//wifi_init();
+			wifi_init();
 		}
 		if ( oldBits & (1U<<WIFI_CONNECT_TCP0_) ) {
 			oldBits &=~ (1U<<WIFI_CONNECT_TCP0_);
@@ -184,6 +184,10 @@ void wifi_control_task_fun(void const * argument) {
 		}
 		if ( oldBits & (1U<<WIFI_SEND_OK) ) {
 			oldBits &=~ (1U<<WIFI_SEND_OK);
+		}
+		if ( oldBits & (1U<<WIFI_DATA_CLASS) ) {
+			oldBits &=~ (1U<<WIFI_DATA_CLASS);
+			wifi_data_classification();
 		}
   }
 }
