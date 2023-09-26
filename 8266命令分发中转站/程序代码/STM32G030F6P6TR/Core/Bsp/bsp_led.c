@@ -55,7 +55,7 @@ void led_tim_callback( void ) {
 	uint8_t count_t;//00*2:00 01*2:2 10*2:4	11*2:6
 	if ( led_str.led_mode & LED_NRF_FLICKER ) {
 		led_str.led_nrf_count++;
-		count_t = ((led_str.led_mode&LED_NRF_FP)>>2) * 2;
+		count_t = ((led_str.led_mode&LED_NRF_FP)>>4) * 2;
 		if ( led_str.led_nrf_count >= count_t ) {
 			led_str.led_nrf_count = 0;
 			LED_NRF_Toggle();
@@ -63,7 +63,7 @@ void led_tim_callback( void ) {
 	}
 	if ( led_str.led_mode & LED_CON_FLICKER ) {
 		led_str.led_con_count++;
-		count_t = ((led_str.led_mode&LED_CON_FP)>>4) * 2;
+		count_t = ((led_str.led_mode&LED_CON_FP)>>6) * 2;
 		if ( led_str.led_con_count >= count_t ) {
 			led_str.led_con_count = 0;
 			LED_CON_Toggle();

@@ -56,19 +56,16 @@ typedef struct _SESSION {
 } SESSION;
 
 typedef struct _WIFI_STR {
-	uint8_t isConfig;
-	uint8_t askConfig;
-	uint8_t passDataStop;//1:锟斤拷停锟斤拷锟捷斤拷锟斤拷
-	//uint8_t communication;//0:wifi未锟斤拷通锟脚硷拷wifi锟斤拷锟斤拷,锟缴诧拷询状态 1:锟斤拷锟缴诧拷询,锟斤拷锟斤拷锟斤拷锟捷伙拷锟斤拷
+	char ssid[33];//最长32位
+	char pswd[21];//最长20位
 	uint8_t *txBuff;
 	uint8_t *rxBuff;
-	uint16_t dLen;
-	uint16_t tLen;
-	uint8_t checkOnlineNum;
-	SESSION *sesp;
-	uint8_t tcp0_errnum;//tcp0閲嶈繛娆℃暟,3娆″垯閲嶅惎璁惧
-	uint8_t tcp1_errnum;//tcp1閲嶈繛娆℃暟
-	uint8_t heartBeatTime;//mqtt心跳包
+	uint16_t rxLen;
+	uint16_t txLen;
+	//uint8_t checkOnlineNum;
+	//uint8_t tcp0_errnum;//tcp0閲嶈繛娆℃暟,3娆″垯閲嶅惎璁惧
+	//uint8_t tcp1_errnum;//tcp1閲嶈繛娆℃暟
+	//uint8_t heartBeatTime;//mqtt心跳包
 	
 } WIFI_STR;
 

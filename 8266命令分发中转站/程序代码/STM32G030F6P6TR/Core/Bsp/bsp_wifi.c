@@ -3,62 +3,69 @@
 WIFI_STR w_str;
 TCP_DATA tcp_data[3];
 
-static int connect_wifi( const char* const wifiName, const char* const wifiPasswd ) {
-	printf("wifi连接中...\r\n");
-	w_str.isConfig = 1;
-	//xSemaphoreTake( communication_Mutex, portMAX_DELAY );//获取信号量
-	HAL_UART_AbortReceive( &WIFIHUART );
+static int connect_wifi( const char* const wifiName, const char* const wifiPasswd );
+static int send_at_commond( char* cmd, char* reply, uint16_t timeout_10ms );
+
+
+
+
+//DMA初始化
+void wifi_dma_init( void ) {
+	memset( &w_str, 0, sizeof( WIFI_STR ) );	
+	w_str.txBuff = pvPortMalloc( WIFI_TXBUFF_SIZE );
+	w_str.rxBuff = pvPortMalloc( WIFI_RXBUFF_SIZE );
 	memset( w_str.rxBuff, 0, WIFI_RXBUFF_SIZE );
-	sprintf( (char*)w_str.txBuff, "AT+CWJAP=\"%s\",\"%s\"\r\n", wifiName, wifiPasswd );
-	HAL_UART_Receive_DMA( &WIFIHUART, w_str.rxBuff, WIFI_RXBUFF_SIZE );
-	HAL_UART_Transmit( &WIFIHUART, w_str.txBuff, strlen((char*)w_str.txBuff), portMAX_DELAY );
-	while( pdTRUE ) {
-		vTaskDelay(10);
-		if ( strstr( (char*)w_str.rxBuff, "OK" ) != NULL ) {
-			HAL_UART_AbortReceive( &WIFIHUART );
-			printf( "wifi连接成功!\r\n" );
-			HAL_UART_AbortReceive( &WIFIHUART );
-			memset( w_str.rxBuff, 0, WIFI_RXBUFF_SIZE );
-			//xSemaphoreGive( communication_Mutex );//释放信号量
-			w_str.isConfig = 0;
-			return 0;
-		} else if ( strstr( (char*)w_str.rxBuff, "FAIL" ) != NULL ) {
-			HAL_UART_AbortReceive( &WIFIHUART );
-			printf( "wifi连接失败!\r\n" );
-			HAL_UART_AbortReceive( &WIFIHUART );
-			memset( w_str.rxBuff, 0, WIFI_RXBUFF_SIZE );
-			//xSemaphoreGive( communication_Mutex );//释放信号量
-			w_str.isConfig = 0;
-			return -1;
-		}
+	//开启串口中断
+	HAL_UART_DMAStop( &WIFIHUART );
+	__HAL_UART_ENABLE_IT( &WIFIHUART, UART_IT_IDLE );
+	__HAL_UART_ENABLE_IT( &WIFIHUART, UART_IT_TC );
+}
+
+//DMA反初始化
+void wifi_dma_reinit( void ) {
+	//关闭串口中断
+	HAL_UART_DMAStop( &WIFIHUART );
+	__HAL_UART_DISABLE_IT( &WIFIHUART, UART_IT_IDLE );
+	__HAL_UART_DISABLE_IT( &WIFIHUART, UART_IT_TC );
+	memset( &w_str, 0, sizeof( WIFI_STR ) );	
+	vPortFree( w_str.txBuff );
+	vPortFree( w_str.rxBuff );
+}
+
+//station模式下连接wifi
+void station_connect_wifi( void ) {
+	if ( connect_wifi( w_str.ssid, w_str.pswd ) == 0 ) {
+		//连接成功
+	} else {
+		//连接失败,转入station+AP模式
 	}
 }
 
-
-static int send_at_commond( char* cmd, char* reply, uint16_t timeout_10ms ) {
-	//xSemaphoreTake( communication_Mutex, portMAX_DELAY );//获取信号量
-	w_str.isConfig = 1;
-	HAL_UART_AbortTransmit( &WIFIHUART );
-	memset( w_str.rxBuff, 0, WIFI_RXBUFF_SIZE );
+//station+AP模式,设置wifi账号密码并存入flash
+void station_and_ap_connect( void ) {
+	//station+AP
+	if ( send_at_commond( "AT+CWMODE=2\r\n", "OK", 50 ) == 0 ) {
+		printf("station+AP ok\r\n");
+	}
+	//开启多连接
+	if ( send_at_commond( "AT+CIPMUX=1\r\n", "OK", 50 ) == 0 ) {
+		printf("开启多连接 ok\r\n");
+	}
+	//建立服务器TCP
+	if ( send_at_commond( "AT+CIPSERVER=1,8266\r\n", "OK", 50 ) == 0 ) {
+		printf("建立服务器TCP ok \r\n");
+	}
+	
+	//配置中断处理
+	HAL_UART_DMAStop( &WIFIHUART );
 	HAL_UART_Receive_DMA( &WIFIHUART, w_str.rxBuff, WIFI_RXBUFF_SIZE );
-	sprintf( (char*)w_str.txBuff, "%s", cmd );
-	HAL_UART_Transmit( &WIFIHUART, w_str.txBuff, strlen((char*)w_str.txBuff), portMAX_DELAY );
-	for ( ; strstr( (void*)w_str.rxBuff, reply )==NULL && timeout_10ms>0; timeout_10ms-- ) {
-		vTaskDelay(10);
-	}
-	if ( timeout_10ms > 0 ) {
-		HAL_UART_AbortReceive( &WIFIHUART );
-		memset( w_str.rxBuff, 0, WIFI_RXBUFF_SIZE );
-		//xSemaphoreGive( communication_Mutex );//释放信号量
-		w_str.isConfig = 0;
-		return 0;
-	} else {
-		HAL_UART_AbortReceive( &WIFIHUART );
-		memset( w_str.rxBuff, 0, WIFI_RXBUFF_SIZE );
-		//xSemaphoreGive( communication_Mutex );//释放信号量
-		w_str.isConfig = 0;
-		return -1;
-	}
+	
+}
+
+
+//建立mqtt连接
+void mqtt_connect( void ) {
+
 }
 
 //连接TCP0
@@ -404,3 +411,55 @@ void wifi_init( void ) {
 
 
 
+
+static int connect_wifi( const char* const wifiName, const char* const wifiPasswd ) {
+	int res = -1;
+	printf("wifi连接中...\r\n");
+	//关中断
+	__HAL_UART_DISABLE_IT( &WIFIHUART, UART_IT_IDLE );
+	__HAL_UART_DISABLE_IT( &WIFIHUART, UART_IT_TC );
+	HAL_UART_DMAStop( &WIFIHUART );
+	memset( w_str.rxBuff, 0, WIFI_RXBUFF_SIZE );
+	HAL_UART_Receive_DMA( &WIFIHUART, w_str.rxBuff, WIFI_RXBUFF_SIZE );
+	sprintf( (char*)w_str.txBuff, "AT+CWJAP=\"%s\",\"%s\"\r\n", wifiName, wifiPasswd );
+	HAL_UART_Transmit( &WIFIHUART, w_str.txBuff, strlen((char*)w_str.txBuff), portMAX_DELAY );
+	while( pdTRUE ) {
+		vTaskDelay(10);
+		if ( strstr( (char*)w_str.rxBuff, "OK" ) != NULL ) {
+			printf( "wifi连接成功!\r\n" );
+			res = 0;
+			break;
+		} else if ( strstr( (char*)w_str.rxBuff, "FAIL" ) != NULL ) {
+			printf( "wifi连接失败!\r\n" );
+			break;
+		}
+	}
+	HAL_UART_AbortReceive( &WIFIHUART );
+	memset( w_str.rxBuff, 0, WIFI_RXBUFF_SIZE );
+	return res;
+}
+
+
+static int send_at_commond( char* cmd, char* reply, uint16_t timeout_10ms ) {
+	int res = -1;
+	//关中断
+	__HAL_UART_DISABLE_IT( &WIFIHUART, UART_IT_IDLE );
+	__HAL_UART_DISABLE_IT( &WIFIHUART, UART_IT_TC );
+	HAL_UART_DMAStop( &WIFIHUART );
+	memset( w_str.rxBuff, 0, WIFI_RXBUFF_SIZE );
+	HAL_UART_Receive_DMA( &WIFIHUART, w_str.rxBuff, WIFI_RXBUFF_SIZE );
+	sprintf( (char*)w_str.txBuff, "%s", cmd );
+	HAL_UART_Transmit( &WIFIHUART, w_str.txBuff, strlen((char*)w_str.txBuff), portMAX_DELAY );
+	for ( ; strstr( (void*)w_str.rxBuff, reply )==NULL && timeout_10ms>0; timeout_10ms-- ) {
+		vTaskDelay(10);
+	}
+	if ( timeout_10ms > 0 ) {
+		res = 0;
+	}
+	HAL_UART_AbortReceive( &WIFIHUART );
+	memset( w_str.rxBuff, 0, WIFI_RXBUFF_SIZE );
+	//开中断
+	__HAL_UART_ENABLE_IT( &WIFIHUART, UART_IT_IDLE );
+	__HAL_UART_ENABLE_IT( &WIFIHUART, UART_IT_TC );
+	return res;
+}
