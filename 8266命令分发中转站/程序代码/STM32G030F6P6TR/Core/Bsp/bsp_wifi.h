@@ -27,8 +27,7 @@
 	"Content-Length:"
 	
 #define HTML_HEAD_END 	"\r\n"\
-	"Connection: keep-alive\r\n"\
-	"Accept-Ranges: bytes\r\n\r\n"
+	"Connection: keep-alive\r\n\r\n"
 #define HTML_BODY_START "<!DOCTYPE html>"\
 "<html>"\
 	"<head>"\
@@ -36,11 +35,15 @@
 		"<meta name=\"viewport\"content=\"width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=0\">"\
 	"</head><body><div style=\"display:block;margin:50px auto; width:180px;\">"
 #define HTML_CONTENT_1 "<form action=\"/\" method=\"POST\">"\
-			"<input type=\"text\" name=\"wssid\" placeholder=\"wifi名称\"><br />"\
-			"<input type=\"text\" name=\"wpswd\" placeholder=\"wifi密码\"><br />"\
+			"<input type=\"text\" name=\"wssid\" placeholder=\"wifi ssid\"><br />"\
+			"<input type=\"text\" name=\"wpswd\" placeholder=\"wifi password\"><br />"\
+			"<input type=\"text\" name=\"tcpurl\" placeholder=\"mqtt host\"><br />"\
+			"<input type=\"number\" min=\"1\" max=\"65535\" name=\"tcpport\" placeholder=\"mqtt port\"><br />"\
+			"<input type=\"text\" name=\"mqusername\" placeholder=\"mqtt username\"><br />"\
+			"<input type=\"text\" name=\"mqpasswd\" placeholder=\"mqtt password\"><br />"\
 			"<input type=\"submit\" value=\"保存\"></form>"
 #define HTML_CONTENT_2 "<form action=\"/\" method=\"GET\">"\
-			"<h3 >正在验证请等待...</h3>"\
+			"<h3>正在验证请等待...</h3>"\
 			"<h4 style=\"color: red;\">1.指示灯由灭转闪烁表示验证失败,请刷新重试</h4>"\
 			"<h4 style=\"color: green;\">2.指示灯由灭转常亮表示验证成功</h4>"\
 			"<h4>3.wifi验证成功后,10s内会连接mqtt服务器,连接成功指示灯会灭,否则双灯常亮</h4>"\
@@ -55,8 +58,8 @@
 #define STATION_MODE				0
 #define STATION_AP_MODE			1
 
-#define WIFI_APTXBUFF_SIZE	256
-#define WIFI_APRXBUFF_SIZE	1536
+#define WIFI_APTXBUFF_SIZE	1024
+#define WIFI_APRXBUFF_SIZE	1024
 #define WIFI_TXBUFF_SIZE		128
 #define WIFI_RXBUFF_SIZE		128
 
@@ -150,8 +153,8 @@ extern WIFI_STR w_str;
 //uint8_t cmd_sub_3_fun( void );
 
 
-//void esp_connect_tcp0 ( void );//杩炴帴TCP0
-//void esp_connect_tcp1 ( void );//杩炴帴TCP1
+void esp_connect_tcp0 ( void );
+void esp_connect_tcp1 ( void );
 //void wifi_tcp_send_data( uint8_t pid );//多链路tcp发送数据
 //void wifi_tcp1_send_data( void );
 //void wifi_mqtt_heart( void );

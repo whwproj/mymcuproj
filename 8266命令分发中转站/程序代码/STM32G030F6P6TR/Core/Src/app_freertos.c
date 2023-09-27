@@ -132,7 +132,9 @@ void StartDefaultTask(void const * argument)
 #else
 		read_data_from_flash();
 		led_init();
-		//debug_init();
+#ifdef DEBUG_ENABLE
+		debug_init();
+#endif
 		HAL_TIM_Base_Start_IT( &htim3 );
 		HAL_TIM_Base_Start( &htim3 );
 	
@@ -147,7 +149,6 @@ void StartDefaultTask(void const * argument)
   }
   /* USER CODE END StartDefaultTask */
 }
-
 /* Private application code --------------------------------------------------*/
 /* USER CODE BEGIN Application */
 /*--------------- DEBUG ----------------*/
@@ -226,6 +227,7 @@ void wifi_tcp_connect_task_fun(void const * argument) {
 	uint32_t newBits, oldBits = 0;
   for(;;) {
 		xTaskNotifyWait( pdFALSE, portMAX_DELAY, &newBits, portMAX_DELAY );
+		//xTaskNotifyWait( pdFALSE, portMAX_DELAY, &newBits, 5000 );
 		oldBits |= newBits;
 		if ( oldBits & (1U<<WIFI_CONNECT_TCP0_DELAY) ) {
 			oldBits &=~ (1U<<WIFI_CONNECT_TCP0_DELAY);
@@ -237,6 +239,13 @@ void wifi_tcp_connect_task_fun(void const * argument) {
 			vTaskDelay(5000);
 			//esp_connect_tcp1();
 		}
+		
+		printf("\r\n------ 单个任务堆栈的历史最小内存 总大小 / 历史最小内存 start ------\r\n");
+		if ( wifi_control_taskHandle != NULL ) printf("%d / %ld   wifi_control_taskHandle\r\n", wifi_control_taskSize, uxTaskGetStackHighWaterMark(wifi_control_taskHandle) );
+		if ( wifi_tcp_connect_taskHandle != NULL ) printf("%d / %ld  wifi_tcp_connect_taskHandle\r\n", wifi_tcp_connect_taskSize ,uxTaskGetStackHighWaterMark(wifi_tcp_connect_taskHandle));
+		printf("内存剩余：%d Byte 历史最小内存剩余：%d Byte\r\n", xPortGetFreeHeapSize(), xPortGetMinimumEverFreeHeapSize());
+		printf("------ 单个任务堆栈的历史最小内存 end ------\r\n");
+		
   }
 }
 /*--------------- WIFI ----------------*/

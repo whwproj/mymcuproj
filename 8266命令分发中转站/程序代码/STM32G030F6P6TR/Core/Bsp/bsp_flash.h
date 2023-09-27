@@ -22,10 +22,12 @@
 
 
 typedef struct _USER_DATA {
-	char ssid[33];//最长32byte
-	char pswd[21];//最长20byte
-	char tcpUrl[43];//最长42byte
-	uint16_t tcpPort;
+	char wssid[33];//最长32byte
+	char wpswd[21];//最长20byte
+	char tcpurl[43];//最长42byte
+	char mqusername[51];//mqtt username 50byte
+	char mqpasswd[33];//mqtt password 32byte
+	uint16_t tcpport;
 } USER_DATA;
 
 extern USER_DATA udata;

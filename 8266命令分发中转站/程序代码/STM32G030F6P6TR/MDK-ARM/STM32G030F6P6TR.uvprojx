@@ -519,6 +519,16 @@
           </Files>
         </Group>
         <Group>
+          <GroupName>Application/User/Tools</GroupName>
+          <Files>
+            <File>
+              <FileName>tool_url.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Core\Tools\tool_url.c</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
           <GroupName>Application/MDK-ARM</GroupName>
           <Files>
             <File>

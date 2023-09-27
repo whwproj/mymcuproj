@@ -1,8 +1,10 @@
 #ifndef __COMMON__H
 #define __COMMON__H
 
+
 //#define WIFIDEBUG
-//#define DEBUG_ENABLE
+#define DEBUG_ENABLE
+//INCLUDE_uxTaskGetStackHighWaterMark 0
 
 /* LIB ------------------------------------------------------------*/
 #include <stdio.h>
@@ -29,8 +31,12 @@
 #include "../Bsp/bsp_led.h"
 #include "../Bsp/bsp_flash.h"
 
+/*---- Tools -------------------------*/
+#include "../Tools/tool_url.h"
 
-#define 	debugTaskSize								256
+
+
+#define 	debugTaskSize								64
 #define 	wifi_control_taskSize				128
 #define 	wifi_tcp_connect_taskSize		128
 

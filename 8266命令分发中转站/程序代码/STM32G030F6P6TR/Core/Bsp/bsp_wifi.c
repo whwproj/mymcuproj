@@ -23,12 +23,13 @@ void wifi_reset( void ) {
 //station模式初始化
 void station_mode_init( void ) {
 	wifi_dma_init( STATION_MODE );
-	if ( connect_wifi( udata.ssid, udata.pswd ) == 0 ) {//连接成功
+	if ( connect_wifi( udata.wssid, udata.wpswd ) == 0 ) {//连接成功
 		printf("wifi连接连接成功\r\n");
-		send_at_commond( "AT+CWMODE=1\r\n", "OK", 50 );
-		send_at_commond( "AT+CIPMUX=1\r\n", "OK", 50 );
 		//wifi连接变更,存入flash
 		if ( w_str.updateLink == 1 ) { write_data_into_flash(); }
+		send_at_commond( "AT+CWMODE=1\r\n", "OK", 50 );
+		send_at_commond( "AT+CIPMUX=1\r\n", "OK", 50 );
+		esp_connect_tcp1();
 		
 	} else {
 		//连接失败,转入station+AP模式
@@ -45,12 +46,9 @@ void station_and_ap_init( void ) {
 	send_at_commond( "AT+CWMODE=3\r\n", "OK", 50 );
 	send_at_commond( "AT+CIPMUX=1\r\n", "OK", 50 );
 	send_at_commond( "AT+CIPSERVER=1,8266\r\n", "OK", 50 );
-	
 	HAL_UART_DMAStop( &WIFIHUART );
 	HAL_UART_Receive_DMA( &WIFIHUART, w_str.rxBuff, WIFI_APRXBUFF_SIZE );
-	
 }
-
 
 //wifi串口空闲中断回调执行函数
 void wifi_uart_idle_callback( void ) {
@@ -76,13 +74,13 @@ void wifi_uart_idle_callback( void ) {
 			str1 = strstr( (char*)w_str.rxBuff, "wssid=" ) + strlen("wssid=");
 			str2 = strstr( (char*)w_str.rxBuff, "&wpswd=" );
 			if ( str1!=NULL && str2!=NULL ) {
-				memset( udata.ssid, 0, 33 );
-				memset( udata.pswd, 0, 21 );
-				memcpy( udata.ssid, str1, (uint32_t)str2-(uint32_t)str1 );
-				sprintf( udata.pswd, "%s", str2+strlen("&wpswd=") );
+				memset( udata.wssid, 0, 33 );
+				memset( udata.wpswd, 0, 21 );
+				memcpy( udata.wssid, str1, (uint32_t)str2-(uint32_t)str1 );
+				sprintf( udata.wpswd, "%s", str2+strlen("&wpswd=") );
 				printf("设置wifi参数:");
-				printf("udata.ssid: %s\r\n", udata.ssid);
-				printf("udata.pswd: %s\r\n", udata.pswd);
+				printf("udata.ssid: %s\r\n", udata.wssid);
+				printf("udata.pswd: %s\r\n", udata.wpswd);
 				len = strlen(HTML_BODY_START) + strlen(HTML_CONTENT_2) + strlen(HTML_BODY_END);
 				sprintf( (char*)w_str.txBuff, "%s%d%s%s%s%s", (char*)&HTML_HEAD_START, len, (char*)&HTML_HEAD_END,
 					(char*)&HTML_BODY_START, (char*)&HTML_CONTENT_2, (char*)&HTML_BODY_END );
@@ -91,6 +89,7 @@ void wifi_uart_idle_callback( void ) {
 				w_str.updateLink = 1;
 				wifi_dma_reinit();
 				xTaskNotify( wifi_control_taskHandle, 1U<<WIFI_STATION_MODE_INIT, eSetBits );
+				HAL_UART_Transmit( &huart1, w_str.rxBuff, strlen((char*)w_str.rxBuff), 1000 );
 			}
 		}
 	
@@ -160,9 +159,6 @@ void wifi_uart_idle_callback( void ) {
 }
 
 
-
-
-
 //建立mqtt连接
 void mqtt_connect( void ) {
 
@@ -214,7 +210,7 @@ void esp_connect_tcp1 ( void ) {
 	printf("TCP1 连接中...\r\n");
 	HAL_UART_AbortReceive( &WIFIHUART );
 	memset( w_str.rxBuff, 0, WIFI_RXBUFF_SIZE ); 
-	sprintf( (char*)w_str.txBuff, "AT+CIPSTART=1,\"TCP\",\"%s\",%d\r\n", udata.tcpUrl, udata.tcpPort );
+	sprintf( (char*)w_str.txBuff, "AT+CIPSTART=1,\"TCP\",\"%s\",%d\r\n", udata.tcpurl, udata.tcpport );
 	HAL_UART_Receive_DMA( &WIFIHUART, w_str.rxBuff, WIFI_RXBUFF_SIZE );
 	HAL_UART_Transmit( &WIFIHUART, w_str.txBuff, strlen((char*)w_str.txBuff), portMAX_DELAY );
 	for ( i=1000; i>0; i-- ) {
@@ -238,10 +234,6 @@ void esp_connect_tcp1 ( void ) {
 	HAL_UART_AbortReceive( &WIFIHUART );
 	memset( w_str.rxBuff, 0, WIFI_RXBUFF_SIZE );
 }
-
-
-
-
 
 
 #if 0
@@ -359,7 +351,10 @@ static void wifi_tcp_send_data( uint8_t pid ) {
 //连接wifi
 static int connect_wifi( const char* const wifiName, const char* const wifiPasswd ) {
 	int res = -1;
+	if ( strlen(wifiName)==0 || (uint8_t)wifiName[0]==0xff ) return res;
+	
 	printf("wifi连接中...\r\n");
+	
 	//关中断
 	__HAL_UART_DISABLE_IT( &WIFIHUART, UART_IT_IDLE );
 	__HAL_UART_DISABLE_IT( &WIFIHUART, UART_IT_TC );
