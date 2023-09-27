@@ -53,7 +53,9 @@ osThreadId defaultTaskHandle;
 
 /* Private function prototypes -----------------------------------------------*/
 /* USER CODE BEGIN FunctionPrototypes */
+#ifdef DEBUG_ENABLE
 void debugTaskFun(void const * argument);
+#endif
 void wifi_control_task_fun(void const * argument);
 void wifi_tcp_connect_task_fun(void const * argument);
 /* USER CODE END FunctionPrototypes */
@@ -95,8 +97,10 @@ void MX_FREERTOS_Init(void) {
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
+#ifdef DEBUG_ENABLE
 	osThreadDef(debugTask, debugTaskFun, osPriorityNormal, 0, debugTaskSize);
   debugTaskHandle = osThreadCreate(osThread(debugTask), NULL);
+#endif
 	osThreadDef(wifi_control_task, wifi_control_task_fun, osPriorityNormal, 0, wifi_control_taskSize);
   wifi_control_taskHandle = osThreadCreate(osThread(wifi_control_task), NULL);
 	osThreadDef(wifi_tcp_connect_task, wifi_tcp_connect_task_fun, osPriorityNormal, 0, wifi_tcp_connect_taskSize);
@@ -126,11 +130,17 @@ void StartDefaultTask(void const * argument)
 		HAL_GPIO_WritePin( ESP_RST_GPIO_Port, ESP_RST_Pin, GPIO_PIN_SET );
 		vTaskDelay( 2000 );
 #else
+		read_data_from_flash();
+		led_init();
+		//debug_init();
 		HAL_TIM_Base_Start_IT( &htim3 );
 		HAL_TIM_Base_Start( &htim3 );
-		led_init();
-		debug_init();
-		wifi_init();
+	
+		xTaskNotify( wifi_control_taskHandle, 1U<<WIFI_DEVICE_RESET, eSetBits );
+		vTaskDelay(1200);
+		xTaskNotify( wifi_control_taskHandle, 1U<<WIFI_STATION_MODE_INIT, eSetBits );
+		
+		vTaskDelay(1000);
 		printf("init ok\r\n");
 #endif
 		vTaskDelete( defaultTaskHandle );
@@ -141,6 +151,7 @@ void StartDefaultTask(void const * argument)
 /* Private application code --------------------------------------------------*/
 /* USER CODE BEGIN Application */
 /*--------------- DEBUG ----------------*/
+#ifdef DEBUG_ENABLE
 void debugTaskFun(void const * argument) {
 	uint32_t newBits, oldBits = 0;
 	xTaskNotify( debugTaskHandle, 1U<<DEBUG_SEND_OK, eSetBits );
@@ -153,6 +164,7 @@ void debugTaskFun(void const * argument) {
 		}
   }
 }
+#endif
 /*--------------- DEBUG ----------------*/
 
 /*--------------- WIFI ----------------*/
@@ -161,10 +173,26 @@ void wifi_control_task_fun(void const * argument) {
   for(;;) {
 		xTaskNotifyWait( pdFALSE, portMAX_DELAY, &newBits, portMAX_DELAY );
 		oldBits |= newBits;
-		if ( oldBits & (1U<<WIFI_DEVICE_INIT) ) {
-			oldBits &=~ (1U<<WIFI_DEVICE_INIT);
-			wifi_init();
+		if ( oldBits & (1U<<WIFI_DEVICE_RESET) ) {
+			oldBits &=~ (1U<<WIFI_DEVICE_RESET);
+			wifi_reset();
 		}
+		if ( oldBits & (1U<<WIFI_UART_IDLE_CALLBACK) ) {
+			oldBits &=~ (1U<<WIFI_UART_IDLE_CALLBACK);
+			wifi_uart_idle_callback();
+		}
+		if ( oldBits & (1U<<WIFI_STATION_MODE_INIT) ) {
+			oldBits &=~ (1U<<WIFI_STATION_MODE_INIT);
+			station_mode_init();
+		}
+		if ( oldBits & (1U<<WIFI_STA_AP_MODE_INIT) ) {
+			oldBits &=~ (1U<<WIFI_STA_AP_MODE_INIT);
+			station_and_ap_init();
+		}
+		
+		
+		
+		
 		if ( oldBits & (1U<<WIFI_CONNECT_TCP0_) ) {
 			oldBits &=~ (1U<<WIFI_CONNECT_TCP0_);
 			//esp_connect_tcp0();
@@ -188,10 +216,10 @@ void wifi_control_task_fun(void const * argument) {
 		if ( oldBits & (1U<<WIFI_SEND_OK) ) {
 			oldBits &=~ (1U<<WIFI_SEND_OK);
 		}
-		if ( oldBits & (1U<<WIFI_DATA_CLASS) ) {
-			oldBits &=~ (1U<<WIFI_DATA_CLASS);
-			wifi_data_classification();
-		}
+		
+		
+		
+		
   }
 }
 void wifi_tcp_connect_task_fun(void const * argument) {

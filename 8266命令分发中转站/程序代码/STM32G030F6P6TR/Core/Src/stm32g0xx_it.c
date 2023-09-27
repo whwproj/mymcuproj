@@ -205,16 +205,12 @@ void USART1_IRQHandler(void)
   HAL_UART_IRQHandler(&huart1);
   /* USER CODE BEGIN USART1_IRQn 1 */
 	if((__HAL_UART_GET_FLAG(&huart1,UART_FLAG_IDLE) != RESET)) {
-		__HAL_UART_CLEAR_IDLEFLAG(&huart1);  //清除空闲状�?�标�?
-		if ( w_str.isConfig ) {
-			w_str.askConfig = 1;
-		} else {
-			xTaskNotifyFromISR( wifi_control_taskHandle, 1U<<WIFI_DATA_CLASS, eSetBits, &phpt );
-			portYIELD_FROM_ISR( phpt );
-		}
+		__HAL_UART_CLEAR_IDLEFLAG(&huart1);  //清除空闲状
+		xTaskNotifyFromISR( wifi_control_taskHandle, 1U<<WIFI_UART_IDLE_CALLBACK, eSetBits, &phpt );
+		portYIELD_FROM_ISR( phpt );
 	} else if ( __HAL_UART_GET_FLAG( &huart1, UART_FLAG_TC ) != RESET ) {
 		__HAL_UART_CLEAR_FLAG( &huart1, UART_FLAG_TC );
-		xTaskNotifyFromISR( wifi_control_taskHandle, 1U<<WIFI_SEND_OK, eSetBits, &phpt );//DMA发�?�完成中�?
+		xTaskNotifyFromISR( wifi_control_taskHandle, 1U<<WIFI_SEND_OK, eSetBits, &phpt );//DMA发送完成
 		portYIELD_FROM_ISR( phpt );
 	}
   /* USER CODE END USART1_IRQn 1 */
@@ -232,12 +228,15 @@ void USART2_IRQHandler(void)
   /* USER CODE BEGIN USART2_IRQn 1 */
 	if((__HAL_UART_GET_FLAG(&huart2,UART_FLAG_IDLE) != RESET)) {
 		__HAL_UART_CLEAR_IDLEFLAG(&huart2);  //清除空闲状�??
+#ifdef DEBUG_ENABLE
 		xTaskNotifyFromISR( debugTaskHandle, 1U<<DEBUG_PARSE_DATA, eSetBits, &phpt );//DMA发�?�完成�?�知
 		portYIELD_FROM_ISR( phpt );
-		
+#endif		
 	} else if ( __HAL_UART_GET_FLAG(&huart2,UART_FLAG_TC) != RESET ) {
+#ifdef DEBUG_ENABLE
 		xTaskNotifyFromISR( debugTaskHandle, 1U<<DEBUG_SEND_OK, eSetBits, &phpt );//DMA发�?�完成�?�知
 		portYIELD_FROM_ISR( phpt );
+#endif	
 	}
   /* USER CODE END USART2_IRQn 1 */
 }

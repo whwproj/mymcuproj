@@ -2,7 +2,7 @@
 #define __COMMON__H
 
 //#define WIFIDEBUG
-
+//#define DEBUG_ENABLE
 
 /* LIB ------------------------------------------------------------*/
 #include <stdio.h>
@@ -27,6 +27,7 @@
 #include "../Bsp/bsp_wifi.h"
 #include "../Bsp/bsp_nrf.h"
 #include "../Bsp/bsp_led.h"
+#include "../Bsp/bsp_flash.h"
 
 
 #define 	debugTaskSize								256

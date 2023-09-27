@@ -19,8 +19,38 @@ void debug_parse_data_fun( void ) {
 	HAL_UART_AbortReceive( &DEBUG_HUART );
 	ds.len = DEBUG_BUFF_SIZE - __HAL_DMA_GET_COUNTER( &DEBUG_HDMA_USART_RX );
 	
-	if ( strstr( (char *)ds.rxBuff, "debug" ) != NULL ) {
-		printf("debug\r\n");
+	if ( strstr( (char *)ds.rxBuff, "erase" ) != NULL ) {
+		user_flash_erase();
+		printf("擦除ok\r\n");
+		
+	} else if ( strstr( (char *)ds.rxBuff, "rrr" ) != NULL ) {
+		printf("udata.pswd: %s\r\n", udata.pswd);
+		printf("udata.ssid: %s\r\n", udata.ssid);
+		printf("udata.tcpUrl: %s\r\n", udata.tcpUrl);
+		printf("udata.tcpPort: %d\r\n", udata.tcpPort);
+		
+	} else if ( strstr( (char *)ds.rxBuff, "read" ) != NULL ) {
+		read_data_from_flash();
+		printf("udata.pswd: %s\r\n", udata.pswd);
+		printf("udata.ssid: %s\r\n", udata.ssid);
+		printf("udata.tcpUrl: %s\r\n", udata.tcpUrl);
+		printf("udata.tcpPort: %d\r\n", udata.tcpPort);
+		
+	} else if ( strstr( (char *)ds.rxBuff, "write1" ) != NULL ) {
+		sprintf(udata.pswd, "pswd001");
+		sprintf(udata.ssid, "ssid001");
+		sprintf(udata.tcpUrl, "www.xiaojumao.com");
+		udata.tcpPort = 12345;
+		write_data_into_flash();
+		printf("write1 ok\r\n");
+	
+	} else if ( strstr( (char *)ds.rxBuff, "write2" ) != NULL ) {
+		sprintf(udata.pswd, "aaaaab2");
+		sprintf(udata.ssid, "fdsagfds2");
+		sprintf(udata.tcpUrl, "www.baidu.com");
+		udata.tcpPort = 567;
+		write_data_into_flash();
+		printf("write2 ok\r\n");
 		
 	} else if ( strstr( (char *)ds.rxBuff, "esp:" ) != NULL ) {
 		HAL_UART_Transmit( &huart1, &ds.rxBuff[4], ds.len-4, 1000 );

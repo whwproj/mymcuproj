@@ -22,69 +22,50 @@
 #define TCP_URL_1	"server.natappfree.cc"
 #define TCP_PORT_1	36017
 
-//#define HTML 	"HTTP/1.1 200 OK\r\n"\
-//							"Content-Type: text/html\r\n"\
-//							"Content-Length: 217\r\n"\
-//							"Connection: keep-alive\r\n"\
-//							"Accept-Ranges: bytes\r\n"\
-//							"\r\n"\
-//							"<!DOCTYPE html><html><head><meta charset=\"utf-8\">"\
-//							"</head><body><form action=\"/\"><input type=\"text\" value=\"wifi名称\"><br />"\
-//							"<input type=\"text\" value=\"wifi密码\"><br />"\
-//							"<input type=\"submit\" value=\"提交\"></form></html>"
-#define HTML "<!DOCTYPE html>"\
+#define HTML_HEAD_START "HTTP/1.1 200 OK\r\n"\
+	"Content-Type: text/html\r\n"\
+	"Content-Length:"
+	
+#define HTML_HEAD_END 	"\r\n"\
+	"Connection: keep-alive\r\n"\
+	"Accept-Ranges: bytes\r\n\r\n"
+#define HTML_BODY_START "<!DOCTYPE html>"\
 "<html>"\
 	"<head>"\
 		"<meta charset=\"utf-8\">"\
 		"<meta name=\"viewport\"content=\"width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=0\">"\
-	"</head>"\
-	"<body><div style=\"display:block;margin:50px auto; width:180px;\">"\
-		"<form action=\"/locahost\" method=\"POST\">"\
-			"<input type=\"text\" id=\"wname\" placeholder=\"wifi名称\"><br />"\
-			"<input type=\"text\" id=\"wpswd\" placeholder=\"wifi密码\"><br />"\
-			"<input type=\"submit\" value=\"保存\"></form>"\
-		"</div>"\
-"</html>"
-							
-typedef struct _SESSION {
-	uint8_t onlineSta;//0:offline 1:online
-	uint8_t pid;
-	uint8_t dir;//main:0 sub1:1...
-	uint8_t dataLen;
-	uint8_t heart;//锟斤拷始10 锟捷硷拷锟斤拷0锟截伙拷锟斤拷锟津覆革拷
-	char data[128];
-} SESSION;
+	"</head><body><div style=\"display:block;margin:50px auto; width:180px;\">"
+#define HTML_CONTENT_1 "<form action=\"/\" method=\"POST\">"\
+			"<input type=\"text\" name=\"wssid\" placeholder=\"wifi名称\"><br />"\
+			"<input type=\"text\" name=\"wpswd\" placeholder=\"wifi密码\"><br />"\
+			"<input type=\"submit\" value=\"保存\"></form>"
+#define HTML_CONTENT_2 "<form action=\"/\" method=\"GET\">"\
+			"<h3 >正在验证请等待...</h3>"\
+			"<h4 style=\"color: red;\">1.指示灯由灭转闪烁表示验证失败,请刷新重试</h4>"\
+			"<h4 style=\"color: green;\">2.指示灯由灭转常亮表示验证成功</h4>"\
+			"<h4>3.wifi验证成功后,10s内会连接mqtt服务器,连接成功指示灯会灭,否则双灯常亮</h4>"\
+			"<input type=\"submit\" value=\"刷新\"></form>"
+#define HTML_BODY_END "</div></html>"
 
-typedef struct _WIFI_STR {
-	char ssid[33];//最长32位
-	char pswd[21];//最长20位
-	uint8_t *txBuff;
-	uint8_t *rxBuff;
-	uint16_t rxLen;
-	uint16_t txLen;
-	//uint8_t checkOnlineNum;
-	//uint8_t tcp0_errnum;//tcp0閲嶈繛娆℃暟,3娆″垯閲嶅惎璁惧
-	//uint8_t tcp1_errnum;//tcp1閲嶈繛娆℃暟
-	//uint8_t heartBeatTime;//mqtt心跳包
-	
-} WIFI_STR;
+//连上wifi			
+//连接wifi失败	闪烁  1颗灯常亮
+//建立tcp成功		灭
+//建立tcp失败		
 
-typedef struct _TCP_DATA {
-	char* data;
-	uint16_t len;
-} TCP_DATA;
+#define STATION_MODE				0
+#define STATION_AP_MODE			1
 
-extern WIFI_STR wifi_str;
-//extern SESSION session[];
+#define WIFI_APTXBUFF_SIZE	256
+#define WIFI_APRXBUFF_SIZE	1536
+#define WIFI_TXBUFF_SIZE		128
+#define WIFI_RXBUFF_SIZE		128
 
-#define WIFI_RXBUFF_SIZE	256
-#define WIFI_TXBUFF_SIZE	256
 
 #define DEFAULT_HEART	60
 
 /*---- wifi task bits start ----------------*/
 //*****	wifi_control_task_fun
-#define WIFI_DEVICE_INIT 		0
+
 #define WIFI_PARSE_DATA 		1
 #define WIFI_CONNECT_TCP0_	2
 #define WIFI_CONNECT_TCP1_	3
@@ -93,6 +74,12 @@ extern WIFI_STR wifi_str;
 #define WIFI_SEND_HEART			6
 #define WIFI_SEND_OK				7
 #define WIFI_DATA_CLASS			8
+
+#define WIFI_DEVICE_RESET 	0
+#define WIFI_UART_IDLE_CALLBACK	10
+#define WIFI_STA_AP_MODE_INIT				9
+#define WIFI_STATION_MODE_INIT		11
+
 
 //*****	wifi_control_task_fun 
 #define WIFI_CONNECT_TCP0_DELAY	0
@@ -119,28 +106,64 @@ extern WIFI_STR wifi_str;
 /*---- check task bits end ----------------*/
 
 
+
+typedef struct _SESSION {
+	uint8_t onlineSta;//0:offline 1:online
+	uint8_t pid;
+	uint8_t dir;//main:0 sub1:1...
+	uint8_t dataLen;
+	uint8_t heart;
+	char data[128];
+} SESSION;
+
+typedef struct _WIFI_STR {
+	uint8_t *txBuff;
+	uint8_t *rxBuff;
+	uint16_t rxLen;
+	uint16_t txLen;
+	//uint8_t checkOnlineNum;
+	uint8_t tcp0_errnum;//tcp0连接失败次数
+	uint8_t tcp1_errnum;//tcp1连接失败次数
+	uint8_t wifiMode;
+	uint8_t updateLink;//wifi变更,待验证连接成功则存入flash 0:未变更 1:变更
+	//uint8_t heartBeatTime;//mqtt心跳包
+} WIFI_STR;
+
+typedef struct _TCP_DATA {
+	char* data;
+	uint16_t len;
+} TCP_DATA;
+
+extern WIFI_STR wifi_str;
+//extern SESSION session[];
+
+
 extern WIFI_STR w_str;
 
-uint32_t wifi_check_online( void );
-void wifi_to_reconfigure( void );
-void wifi_parse_data( void );
-int check_turn_on_time( void );
-uint8_t cmd_main_fun( void );
-uint8_t cmd_sub_1_fun( void );
-uint8_t cmd_sub_2_fun( void );
-uint8_t cmd_sub_3_fun( void );
+//uint32_t wifi_check_online( void );
+//void wifi_to_reconfigure( void );
+//void wifi_parse_data( void );
+//int check_turn_on_time( void );
+//uint8_t cmd_main_fun( void );
+//uint8_t cmd_sub_1_fun( void );
+//uint8_t cmd_sub_2_fun( void );
+//uint8_t cmd_sub_3_fun( void );
 
 
-void esp_connect_tcp0 ( void );//杩炴帴TCP0
-void esp_connect_tcp1 ( void );//杩炴帴TCP1
-void wifi_tcp0_send_data( void );
-void wifi_tcp1_send_data( void );
-void wifi_mqtt_heart( void );
-void mqtt_connect( void );//寤虹珛mqtt杩炴帴
-void wifi_init( void );//WIFI初始化
-UBaseType_t wifi_mqtt_data_parse( void );//解析mqtt数据
+//void esp_connect_tcp0 ( void );//杩炴帴TCP0
+//void esp_connect_tcp1 ( void );//杩炴帴TCP1
+//void wifi_tcp_send_data( uint8_t pid );//多链路tcp发送数据
+//void wifi_tcp1_send_data( void );
+//void wifi_mqtt_heart( void );
+//void mqtt_connect( void );//寤虹珛mqtt杩炴帴
+//void wifi_init( void );//WIFI初始化
+//UBaseType_t wifi_mqtt_data_parse( void );//解析mqtt数据
 
-void wifi_data_classification( void );//wifi数据分类
+
+void wifi_reset( void );//wifi复位
+void station_mode_init( void );//station模式初始化
+void station_and_ap_init( void );//station+AP模式初始化,供用户设置wifi账号密码并存入flash
+void wifi_uart_idle_callback( void );//wifi空闲中断回调执行函数
 
 #endif /*__BSP_WIFI__H*/
 
