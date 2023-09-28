@@ -3,7 +3,7 @@
 
 
 //#define WIFIDEBUG
-#define DEBUG_ENABLE
+//#define DEBUG_ENABLE
 //INCLUDE_uxTaskGetStackHighWaterMark 0
 
 /* LIB ------------------------------------------------------------*/
@@ -33,10 +33,12 @@
 
 /*---- Tools -------------------------*/
 #include "../Tools/tool_url.h"
+//#include "../Tools/cJSON.h"
+#include "../Tools/mqtt.h"
+//#include "../Tools/crc.h"
 
 
-
-#define 	debugTaskSize								64
+#define 	debugTaskSize								256
 #define 	wifi_control_taskSize				128
 #define 	wifi_tcp_connect_taskSize		128
 

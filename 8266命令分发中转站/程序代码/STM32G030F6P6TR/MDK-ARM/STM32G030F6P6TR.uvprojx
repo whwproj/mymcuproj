@@ -331,7 +331,7 @@
             <v6Lto>0</v6Lto>
             <v6WtE>0</v6WtE>
             <VariousControls>
-              <MiscControls></MiscControls>
+              <MiscControls>--no-multibyte-chars</MiscControls>
               <Define>USE_HAL_DRIVER,STM32G030xx</Define>
               <Undefine></Undefine>
               <IncludePath>../Core/Inc;../Drivers/STM32G0xx_HAL_Driver/Inc;../Drivers/STM32G0xx_HAL_Driver/Inc/Legacy;../Middlewares/Third_Party/FreeRTOS/Source/include;../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS;../Middlewares/Third_Party/FreeRTOS/Source/portable/RVDS/ARM_CM0;../Drivers/CMSIS/Device/ST/STM32G0xx/Include;../Drivers/CMSIS/Include</IncludePath>
@@ -378,11 +378,6 @@
           <GroupName>Application/User/Bsp</GroupName>
           <Files>
             <File>
-              <FileName>bsp_debug.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\Core\Bsp\bsp_debug.c</FilePath>
-            </File>
-            <File>
               <FileName>bsp_wifi.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\Core\Bsp\bsp_wifi.c</FilePath>
@@ -406,6 +401,11 @@
               <FileName>bsp_flash.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\Core\Bsp\bsp_flash.c</FilePath>
+            </File>
+            <File>
+              <FileName>init.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Core\Bsp\init.c</FilePath>
             </File>
           </Files>
         </Group>
@@ -525,6 +525,11 @@
               <FileName>tool_url.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\Core\Tools\tool_url.c</FilePath>
+            </File>
+            <File>
+              <FileName>mqtt.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Core\Tools\mqtt.c</FilePath>
             </File>
           </Files>
         </Group>

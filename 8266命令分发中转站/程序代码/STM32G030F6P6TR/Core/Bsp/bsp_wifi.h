@@ -34,7 +34,8 @@
 		"<meta charset=\"utf-8\">"\
 		"<meta name=\"viewport\"content=\"width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=0\">"\
 	"</head><body><div style=\"display:block;margin:50px auto; width:180px;\">"
-#define HTML_CONTENT_1 "<form action=\"/\" method=\"POST\">"\
+#define HTML_CONTENT_1 "<h5>可为空,为空项则不更改该项原有配置</h5>"\
+			"<form action=\"/\" method=\"POST\">"\
 			"<input type=\"text\" name=\"wssid\" placeholder=\"wifi ssid\"><br />"\
 			"<input type=\"text\" name=\"wpswd\" placeholder=\"wifi password\"><br />"\
 			"<input type=\"text\" name=\"tcpurl\" placeholder=\"mqtt host\"><br />"\
@@ -44,10 +45,10 @@
 			"<input type=\"submit\" value=\"保存\"></form>"
 #define HTML_CONTENT_2 "<form action=\"/\" method=\"GET\">"\
 			"<h3>正在验证请等待...</h3>"\
-			"<h4 style=\"color: red;\">1.指示灯由灭转闪烁表示验证失败,请刷新重试</h4>"\
-			"<h4 style=\"color: green;\">2.指示灯由灭转常亮表示验证成功</h4>"\
-			"<h4>3.wifi验证成功后,10s内会连接mqtt服务器,连接成功指示灯会灭,否则双灯常亮</h4>"\
-			"<input type=\"submit\" value=\"刷新\"></form>"
+			"<h4 style=\"color: red;\">1.红色指示灯常亮表示wifi连接失败</h4>"\
+			"<h4 style=\"color: red;\">2.蓝色指示灯常亮表示mqtt服务器连接失败</h4>"\
+			"<h4 style=\"color: green;\">3.成功连接服务器两个指示灯会灭5s,然后闪烁显示工作状态</h4>"\
+			"<input type=\"submit\" value=\"点击重配置\"></form>"
 #define HTML_BODY_END "</div></html>"
 
 //连上wifi			
@@ -152,9 +153,6 @@ extern WIFI_STR w_str;
 //uint8_t cmd_sub_2_fun( void );
 //uint8_t cmd_sub_3_fun( void );
 
-
-void esp_connect_tcp0 ( void );
-void esp_connect_tcp1 ( void );
 //void wifi_tcp_send_data( uint8_t pid );//多链路tcp发送数据
 //void wifi_tcp1_send_data( void );
 //void wifi_mqtt_heart( void );
@@ -167,6 +165,7 @@ void wifi_reset( void );//wifi复位
 void station_mode_init( void );//station模式初始化
 void station_and_ap_init( void );//station+AP模式初始化,供用户设置wifi账号密码并存入flash
 void wifi_uart_idle_callback( void );//wifi空闲中断回调执行函数
+
 
 #endif /*__BSP_WIFI__H*/
 

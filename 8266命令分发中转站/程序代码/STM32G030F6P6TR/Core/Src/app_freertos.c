@@ -137,6 +137,8 @@ void StartDefaultTask(void const * argument)
 #endif
 		HAL_TIM_Base_Start_IT( &htim3 );
 		HAL_TIM_Base_Start( &htim3 );
+		led_nrf_flicker_on();
+		led_con_flicker_on();
 	
 		xTaskNotify( wifi_control_taskHandle, 1U<<WIFI_DEVICE_RESET, eSetBits );
 		vTaskDelay(1200);

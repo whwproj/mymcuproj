@@ -8,6 +8,10 @@ static int send_at_commond( char* cmd, char* reply, uint16_t timeout_10ms );
 static void wifi_dma_init( uint8_t mode );
 static void wifi_dma_reinit( void );
 static void wifi_tcp_send_data( uint8_t pid );
+static int post_param_handle( char* param );
+static int esp_connect_tcp0 ( void );
+static int esp_connect_tcp1 ( void );
+static int mqtt_connect( void );
 
 //wifi复位
 void wifi_reset( void ) {
@@ -25,15 +29,27 @@ void station_mode_init( void ) {
 	wifi_dma_init( STATION_MODE );
 	if ( connect_wifi( udata.wssid, udata.wpswd ) == 0 ) {//连接成功
 		printf("wifi连接连接成功\r\n");
-		//wifi连接变更,存入flash
-		if ( w_str.updateLink == 1 ) { write_data_into_flash(); }
+		led_nrf_flicker_off(0);
+		if ( w_str.updateLink == 1 ) { write_data_into_flash(); }//wifi连接变更,存入flash
 		send_at_commond( "AT+CWMODE=1\r\n", "OK", 50 );
 		send_at_commond( "AT+CIPMUX=1\r\n", "OK", 50 );
-		esp_connect_tcp1();
+		if ( esp_connect_tcp1() == -1 ) {
+			//连接失败,转入station+AP模式
+			printf("连接失败,转入station+AP模式\r\n");
+			led_con_flicker_off(1);
+			wifi_dma_reinit();
+			xTaskNotify( wifi_control_taskHandle, 1U<<WIFI_STA_AP_MODE_INIT, eSetBits );
+			return;
+		}
+		//建立mqtt连接
+		//mqtt连接成功
+		led_con_flicker_off(0);
 		
 	} else {
 		//连接失败,转入station+AP模式
 		printf("连接失败,转入station+AP模式\r\n");
+		led_nrf_flicker_off(1);
+		led_con_flicker_off(1);
 		wifi_dma_reinit();
 		xTaskNotify( wifi_control_taskHandle, 1U<<WIFI_STA_AP_MODE_INIT, eSetBits );
 	}
@@ -41,6 +57,8 @@ void station_mode_init( void ) {
 
 //station+AP模式初始化,供用户设置wifi账号密码并存入flash
 void station_and_ap_init( void ) {
+	send_at_commond( "AT+RST\r\n", "OK", 50 );
+	vTaskDelay(500);
 	printf("station+AP模式初始化...\r\n");
 	wifi_dma_init( STATION_AP_MODE );
 	send_at_commond( "AT+CWMODE=3\r\n", "OK", 50 );
@@ -52,8 +70,8 @@ void station_and_ap_init( void ) {
 
 //wifi串口空闲中断回调执行函数
 void wifi_uart_idle_callback( void ) {
-	uint16_t len;
-	char *str1, *str2;
+	uint16_t len_t;
+	char *str, *str2;
 	TCP_DATA *tcpd;
 	uint8_t pid;
 	if ( w_str.wifiMode == STATION_AP_MODE ) {
@@ -64,32 +82,28 @@ void wifi_uart_idle_callback( void ) {
 		} else if ( strstr( (char*)w_str.rxBuff, "GET / HTTP" ) || strstr( (char*)w_str.rxBuff, "GET /? HTTP" ) ) {
 			pid = *(strstr((char*)w_str.rxBuff,"+IPD,")+5)-'0';
 			printf("TCP%d 建立连接\r\n", pid);
-			len = strlen(HTML_BODY_START) + strlen(HTML_CONTENT_1) + strlen(HTML_BODY_END);
-			sprintf( (char*)w_str.txBuff, "%s%d%s%s%s%s", (char*)&HTML_HEAD_START, len, (char*)&HTML_HEAD_END,
+			len_t = strlen(HTML_BODY_START) + strlen(HTML_CONTENT_1) + strlen(HTML_BODY_END);
+			sprintf( (char*)w_str.txBuff, "%s%d%s%s%s%s", (char*)&HTML_HEAD_START, len_t, (char*)&HTML_HEAD_END,
 				(char*)&HTML_BODY_START, (char*)&HTML_CONTENT_1, (char*)&HTML_BODY_END );
 			wifi_tcp_send_data( pid );
 			
 		} else if ( strstr( (char*)w_str.rxBuff, "POST / HTTP" ) ) {
 			pid = *(strstr((char*)w_str.rxBuff,"+IPD,")+5)-'0';
-			str1 = strstr( (char*)w_str.rxBuff, "wssid=" ) + strlen("wssid=");
-			str2 = strstr( (char*)w_str.rxBuff, "&wpswd=" );
-			if ( str1!=NULL && str2!=NULL ) {
-				memset( udata.wssid, 0, 33 );
-				memset( udata.wpswd, 0, 21 );
-				memcpy( udata.wssid, str1, (uint32_t)str2-(uint32_t)str1 );
-				sprintf( udata.wpswd, "%s", str2+strlen("&wpswd=") );
-				printf("设置wifi参数:");
-				printf("udata.ssid: %s\r\n", udata.wssid);
-				printf("udata.pswd: %s\r\n", udata.wpswd);
-				len = strlen(HTML_BODY_START) + strlen(HTML_CONTENT_2) + strlen(HTML_BODY_END);
-				sprintf( (char*)w_str.txBuff, "%s%d%s%s%s%s", (char*)&HTML_HEAD_START, len, (char*)&HTML_HEAD_END,
+			str = strstr( (char*)w_str.rxBuff, "\r\n\r\n" ) + 4;
+			if ( post_param_handle(str) == 0 ) {
+				led_nrf_flicker_on();
+				led_con_flicker_on();
+				printf("参数设置成功\r\n");
+				len_t = strlen(HTML_BODY_START) + strlen(HTML_CONTENT_2) + strlen(HTML_BODY_END);
+				sprintf( (char*)w_str.txBuff, "%s%d%s%s%s%s", (char*)&HTML_HEAD_START, len_t, (char*)&HTML_HEAD_END,
 					(char*)&HTML_BODY_START, (char*)&HTML_CONTENT_2, (char*)&HTML_BODY_END );
 				wifi_tcp_send_data( pid );
 				//重连WIFI
+				send_at_commond( "AT+RST\r\n", "OK", 50 );
+				vTaskDelay(500);
 				w_str.updateLink = 1;
 				wifi_dma_reinit();
 				xTaskNotify( wifi_control_taskHandle, 1U<<WIFI_STATION_MODE_INIT, eSetBits );
-				HAL_UART_Transmit( &huart1, w_str.rxBuff, strlen((char*)w_str.rxBuff), 1000 );
 			}
 		}
 	
@@ -148,26 +162,20 @@ void wifi_uart_idle_callback( void ) {
 //}
 	HAL_UART_AbortReceive( &WIFIHUART );
 	if ( w_str.wifiMode == STATION_MODE ) {
-		len = WIFI_RXBUFF_SIZE - __HAL_DMA_GET_COUNTER( &WIFI_HDMA_HUART_RX );
-		memset( w_str.rxBuff, 0, len );
+		len_t = WIFI_RXBUFF_SIZE - __HAL_DMA_GET_COUNTER( &WIFI_HDMA_HUART_RX );
+		memset( w_str.rxBuff, 0, len_t );
 		HAL_UART_Receive_DMA( &WIFIHUART, w_str.rxBuff, WIFI_RXBUFF_SIZE );
 	} else {
-		len = WIFI_APRXBUFF_SIZE - __HAL_DMA_GET_COUNTER( &WIFI_HDMA_HUART_RX );
-		memset( w_str.rxBuff, 0, len );
+		len_t = WIFI_APRXBUFF_SIZE - __HAL_DMA_GET_COUNTER( &WIFI_HDMA_HUART_RX );
+		memset( w_str.rxBuff, 0, len_t );
 		HAL_UART_Receive_DMA( &WIFIHUART, w_str.rxBuff, WIFI_APRXBUFF_SIZE );
 	}
 }
 
-
-//建立mqtt连接
-void mqtt_connect( void ) {
-
-}
-
-
 //连接TCP0
-void esp_connect_tcp0 ( void ) {
+static int esp_connect_tcp0 ( void ) {
 	uint16_t i;	
+	int res = -1;
 	if ( w_str.tcp0_errnum++>2 && w_str.tcp1_errnum>2 ) {//重启设备
 		//__set_FAULTMASK(1);
 		NVIC_SystemReset();//重启
@@ -181,6 +189,7 @@ void esp_connect_tcp0 ( void ) {
 	for ( i=1000; i>0; i-- ) {
 		if ( strstr( (void*)w_str.rxBuff, "CONNECT" ) != NULL ) {
 			printf("TCP0 连接成功\r\n");
+			res = 0;
 			break;
 		} else if ( strstr( (void*)w_str.rxBuff, "DNS Fail" ) != NULL ) {
 			printf("TCP0 DNS Fail 连接失败\r\n");
@@ -198,11 +207,13 @@ void esp_connect_tcp0 ( void ) {
 	w_str.tcp0_errnum = 0;
 	HAL_UART_AbortReceive( &WIFIHUART );
 	memset( w_str.rxBuff, 0, WIFI_RXBUFF_SIZE );
+	return res;
 }
 
 //连接TCP1
-void esp_connect_tcp1 ( void ) {
+static int esp_connect_tcp1 ( void ) {
 	uint16_t i;
+	int res = -1;
 	if ( w_str.tcp1_errnum++>2 && w_str.tcp0_errnum>2 ) {//重启设备
 		//__set_FAULTMASK(1);
 		NVIC_SystemReset();
@@ -216,6 +227,7 @@ void esp_connect_tcp1 ( void ) {
 	for ( i=1000; i>0; i-- ) {
 		if ( strstr( (void*)w_str.rxBuff, "CONNECT" ) != NULL ) {
 			printf("TCP1 连接成功\r\n");
+			res = 1;
 			break;
 		} else if ( strstr( (void*)w_str.rxBuff, "DNS Fail" ) != NULL ) {
 			printf("TCP1 DNS Fail 连接失败\r\n");
@@ -233,6 +245,7 @@ void esp_connect_tcp1 ( void ) {
 	w_str.tcp1_errnum = 0;
 	HAL_UART_AbortReceive( &WIFIHUART );
 	memset( w_str.rxBuff, 0, WIFI_RXBUFF_SIZE );
+	return res;
 }
 
 
@@ -301,22 +314,20 @@ void wifi_mqtt_heart( void ) {
 	xTaskNotify( wifi_control_taskHandle, 1U<<WIFI_TCP0_SEND, eSetBits );
 }
 
-void mqtt_connect( void ) {
-	//获取信号量
-	xSemaphoreTake( TxSend_Mutex, portMAX_DELAY );
-	
-	//连接mqtt服务器
-	GetDataConnet( w_str.rxBuff );
-	
-	//订阅主题
-	GetDataSUBSCRIBE( m.mqttTxBuff, net_str.servicesTopic, 2 );
-	mqttConCache = mbedtls_parse_data_mqtt_con( m.mqttTxBuff, m.mqttTxBuff[1]+2 );
-	if ( mqttConCache==NULL || mqttConCache[0]!=0x90 ) {
-		return pdFAIL;//订阅失败
-	}
-}
+
 #endif
 
+//建立mqtt连接
+static int mqtt_connect( void ) {
+	//建立连接
+//	GetDataConnet( w_str.rxBuff );
+//	//订阅主题
+//	GetDataSUBSCRIBE( m.mqttTxBuff, net_str.servicesTopic, 2 );
+//	mqttConCache = mbedtls_parse_data_mqtt_con( m.mqttTxBuff, m.mqttTxBuff[1]+2 );
+//	if ( mqttConCache==NULL || mqttConCache[0]!=0x90 ) {
+//		return pdFAIL;//订阅失败
+//	}
+}
 
 
 //多链路发送tcp数据
@@ -438,5 +449,118 @@ static void wifi_dma_reinit( void ) {
 	__HAL_UART_DISABLE_IT( &WIFIHUART, UART_IT_TC );	
 	vPortFree( w_str.txBuff );
 	vPortFree( w_str.rxBuff );
+}
+
+//参数处理
+static int post_param_handle( char* param ) {
+	uint16_t len_t;
+	char *str_t, *str, *str1_t, *str2_t;
+	int res = -1;//成功更新过,并且校验所有参数合法时res=0
+	
+	if ( param == NULL ) return res;
+	
+	//ssid
+	str1_t = strstr( param, "wssid=" )+6;
+	str2_t = strstr( param, "&wpswd=" );
+	len_t = (str1_t!=NULL && str2_t!=NULL) ? (uint16_t)((uint32_t)str2_t - (uint32_t)str1_t) : 0;
+	if ( len_t != 0 ) {
+		memset( udata.wssid, 0, 33 );
+		str_t = pvPortMalloc( len_t+1 );
+		memcpy( str_t, str1_t, len_t );
+		str_t[len_t] = '\0';
+		//URL转义解码,去除%XX
+		str = decodeURL( str_t );
+		sprintf( udata.wssid, "%s", str );
+		vPortFree( str_t );
+		vPortFree( str );
+		res = 0;
+	}
+	
+	//wssid
+	str1_t = str2_t + 7;
+	str2_t = strstr( param, "&tcpurl=" );
+	len_t = (str1_t!=NULL && str2_t!=NULL) ? (uint16_t)((uint32_t)str2_t - (uint32_t)str1_t) : 0;
+	if ( len_t != 0 ) {
+		memset( udata.wpswd, 0, 21 );
+		str_t = pvPortMalloc( len_t+1 );
+		memcpy( str_t, str1_t, len_t );
+		str_t[len_t] = '\0';
+		//URL转义解码,去除%XX
+		str = decodeURL( str_t );
+		sprintf( udata.wpswd, "%s", str );
+		vPortFree( str_t );
+		vPortFree( str );
+		res = 0;
+	}
+	
+	//tcpurl
+	str1_t = str2_t + 8;
+	str2_t = strstr( param, "&tcpport=" );
+	len_t = (str1_t!=NULL && str2_t!=NULL) ? (uint16_t)((uint32_t)str2_t - (uint32_t)str1_t) : 0;
+	if ( len_t != 0 ) {
+		memset( udata.tcpurl, 0, 43 );
+		str_t = pvPortMalloc( len_t+1 );
+		memcpy( str_t, str1_t, len_t );
+		str_t[len_t] = '\0';
+		//URL转义解码,去除%XX
+		str = decodeURL( str_t );
+		sprintf( udata.tcpurl, "%s", str );
+		vPortFree( str_t );
+		vPortFree( str );
+		res = 0;
+	}
+	
+	//tcpport
+	str1_t = str2_t + 9;
+	str2_t = strstr( param, "&mqusername=" );
+	len_t = (str1_t!=NULL && str2_t!=NULL) ? (uint16_t)((uint32_t)str2_t - (uint32_t)str1_t) : 0;
+	if ( len_t != 0 ) {
+		for ( len_t=0; (*str1_t>='0')&&(*str1_t<='9');  ) {
+			len_t *= 10;
+			len_t += (*str1_t-'0');
+			str1_t++;
+		}
+		udata.tcpport = len_t;
+		res = 0;
+	}
+
+	//mqusername
+	str1_t = str2_t + 12;
+	str2_t = strstr( param, "&mqpasswd=" );
+	len_t = (str1_t!=NULL && str2_t!=NULL) ? (uint16_t)((uint32_t)str2_t - (uint32_t)str1_t) : 0;
+	if ( len_t != 0 ) {
+		memset( udata.mqusername, 0, 51 );
+		str_t = pvPortMalloc( len_t+1 );
+		memcpy( str_t, str1_t, len_t );
+		str_t[len_t] = '\0';
+		//URL转义解码,去除%XX
+		str = decodeURL( str_t );
+		sprintf( udata.mqusername, "%s", str );
+		vPortFree( str_t );
+		vPortFree( str );
+		res = 0;
+	}
+	
+	//mqpasswd
+	str1_t = str2_t + 10;
+	if ( strlen(str1_t)>0 && (uint8_t)str1_t[0]!=0xFF ) {
+		memset( udata.mqpasswd, 0, 33 );
+		str_t = pvPortMalloc( 33 );
+		sprintf( str_t, "%s", str1_t );
+		//URL转义解码,去除%XX
+		str = decodeURL( str_t );
+		sprintf( udata.mqpasswd, "%s", str );
+		vPortFree( str_t );
+		vPortFree( str );
+		res = 0;
+	}
+	
+	if ( strlen(udata.wssid)==0 || (uint8_t)udata.wssid[0]==0xFF ) res = -1;
+	if ( strlen(udata.wpswd)==0 || (uint8_t)udata.wpswd[0]==0xFF ) res = -1;
+	if ( strlen(udata.tcpurl)==0 || (uint8_t)udata.tcpurl[0]==0xFF ) res = -1;
+	if ( strlen(udata.mqusername)==0 || (uint8_t)udata.mqusername[0]==0xFF ) res = -1;
+	if ( strlen(udata.mqpasswd)==0 || (uint8_t)udata.mqpasswd[0]==0xFF ) res = -1;
+	
+	return res;
 }
 

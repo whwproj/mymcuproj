@@ -13,8 +13,12 @@ void led_nrf_flicker_on( void ) {
 }
 
 //LED_NRF闪烁关闭
-void led_nrf_flicker_off( void ) {
-	LED_NRF_OFF();
+void led_nrf_flicker_off( uint8_t sta ) {
+	if ( sta == 0 ) {
+		LED_NRF_OFF();
+	} else if ( sta == 1 ) {
+		LED_NRF_ON();
+	} else { /*不改变状态*/ }
 	led_str.led_mode &=~ LED_NRF_FLICKER;
 }
 
@@ -35,8 +39,12 @@ void led_con_flicker_on( void ) {
 }
 
 //LED_CON闪烁关闭
-void led_con_flicker_off( void ) {
-	LED_CON_OFF();
+void led_con_flicker_off( uint8_t sta ) {
+	if ( sta == 0 ) {
+		LED_CON_OFF();
+	} else if ( sta == 1 ) {
+		LED_CON_ON();
+	} else { /*不改变状态*/ }
 	led_str.led_mode &=~ LED_CON_FLICKER;
 }
 

@@ -62,10 +62,10 @@ void debug_parse_data_fun( void ) {
 		led_con_flicker_on();
 		
 	} else if ( strstr( (char *)ds.rxBuff, "nled_off" ) != NULL ) {
-		led_nrf_flicker_off();
+		led_nrf_flicker_off(0);
 		
 	} else if ( strstr( (char *)ds.rxBuff, "cled_off" ) != NULL ) {
-		led_con_flicker_off();
+		led_con_flicker_off(0);
 		
 	} else if ( strstr( (char *)ds.rxBuff, "decodeURL" ) != NULL ) {
 		decodeURL( "mqusername=thingidp%40anvntlw%7Cesp8266%7C0%7CMD5" );
@@ -84,6 +84,18 @@ void debug_parse_data_fun( void ) {
 			printf("cled_speed设置失败\r\n");
 		}
 		
+//	} else if ( strstr( (char *)ds.rxBuff, "param:" ) != NULL ) {
+//		if ( post_param_handle((char*)ds.rxBuff+6) == 0 ) {
+//			printf("解析成功:\r\n");
+//			printf("wssid: %s\r\n", udata.wssid );
+//			printf("wpswd: %s\r\n", udata.wpswd );
+//			printf("tcpurl: %s\r\n", udata.tcpurl );
+//			printf("mqusername: %s\r\n", udata.mqusername );
+//			printf("mqpasswd: %s\r\n", udata.mqpasswd );
+//			printf("tcpport: %d\r\n", udata.tcpport );
+//		} else {
+//			printf("err\r\n");
+//		}
 		
 	} else if ( strstr( (char *)ds.rxBuff, "查询内存" ) != NULL ) {
 	
