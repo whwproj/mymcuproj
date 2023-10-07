@@ -25,12 +25,16 @@
 #define		MQTT_StaUserNameFlag					1	//用户名标志 User Name Flag
 #define		MQTT_StaPasswordFlag					1	//密码标志 Password Flag
 #define		MQTT_KeepAlive								300
-#define		MQTT_ClientIdentifier  "lot"//"mqttx_b9cb3b0c"	//客户端标识符 Client Identifier
-#define		MQTT_WillTopic			""				//遗嘱主题 Will Topic
-#define		MQTT_WillMessage		""				//遗嘱消息 Will Message
-#define		MQTT_UserName			"zfdcghw"			//用户名 User Name
-#define		MQTT_Password			"zf@dcghw2023.com"	//密码 Password
- 
+#define		MQTT_ClientIdentifier  	udata.duid			//"mqttx_b9cb3b0c"	//客户端标识符 Client Identifier
+#define		MQTT_WillTopic					""				//遗嘱主题 Will Topic
+#define		MQTT_WillMessage				""				//遗嘱消息 Will Message
+#define		MQTT_UserName						udata.mqusername	//用户名 User Name
+#define		MQTT_Password						udata.mqpasswd		//密码 Password
+#define		MQTT_SUB1Topic					"message"				//订阅主题1
+#define		MQTT_SUB2Topic					"config"				//订阅主题2
+#define		MQTT_PUBTopic						"reply"					//发布主题
+
+
 unsigned char GetDataFixedHead(unsigned char MesType,unsigned char DupFlag,unsigned char QosLevel,unsigned char Retain);
 uint32_t GetDataPUBLISH(unsigned char *buff,unsigned char dup, unsigned char qos,unsigned char retain,const char *topic ,const char *msg);//获取发布消息的数据包		 	
 void GetDataSUBSCRIBE(unsigned char *buff,const char *dat,unsigned char RequestedQoS);//订阅主题的数据包 RequestedQoS:服务质量要求0,1或2

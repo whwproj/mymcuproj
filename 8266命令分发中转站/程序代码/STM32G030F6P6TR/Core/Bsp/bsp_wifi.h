@@ -64,6 +64,10 @@
 #define WIFI_TXBUFF_SIZE		128
 #define WIFI_RXBUFF_SIZE		128
 
+#define ENABLE_IT	0x80
+#define NOT_STR		0x40
+
+
 
 #define DEFAULT_HEART	60
 
@@ -88,7 +92,6 @@
 //*****	wifi_control_task_fun 
 #define WIFI_CONNECT_TCP0_DELAY	0
 #define WIFI_CONNECT_TCP1_DELAY	1
-
 /*---- wifi task bits end ----------------*/
 
 /*---- sleep task bits start ----------------*/

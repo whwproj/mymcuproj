@@ -49,6 +49,19 @@ void read_data_from_flash( void ) {
 		if ( j >= 2 ) { pudata[1] = da_t>>16; }
 		if ( j == 3 ) { pudata[2] = da_t>>8; }
 	}
+	
+	sprintf(udata.duid, "AABBCC");
+	sprintf(udata.mqpasswd, "fcbfa8ffddfca54945ca549955cfa2cc");
+	sprintf(udata.mqusername, "thingidp@anvntlw|esp8266|0|MD5");
+	udata.tcpport = 1883;
+	sprintf(udata.tcpurl, "anvntlw.iot.gz.baidubce.com");
+//	udata.tcpport = 44169;
+//	sprintf(udata.tcpurl, "server.natappfree.cc");
+	
+	sprintf(udata.wpswd, "wuhanwei");
+	sprintf(udata.wssid, "MI");
+	//sprintf(udata.wpswd, "Ufidev888");
+	//sprintf(udata.wssid, "UFI-Dev");
 }
 
 

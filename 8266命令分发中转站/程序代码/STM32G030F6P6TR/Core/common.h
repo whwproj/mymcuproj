@@ -35,7 +35,7 @@
 #include "../Tools/tool_url.h"
 //#include "../Tools/cJSON.h"
 #include "../Tools/mqtt.h"
-//#include "../Tools/crc.h"
+#include "../Tools/crc.h"
 
 
 #define 	debugTaskSize								256

@@ -531,6 +531,16 @@
               <FileType>1</FileType>
               <FilePath>..\Core\Tools\mqtt.c</FilePath>
             </File>
+            <File>
+              <FileName>cJSON.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Core\Tools\cJSON.c</FilePath>
+            </File>
+            <File>
+              <FileName>crc.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Core\Tools\crc.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>

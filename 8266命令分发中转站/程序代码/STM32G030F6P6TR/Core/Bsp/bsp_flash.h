@@ -28,6 +28,8 @@ typedef struct _USER_DATA {
 	char mqusername[51];//mqtt username 50byte
 	char mqpasswd[33];//mqtt password 32byte
 	uint16_t tcpport;
+	
+	char duid[7];//设备id
 } USER_DATA;
 
 extern USER_DATA udata;

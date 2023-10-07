@@ -43,17 +43,11 @@ void GetDataConnet(uint8_t *buff)//获取连接的数据包正确连接返回20 
 							|	(MQTT_StaPasswordFlag << 6) |(MQTT_StaUserNameFlag << 7);//连接标志
 	buff[10] = MQTT_KeepAlive >> 8;
 	buff[11] = ( uint8_t ) MQTT_KeepAlive;
-	//len = strlen(MQTT_ClientIdentifier);
-	
-	//printf("\r\n---%04d---\r\n",randNum);
-//sprintf(&net_str.clientId[15], "%04d", (uint8_t)rand());
-//len = strlen( net_str.clientId );
+	len = strlen(MQTT_ClientIdentifier);
 	buff[12] = len >> 8;
 	buff[13] = len;
-	//msg = (uchar *)MQTT_ClientIdentifier;
-//msg = (uchar *) net_str.clientId;
-	for(i = 0;i<len;i++)
-	{
+	msg = (uchar *)MQTT_ClientIdentifier;
+	for( i=0; i<len; i++ ) {
 		buff[14+i] =  msg[i];
 	}
 	lennum += len;

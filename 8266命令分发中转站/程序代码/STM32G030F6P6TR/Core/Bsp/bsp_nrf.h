@@ -56,8 +56,8 @@
 
 
 /*---------------------------- 位操作 -----------------------------------*/
-#define CSN_Low()						NRF_CS_GPIO_Port->BRR = NRF_CS_Pin
-#define CSN_High()					NRF_CS_GPIO_Port->BSRR = NRF_CS_Pin
+#define CSN_Low()						NRF_CSN_GPIO_Port->BRR = NRF_CSN_Pin
+#define CSN_High()					NRF_CSN_GPIO_Port->BSRR = NRF_CSN_Pin
 #define CE_Low()						NRF_CE_GPIO_Port->BRR = NRF_CE_Pin
 #define CE_High()						NRF_CE_GPIO_Port->BSRR = NRF_CE_Pin
 #define IRQ_isHigh()				(NRF_IRQ_GPIO_Port->IDR)&NRF_IRQ_Pin
