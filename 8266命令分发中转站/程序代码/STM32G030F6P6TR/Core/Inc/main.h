@@ -61,12 +61,12 @@ void Error_Handler(void);
 #define ESP_RST_GPIO_Port GPIOB
 #define ESP_EN_Pin GPIO_PIN_15
 #define ESP_EN_GPIO_Port GPIOC
-#define ESP_IO2_Pin GPIO_PIN_0
-#define ESP_IO2_GPIO_Port GPIOA
+#define FLASH_CSN_Pin GPIO_PIN_0
+#define FLASH_CSN_GPIO_Port GPIOA
 #define NRF_CE_Pin GPIO_PIN_4
 #define NRF_CE_GPIO_Port GPIOA
-#define NRF_CS_Pin GPIO_PIN_5
-#define NRF_CS_GPIO_Port GPIOA
+#define NRF_CSN_Pin GPIO_PIN_5
+#define NRF_CSN_GPIO_Port GPIOA
 #define NRF_IRQ_Pin GPIO_PIN_8
 #define NRF_IRQ_GPIO_Port GPIOA
 #define NRF_IRQ_EXTI_IRQn EXTI4_15_IRQn
