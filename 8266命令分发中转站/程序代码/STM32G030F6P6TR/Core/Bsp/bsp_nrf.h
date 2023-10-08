@@ -201,6 +201,14 @@
 #define EN_DYN_ACK	1<<0 /* 使能该条数据不需要自动确认(NO_ACK) */
 
 
+typedef struct _NRF_STR {
+	uint8_t *txAddr;
+	uint8_t *rxAddr;
+	uint8_t *txBuf;
+	uint8_t *rxBuf;
+} NRF_STR;
+
+
 /*NRF初始化配置*/
 typedef struct {
 	uint8_t CONFIG_;			/*!< @ref CONFIG_Define 工作模式配置寄存器 */
@@ -248,6 +256,9 @@ typedef struct {
 } NRF24L01_TypeDef;
 
 
+extern NRF_STR nrf_str;
+
+
 uint8_t SPI_RW_Reg( uint8_t reg, uint8_t value );//读取寄存器
 uint8_t SPI_Write_Buf( uint8_t reg, uint8_t *pBuf, uint8_t len );//多字节写入
 uint8_t SPI_Read_Buf( uint8_t reg, uint8_t *pBuf, uint8_t len );//多字节读取
@@ -256,8 +267,8 @@ void Tx_Mode( void );
 void Rx_Mode( void );
 
 void nrf_init( void );
-void nrf1_receive_data( void );//接收数据
-void nrf2_send_data( void );
+void nrf_receive_data( void );//接收数据
+void nrf_send_data( void );
 
 #endif /*__BSP_NRF__H*/
 

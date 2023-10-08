@@ -114,11 +114,16 @@ void HardFault_Handler(void)
 void EXTI4_15_IRQHandler(void)
 {
   /* USER CODE BEGIN EXTI4_15_IRQn 0 */
-
+	BaseType_t phpt;
   /* USER CODE END EXTI4_15_IRQn 0 */
-  HAL_GPIO_EXTI_IRQHandler(NRF_IRQ_Pin);
+  //HAL_GPIO_EXTI_IRQHandler(NRF_IRQ_Pin);
   /* USER CODE BEGIN EXTI4_15_IRQn 1 */
-
+	if(__HAL_GPIO_EXTI_GET_IT(NRF_IRQ_Pin) != RESET) {
+		__HAL_GPIO_EXTI_CLEAR_IT(NRF_IRQ_Pin);
+		HAL_NVIC_DisableIRQ(NRF_IRQ_EXTI_IRQn);
+		xTaskNotifyFromISR( nrf_control_taskHandle, 1U<<NRF_RX_EVENT, eSetBits, &phpt );
+		portYIELD_FROM_ISR(phpt);
+	}
   /* USER CODE END EXTI4_15_IRQn 1 */
 }
 
@@ -207,38 +212,14 @@ void USART1_IRQHandler(void)
 		__HAL_UART_CLEAR_IDLEFLAG(&huart1);  //清除空闲
 		xTaskNotifyFromISR( wifi_control_taskHandle, 1U<<WIFI_UART_IDLE_CALLBACK, eSetBits, &phpt );
 		portYIELD_FROM_ISR( phpt );
-	} else if ( __HAL_UART_GET_FLAG( &huart1, UART_FLAG_TC ) != RESET ) {
+	} 
+	/*else if ( __HAL_UART_GET_FLAG( &huart1, UART_FLAG_TC ) != RESET ) {
 		__HAL_UART_CLEAR_FLAG( &huart1, UART_FLAG_TC );
-		xTaskNotifyFromISR( wifi_control_taskHandle, 1U<<WIFI_SEND_OK, eSetBits, &phpt );//DMA发�?�完�?
+		xTaskNotifyFromISR( wifi_control_taskHandle, 1U<<WIFI_SEND_OK, eSetBits, &phpt );
 		portYIELD_FROM_ISR( phpt );
-	}
+	}*/
   /* USER CODE END USART1_IRQn 1 */
 }
-
-///**
-//  * @brief This function handles USART2 global interrupt / USART2 wake-up interrupt through EXTI line 26.
-//  */
-//void USART2_IRQHandler(void)
-//{
-//  /* USER CODE BEGIN USART2_IRQn 0 */
-//	BaseType_t phpt;
-//  /* USER CODE END USART2_IRQn 0 */
-//  HAL_UART_IRQHandler(&huart2);
-//  /* USER CODE BEGIN USART2_IRQn 1 */
-//	if((__HAL_UART_GET_FLAG(&huart2,UART_FLAG_IDLE) != RESET)) {
-//		__HAL_UART_CLEAR_IDLEFLAG(&huart2);  //清除空闲状�??
-//#ifdef DEBUG_ENABLE
-//		xTaskNotifyFromISR( debugTaskHandle, 1U<<DEBUG_PARSE_DATA, eSetBits, &phpt );//DMA发�?�完成�?�知
-//		portYIELD_FROM_ISR( phpt );
-//#endif
-//	} else if ( __HAL_UART_GET_FLAG(&huart2,UART_FLAG_TC) != RESET ) {
-//#ifdef DEBUG_ENABLE
-//		xTaskNotifyFromISR( debugTaskHandle, 1U<<DEBUG_SEND_OK, eSetBits, &phpt );//DMA发�?�完成�?�知
-//		portYIELD_FROM_ISR( phpt );
-//#endif
-//	}
-//  /* USER CODE END USART2_IRQn 1 */
-//}
 
 /* USER CODE BEGIN 1 */
 

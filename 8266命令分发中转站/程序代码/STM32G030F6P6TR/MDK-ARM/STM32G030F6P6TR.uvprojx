@@ -313,7 +313,7 @@
           </ArmAdsMisc>
           <Cads>
             <interw>1</interw>
-            <Optim>1</Optim>
+            <Optim>0</Optim>
             <oTime>0</oTime>
             <SplitLS>0</SplitLS>
             <OneElfS>1</OneElfS>
@@ -412,6 +412,16 @@
               <FileName>init.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\Core\Bsp\init.c</FilePath>
+            </File>
+            <File>
+              <FileName>bsp_debug.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Core\Bsp\bsp_debug.c</FilePath>
+            </File>
+            <File>
+              <FileName>bsp_json.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Core\Bsp\bsp_json.c</FilePath>
             </File>
           </Files>
         </Group>

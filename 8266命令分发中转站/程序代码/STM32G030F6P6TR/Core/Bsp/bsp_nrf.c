@@ -1,13 +1,14 @@
 #include "../Bsp/bsp_nrf.h"
 
-uint8_t Long;
-//uint8_t TX_ADDRESS[5] = {0x34,0x43,0x10,0x10,0x01}; //本地地址 
-//uint8_t RX_ADDRESS[5] = {0x34,0x43,0x10,0x10,0x01}; //接收地址
-uint8_t TX_ADDRESS[5] = {0xA2,0xA5,0xA2,0xA5,0xA2}; //中转站地址
-uint8_t RX_ADDRESS[5] = {0xA2,0xA5,0xA2,0xA5,0xA2}; //接收地址
-uint8_t tx_buf[]={"这是来自G030F6P6的消息\r\n"};
-uint8_t rx_buf[224];
+//uint8_t TX_ADDRESS[5] = {0xA2,0xA5,0xA2,0xA5,0xA2}; //中转站地址
+//uint8_t RX_ADDRESS[5] = {0xA2,0xA5,0xA2,0xA5,0xA2}; //接收地址
+uint8_t TX_ADDRESS[5] = {0xA3,0xA3,0xA3,0xA3,0xA3}; //中转站地址
+uint8_t RX_ADDRESS[5] = {0xA3,0xA3,0xA3,0xA3,0xA3}; //接收地址
 
+//uint8_t tx_buf[]={"这是来自G030F6P6的消息\r\n"};
+//uint8_t rx_buf[224];
+
+NRF_STR nrf_str;
 
 uint8_t SPI_RW_Reg( uint8_t reg, uint8_t value ) {//读写寄存器
 	uint8_t status; 
@@ -46,7 +47,7 @@ uint8_t Nrf24l01_Init( NRF24L01_TypeDef *nrf ) {
 	SPI_RW_Reg( FLUSH_TX, NOP );//清空FIFO
 	SPI_RW_Reg( FLUSH_RX, NOP );//清空FIFO
 	SPI_RW_Reg( NRF_WRITE_REG + CONFIG, nrf->CONFIG_ );//CONFIG 工作模式配置寄存器
-	i = SPI_RW_Reg( NRF_READ_REG+CONFIG, NOP );
+	i = SPI_RW_Reg( NRF_READ_REG + CONFIG, NOP );
 	SPI_RW_Reg( NRF_WRITE_REG + EN_AA, nrf->EN_AA_ );//EN_AA 使能自动确认功能(Enhanced ShockBurst)
 	SPI_RW_Reg( NRF_WRITE_REG + EN_RXADDR, nrf->EN_RXADDR_ );//EN_RXADDR 使能接收通道(0~5)
 	SPI_RW_Reg( NRF_WRITE_REG + SETUP_AW, nrf->SETUP_AW_ );//SETUP_AW 设置地址宽度[3-5]byte
@@ -55,16 +56,17 @@ uint8_t Nrf24l01_Init( NRF24L01_TypeDef *nrf ) {
 	SPI_RW_Reg( NRF_WRITE_REG + RF_SETUP, nrf->RF_SETUP_ );//RF_SETUP 射频设置寄存器
 	SPI_RW_Reg( NRF_WRITE_REG + STATUS, nrf->STATUS_ );//STATUS 中断状态寄存器
 	SPI_Write_Buf( NRF_WRITE_REG + RX_ADDR_P0, nrf->RX_ADDR_P0_, nrf->SETUP_AW_+2 );//配置数据通道0地址
-	SPI_Write_Buf( NRF_WRITE_REG + RX_ADDR_P1, nrf->RX_ADDR_P1_, nrf->SETUP_AW_+2 );//配置数据通道1地址
-	SPI_Write_Buf( NRF_WRITE_REG + RX_ADDR_P2, nrf->RX_ADDR_P2_, nrf->SETUP_AW_+2 );//配置数据通道2地址
-	SPI_Write_Buf( NRF_WRITE_REG + RX_ADDR_P3, nrf->RX_ADDR_P3_, nrf->SETUP_AW_+2 );//配置数据通道3地址
-	SPI_Write_Buf( NRF_WRITE_REG + RX_ADDR_P4, nrf->RX_ADDR_P4_, nrf->SETUP_AW_+2 );//配置数据通道4地址
-	SPI_Write_Buf( NRF_WRITE_REG + RX_ADDR_P5, nrf->RX_ADDR_P5_, nrf->SETUP_AW_+2 );//配置数据通道5地址
+	//SPI_Write_Buf( NRF_WRITE_REG + RX_ADDR_P1, nrf->RX_ADDR_P1_, nrf->SETUP_AW_+2 );//配置数据通道1地址
+	//SPI_Write_Buf( NRF_WRITE_REG + RX_ADDR_P2, nrf->RX_ADDR_P2_, nrf->SETUP_AW_+2 );//配置数据通道2地址
+	//SPI_Write_Buf( NRF_WRITE_REG + RX_ADDR_P3, nrf->RX_ADDR_P3_, nrf->SETUP_AW_+2 );//配置数据通道3地址
+	//SPI_Write_Buf( NRF_WRITE_REG + RX_ADDR_P4, nrf->RX_ADDR_P4_, nrf->SETUP_AW_+2 );//配置数据通道4地址
+	//SPI_Write_Buf( NRF_WRITE_REG + RX_ADDR_P5, nrf->RX_ADDR_P5_, nrf->SETUP_AW_+2 );//配置数据通道5地址
 	SPI_Write_Buf( NRF_WRITE_REG + TX_ADDR, nrf->TX_ADDR_, nrf->SETUP_AW_+2 );//配置TX端发送地址
-	memset(rx_buf, 0, nrf->SETUP_AW_+2);
-	SPI_Read_Buf( TX_ADDR, rx_buf, nrf->SETUP_AW_+2 );
+	
+	memset(nrf_str.rxBuf, 0, nrf->SETUP_AW_+2);
+	SPI_Read_Buf( TX_ADDR, nrf_str.rxBuf, nrf->SETUP_AW_+2 );
 	for ( i=0; i<nrf->SETUP_AW_+2; i++ ) {
-		if ( rx_buf[i] != nrf->TX_ADDR_[i] ) {
+		if ( nrf_str.rxBuf[i] != nrf->TX_ADDR_[i] ) {
 			return pdFALSE;
 		}
 	}
@@ -99,6 +101,15 @@ void Rx_Mode( void ) {
 void nrf_init(void) {
 	NRF24L01_TypeDef nrf;
 	memset( &nrf, 0, sizeof(NRF24L01_TypeDef) );
+		
+	//初始化结构体
+	nrf_str.txAddr = TX_ADDRESS;
+	nrf_str.rxAddr = RX_ADDRESS;
+	nrf_str.txBuf = pvPortMalloc(33);
+	nrf_str.rxBuf = pvPortMalloc(33);
+	memset(nrf_str.txBuf, 0, 33);
+	memset(nrf_str.rxBuf, 0, 33);
+	
 	//nrf.CONFIG_ = EN_CRC|CRCO|PWR_UP|PRIM_RX;//RX
 	nrf.CONFIG_ = EN_CRC|CRCO|PWR_UP;//TX
 	nrf.EN_AA_ = ENAA_P0;//|ENAA_P1|ENAA_P2|ENAA_P3|ENAA_P4|ENAA_P5;
@@ -108,45 +119,35 @@ void nrf_init(void) {
 	nrf.RF_CH_ = 2;//2402MHz
 	nrf.RF_SETUP_ = RF_DR_1Mbps|RF_PWR_0dB;
 	nrf.STATUS_ = RX_DR|TX_DS|MAX_RT;//清空标志
-	memcpy( nrf.RX_ADDR_P0_, TX_ADDRESS, 5 );
-	memcpy( nrf.TX_ADDR_, TX_ADDRESS, 5 );
+	memcpy( nrf.RX_ADDR_P0_, nrf_str.rxAddr, 5 );
+	memcpy( nrf.TX_ADDR_, nrf_str.txAddr, 5 );
 	nrf.RX_PW_P0_ = 32;
 	nrf.DYNPD_ = 0;
 	nrf.FEATURE_ = 0;
 	
 	if ( Nrf24l01_Init( &nrf ) != pdTRUE ) {
-		printf("***spi1 nrf24l01 初始化失败!\r\n");
+		printf("*** nrf24l01 初始化失败!\r\n");
 	} else {
-		printf("nrf1 初始化成功!\r\n");
+		printf("nrf 初始化成功!\r\n");
 	}
 	
 }
 
 void nrf_receive_data(void) {
-	uint8_t sta;//,temp;
+	uint8_t sta;
 	sta = SPI_RW_Reg( NRF_READ_REG + STATUS, NOP );//0xFF空指令
 	if ( sta & RX_DR ) {
-		SPI_Read_Buf( RD_RX_PLOAD, rx_buf, RX_PLOAD_WIDTH );
-		printf("%s\n",rx_buf);
+		SPI_Read_Buf( RD_RX_PLOAD, nrf_str.rxBuf, RX_PLOAD_WIDTH );
+		printf("\r\nnrf收到数据:%s\n",nrf_str.rxBuf);
 		//SPI_RW_Reg(FLUSH_RX,NOP);
 		SPI_RW_Reg( NRF_WRITE_REG + STATUS, sta );
 	}
-	//HAL_NVIC_EnableIRQ(EXTI17_IRQn);
+	HAL_NVIC_EnableIRQ(NRF_IRQ_EXTI_IRQn);
 }
 
 void nrf_send_data( void ) {
-	SPI_Write_Buf(WR_TX_PLOAD , tx_buf , 32 );
+	SPI_Write_Buf(WR_TX_PLOAD , nrf_str.txBuf , 32 );
 }
 
-void receive( void ) {
-	uint8_t sta;
-	//if ( HAL_GPIO_ReadPin( NRF_IRQ_GPIO_Port, NRF_IRQ_Pin ) == GPIO_PIN_SET ) {
-		sta = SPI_RW_Reg( NRF_READ_REG + STATUS, NOP );//0xFF空指令
-		if ( sta & RX_DR ) {
-			SPI_Read_Buf( RD_RX_PLOAD, rx_buf, RX_PLOAD_WIDTH );
-			printf("收到NRF数据: %s\r\n",rx_buf);
-			//SPI_RW_Reg(FLUSH_RX,NOP);
-			SPI_RW_Reg( NRF_WRITE_REG + STATUS, sta );
-		}
-	//}
-}
+
+
