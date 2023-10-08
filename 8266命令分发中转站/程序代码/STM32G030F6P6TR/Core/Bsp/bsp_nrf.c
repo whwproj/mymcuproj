@@ -3,18 +3,17 @@
 uint8_t Long;
 //uint8_t TX_ADDRESS[5] = {0x34,0x43,0x10,0x10,0x01}; //本地地址 
 //uint8_t RX_ADDRESS[5] = {0x34,0x43,0x10,0x10,0x01}; //接收地址
-uint8_t TX_ADDRESS[5] = {0xA3,0xA3,0xA3,0xA3,0xA3}; //本地地址 
-uint8_t RX_ADDRESS[5] = {0xA3,0xA3,0xA3,0xA3,0xA3}; //接收地址
+uint8_t TX_ADDRESS[5] = {0xA2,0xA5,0xA2,0xA5,0xA2}; //中转站地址
+uint8_t RX_ADDRESS[5] = {0xA2,0xA5,0xA2,0xA5,0xA2}; //接收地址
 uint8_t tx_buf[]={"这是来自G030F6P6的消息\r\n"};
 uint8_t rx_buf[224];
 
-void NRF2_Init(void);
-	
+
 uint8_t SPI_RW_Reg( uint8_t reg, uint8_t value ) {//读写寄存器
 	uint8_t status; 
 	CSN_Low();
-	HAL_SPI_Transmit( &hspi1, &reg, 1, 100 );
-	HAL_SPI_TransmitReceive( &hspi1, &value, &status, 1, 100 );
+	HAL_SPI_Transmit( &NRF_SPI_Handle, &reg, 1, 100 );
+	HAL_SPI_TransmitReceive( &NRF_SPI_Handle, &value, &status, 1, 100 );
 	CSN_High();
 	return(status);
 } 
@@ -22,8 +21,8 @@ uint8_t SPI_RW_Reg( uint8_t reg, uint8_t value ) {//读写寄存器
 uint8_t SPI_Write_Buf( uint8_t reg, uint8_t *pBuf, uint8_t len ) {//多字节写入
 	uint8_t status; 
 	CSN_Low();
-	HAL_SPI_TransmitReceive( &hspi1, &reg, &status, 1, 100 );
-	HAL_SPI_Transmit( &hspi1, pBuf, len, 100 );
+	HAL_SPI_TransmitReceive( &NRF_SPI_Handle, &reg, &status, 1, 100 );
+	HAL_SPI_Transmit( &NRF_SPI_Handle, pBuf, len, 100 );
 	CSN_High();
 	return(status);  
 }  
@@ -31,8 +30,8 @@ uint8_t SPI_Write_Buf( uint8_t reg, uint8_t *pBuf, uint8_t len ) {//多字节写
 uint8_t SPI_Read_Buf( uint8_t reg, uint8_t *pBuf, uint8_t len ) {//多字节读取
 	uint8_t status; 
 	CSN_Low();
-	HAL_SPI_TransmitReceive( &hspi1, &reg, &status, 1, 100 );
-	HAL_SPI_Receive( &hspi1, pBuf, len, 100);
+	HAL_SPI_TransmitReceive( &NRF_SPI_Handle, &reg, &status, 1, 100 );
+	HAL_SPI_Receive( &NRF_SPI_Handle, pBuf, len, 100);
 	CSN_High();
 	return(status); // return nRF24L01 status uchar 
 }
@@ -41,9 +40,9 @@ uint8_t SPI_Read_Buf( uint8_t reg, uint8_t *pBuf, uint8_t len ) {//多字节读�
 uint8_t Nrf24l01_Init( NRF24L01_TypeDef *nrf ) {
 	uint8_t i;
 	CE_High();
-	vTaskDelay(100);
+	osDelay(100);
 	CE_Low();
-	vTaskDelay(100);
+	osDelay(100);
 	SPI_RW_Reg( FLUSH_TX, NOP );//清空FIFO
 	SPI_RW_Reg( FLUSH_RX, NOP );//清空FIFO
 	SPI_RW_Reg( NRF_WRITE_REG + CONFIG, nrf->CONFIG_ );//CONFIG 工作模式配置寄存器

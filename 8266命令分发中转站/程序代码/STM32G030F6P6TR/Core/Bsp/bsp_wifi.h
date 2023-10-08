@@ -113,16 +113,6 @@
 /*---- check task bits end ----------------*/
 
 
-
-typedef struct _SESSION {
-	uint8_t onlineSta;//0:offline 1:online
-	uint8_t pid;
-	uint8_t dir;//main:0 sub1:1...
-	uint8_t dataLen;
-	uint8_t heart;
-	char data[128];
-} SESSION;
-
 typedef struct _WIFI_STR {
 	uint8_t *txBuff;
 	uint8_t *rxBuff;
@@ -133,17 +123,11 @@ typedef struct _WIFI_STR {
 	uint8_t tcp1_errnum;//tcp1连接失败次数
 	uint8_t wifiMode;
 	uint8_t updateLink;//wifi变更,待验证连接成功则存入flash 0:未变更 1:变更
-	//uint8_t heartBeatTime;//mqtt心跳包
+	
+	uint8_t sendLock;//mqtt心跳,mqtt数据不可同时发送,0:需等待 1:可发送
+	uint8_t mqttSta;//0:未连接 1:建立连接订阅主题完毕
+	uint8_t heartBeatTime;//mqtt心跳包
 } WIFI_STR;
-
-typedef struct _TCP_DATA {
-	char* data;
-	uint16_t len;
-} TCP_DATA;
-
-extern WIFI_STR wifi_str;
-//extern SESSION session[];
-
 
 extern WIFI_STR w_str;
 
@@ -168,7 +152,8 @@ void wifi_reset( void );//wifi复位
 void station_mode_init( void );//station模式初始化
 void station_and_ap_init( void );//station+AP模式初始化,供用户设置wifi账号密码并存入flash
 void wifi_uart_idle_callback( void );//wifi空闲中断回调执行函数
-
+void send_mqtt_heart_isr( void );//发送心跳ISR
+void send_mqtt_heart( void );//发送心跳
 
 #endif /*__BSP_WIFI__H*/
 

@@ -30,21 +30,24 @@
 #include "../Bsp/bsp_nrf.h"
 #include "../Bsp/bsp_led.h"
 #include "../Bsp/bsp_flash.h"
+#include "../Bsp/bsp_json.h"
 
 /*---- Tools -------------------------*/
 #include "../Tools/tool_url.h"
-//#include "../Tools/cJSON.h"
+#include "../Tools/cJSON.h"
 #include "../Tools/mqtt.h"
 #include "../Tools/crc.h"
 
 
 #define 	debugTaskSize								256
-#define 	wifi_control_taskSize				128
+#define 	wifi_control_taskSize				192
 #define 	wifi_tcp_connect_taskSize		128
+#define 	nrf_control_taskSize				192
 
 extern TaskHandle_t debugTaskHandle;
 extern TaskHandle_t wifi_control_taskHandle;
 extern TaskHandle_t wifi_tcp_connect_taskHandle;
+extern TaskHandle_t nrf_control_taskHandle;
 
 #endif /*__COMMON__H*/
 

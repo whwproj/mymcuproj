@@ -190,6 +190,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
   }
 	if (htim->Instance == TIM3) {
 		led_tim_callback();
+		send_mqtt_heart_isr();
   }
   /* USER CODE END Callback 1 */
 }

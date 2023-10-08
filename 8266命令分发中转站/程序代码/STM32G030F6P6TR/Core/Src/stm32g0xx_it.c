@@ -204,7 +204,7 @@ void USART1_IRQHandler(void)
   HAL_UART_IRQHandler(&huart1);
   /* USER CODE BEGIN USART1_IRQn 1 */
 	if((__HAL_UART_GET_FLAG(&huart1,UART_FLAG_IDLE) != RESET)) {
-		__HAL_UART_CLEAR_IDLEFLAG(&huart1);  //清除空闲�?
+		__HAL_UART_CLEAR_IDLEFLAG(&huart1);  //清除空闲
 		xTaskNotifyFromISR( wifi_control_taskHandle, 1U<<WIFI_UART_IDLE_CALLBACK, eSetBits, &phpt );
 		portYIELD_FROM_ISR( phpt );
 	} else if ( __HAL_UART_GET_FLAG( &huart1, UART_FLAG_TC ) != RESET ) {

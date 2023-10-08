@@ -55,6 +55,8 @@
 #define TX_FULL		1<<0	//1: TX FIFO full.
 
 
+#define NRF_SPI_Handle 	hspi1
+
 /*---------------------------- 位操作 -----------------------------------*/
 #define CSN_Low()						NRF_CSN_GPIO_Port->BRR = NRF_CSN_Pin
 #define CSN_High()					NRF_CSN_GPIO_Port->BSRR = NRF_CSN_Pin
@@ -65,8 +67,9 @@
 /*--------------------------- 位操作 ---------------------------------*/
 
 /*-------------------- Task start --------------------*/
-#define NRF_RX_EVENT	0
-#define NRF_TX_EVENT	0
+#define NRF_INIT_EVENT	0
+#define NRF_TX_EVENT		1
+#define NRF_RX_EVENT		2
 /*-------------------- Task end --------------------*/
 
 
@@ -221,11 +224,11 @@ typedef struct {
 	uint8_t RPD_;					/* 可用于检测信号强度	*/													/**** 仅可读 ****/
 	
 	uint8_t RX_ADDR_P0_[5];	/* 通道0地址 */
-	uint8_t RX_ADDR_P1_[5];	/* 通道1地址 */
-	uint8_t RX_ADDR_P2_[5];	/* 通道2地址 */
-	uint8_t RX_ADDR_P3_[5];	/* 通道3地址 */
-	uint8_t RX_ADDR_P4_[5];	/* 通道4地址 */
-	uint8_t RX_ADDR_P5_[5];	/* 通道5地址 */
+	//uint8_t RX_ADDR_P1_[5];	/* 通道1地址 */
+	//uint8_t RX_ADDR_P2_[5];	/* 通道2地址 */
+	//uint8_t RX_ADDR_P3_[5];	/* 通道3地址 */
+	//uint8_t RX_ADDR_P4_[5];	/* 通道4地址 */
+	//uint8_t RX_ADDR_P5_[5];	/* 通道5地址 */
 	
 	uint8_t TX_ADDR_[5];	/* 发送地址 */
 	
