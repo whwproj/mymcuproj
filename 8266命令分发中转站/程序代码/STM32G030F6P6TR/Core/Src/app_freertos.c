@@ -213,7 +213,9 @@ void wifi_tcp_connect_task_fun(void const * argument) {
 	uint32_t newBits, oldBits = 0;
   for(;;) {
 		//xTaskNotifyWait( pdFALSE, portMAX_DELAY, &newBits, portMAX_DELAY );
-		xTaskNotifyWait( pdFALSE, portMAX_DELAY, &newBits, 10000 );
+		//xTaskNotifyWait( pdFALSE, portMAX_DELAY, &newBits, 10000 );
+		xTaskNotifyWait( pdFALSE, portMAX_DELAY, &newBits, 800 );
+		nrf_send_data();
 
 		//printf("\r\n------ 单个任务堆栈的历史最小内存 总大小 / 历史最小内存 start ------\r\n");
 //		printf("\r\n--- all / min \r\n");
@@ -239,11 +241,18 @@ void nrf_control_task_fun(void const * argument) {
 		}
 		if ( oldBits & (1U<<NRF_TX_EVENT) ) {
 			oldBits &=~ (1U<<NRF_TX_EVENT);
-			//debug_parse_data_fun();
+			Tx_Mode();
+			vTaskDelay(100);
+			nrf_send_data();
+			vTaskDelay(100);
+			//Rx_Mode();
+			
 		}
 		if ( oldBits & (1U<<NRF_RX_EVENT) ) {
 			oldBits &=~ (1U<<NRF_RX_EVENT);
-			//nrf_receive_data();
+			nrf_receive_data();
+			//vTaskDelay(500);
+			//xTaskNotify( nrf_control_taskHandle, 1U<<NRF_TX_EVENT, eSetBits );
 		}
 		
   }
