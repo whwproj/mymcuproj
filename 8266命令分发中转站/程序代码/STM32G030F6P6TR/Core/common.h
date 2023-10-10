@@ -3,7 +3,7 @@
 
 
 //#define WIFIDEBUG
-//#define DEBUG_ENABLE
+#define DEBUG_ENABLE
 //#define UNUSE_WIFI
 //INCLUDE_uxTaskGetStackHighWaterMark 0
 

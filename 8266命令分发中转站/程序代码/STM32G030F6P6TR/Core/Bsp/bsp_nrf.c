@@ -4,6 +4,7 @@
 //uint8_t RX_ADDRESS[5] = {0xA2,0xA5,0xA2,0xA5,0xA2}; //接收地址
 uint8_t TX_ADDRESS[5] = {0xA3,0xA3,0xA3,0xA3,0xA3}; //中转站地址
 uint8_t RX_ADDRESS[5] = {0xA3,0xA3,0xA3,0xA3,0xA3}; //接收地址
+#define DEVICE_ID 0
 
 //uint8_t tx_buf[]={"这是来自G030F6P6的消息\r\n"};
 //uint8_t rx_buf[224];
@@ -84,19 +85,25 @@ uint8_t Nrf24l01_Init( NRF24L01_TypeDef *nrf ) {
 
 void Tx_Mode( void ) {
 	uint8_t status;
+	CE_Low();osDelay(1);
 	CSN_Low();
-	status = SPI_RW_Reg( RD_RX_PLOAD + EN_AA, NOP ) & ( ~(PRIM_RX) );
-	SPI_RW_Reg( NRF_WRITE_REG + EN_AA, status );
+	status = SPI_RW_Reg( NRF_READ_REG + CONFIG, NOP ) & ( ~(PRIM_RX) );
+	SPI_RW_Reg( NRF_WRITE_REG + CONFIG, status );
 	CSN_High();
+	CE_High();osDelay(1);
 }
 
 void Rx_Mode( void ) {
 	uint8_t status;
+	CE_Low();osDelay(1);
 	CSN_Low();
-	status = SPI_RW_Reg( RD_RX_PLOAD + EN_AA, NOP ) | ( PRIM_RX );
-	SPI_RW_Reg( NRF_WRITE_REG + EN_AA, status );
+	status = SPI_RW_Reg( NRF_READ_REG + CONFIG, NOP ) | ( PRIM_RX );
+	SPI_RW_Reg( NRF_WRITE_REG + CONFIG, status );
 	CSN_High();
+	CE_High();osDelay(1);
 }
+
+
 
 void nrf_init(void) {
 	NRF24L01_TypeDef nrf;
@@ -111,8 +118,8 @@ void nrf_init(void) {
 	memset(nrf_str.rxBuf, 0, 33);
 	sprintf((char*)nrf_str.txBuf, "STM32G030F6 666");
 	
-	//nrf.CONFIG_ = EN_CRC|CRCO|PWR_UP|PRIM_RX;//RX
-	nrf.CONFIG_ = EN_CRC|CRCO|PWR_UP;//TX
+	nrf.CONFIG_ = MASK_MAX_RT|MASK_TX_DS|EN_CRC|CRCO|PWR_UP|PRIM_RX;//RX
+	//nrf.CONFIG_ = MASK_MAX_RT|MASK_TX_DS|EN_CRC|CRCO|PWR_UP;//TX
 	nrf.EN_AA_ = ENAA_P0;//|ENAA_P1|ENAA_P2|ENAA_P3|ENAA_P4|ENAA_P5;
 	nrf.EN_RXADDR_ = ERX_P0;//|ERX_P1|ERX_P2|ERX_P3|ERX_P4|ERX_P5;
 	nrf.SETUP_AW_ = AW_WIDTH_4_BYTE;
@@ -135,21 +142,30 @@ void nrf_init(void) {
 }
 
 void nrf_receive_data(void) {
-	uint8_t sta;
+	uint8_t sta,temp;
 	sta = SPI_RW_Reg( NRF_READ_REG + STATUS, NOP );//0xFF空指令
 	if ( sta & RX_DR ) {
 		SPI_Read_Buf( RD_RX_PLOAD, nrf_str.rxBuf, RX_PLOAD_WIDTH );
-		printf("\r\nnrf收到数据:%s\n",nrf_str.rxBuf);
+		printf("%s\n",nrf_str.rxBuf);
 		//SPI_RW_Reg(FLUSH_RX,NOP);
-		SPI_RW_Reg( NRF_WRITE_REG + STATUS, sta );
 	}
+	taskENTER_CRITICAL();
+	SPI_RW_Reg( NRF_WRITE_REG + STATUS, sta );
+	taskEXIT_CRITICAL();
 	HAL_NVIC_EnableIRQ(NRF_IRQ_EXTI_IRQn);
 }
 
+
 void nrf_send_data( void ) {
-	
 	SPI_Write_Buf(WR_TX_PLOAD , nrf_str.txBuf , 32 );
 }
 
+//解析数据
+void nrf_parse_data( void ) {
+	nrf_str.rxBuf
+}
 
+void nrf_register_device( void ) {
+
+}
 

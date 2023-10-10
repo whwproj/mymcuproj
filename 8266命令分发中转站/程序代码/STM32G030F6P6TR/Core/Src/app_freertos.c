@@ -143,13 +143,13 @@ void StartDefaultTask(void const * argument)
 	#endif
 		HAL_TIM_Base_Start_IT( &htim3 );
 		HAL_TIM_Base_Start( &htim3 );
-		led_nrf_flicker_on();
-		led_con_flicker_on();
+//		led_nrf_flicker_on();
+//		led_con_flicker_on();
 
-		xTaskNotify( wifi_control_taskHandle, 1U<<WIFI_DEVICE_RESET, eSetBits );
-		vTaskDelay(1200);
-		xTaskNotify( wifi_control_taskHandle, 1U<<WIFI_STATION_MODE_INIT, eSetBits );
-		vTaskDelay(1000);
+//		xTaskNotify( wifi_control_taskHandle, 1U<<WIFI_DEVICE_RESET, eSetBits );
+//		vTaskDelay(1200);
+//		xTaskNotify( wifi_control_taskHandle, 1U<<WIFI_STATION_MODE_INIT, eSetBits );
+//		vTaskDelay(1000);
 		
 		xTaskNotify( nrf_control_taskHandle, 1U<<NRF_INIT_EVENT, eSetBits );
 		vTaskDelay(500);
@@ -187,35 +187,41 @@ void wifi_control_task_fun(void const * argument) {
   for(;;) {
 		xTaskNotifyWait( pdFALSE, portMAX_DELAY, &newBits, portMAX_DELAY );
 		oldBits |= newBits;
-		if ( oldBits & (1U<<WIFI_DEVICE_RESET) ) {
-			oldBits &=~ (1U<<WIFI_DEVICE_RESET);
-			wifi_reset();
-		}
-		if ( oldBits & (1U<<WIFI_UART_IDLE_CALLBACK) ) {
-			oldBits &=~ (1U<<WIFI_UART_IDLE_CALLBACK);
-			wifi_uart_idle_callback();
-		}
-		if ( oldBits & (1U<<WIFI_STATION_MODE_INIT) ) {
-			oldBits &=~ (1U<<WIFI_STATION_MODE_INIT);
-			station_mode_init();
-		}
-		if ( oldBits & (1U<<WIFI_STA_AP_MODE_INIT) ) {
-			oldBits &=~ (1U<<WIFI_STA_AP_MODE_INIT);
-			station_and_ap_init();
-		}
-		if ( oldBits & (1U<<WIFI_SEND_HEART) ) {
-			oldBits &=~ (1U<<WIFI_SEND_HEART);
-			send_mqtt_heart();
-		}
+//		if ( oldBits & (1U<<WIFI_DEVICE_RESET) ) {
+//			oldBits &=~ (1U<<WIFI_DEVICE_RESET);
+//			wifi_reset();
+//		}
+//		if ( oldBits & (1U<<WIFI_UART_IDLE_CALLBACK) ) {
+//			oldBits &=~ (1U<<WIFI_UART_IDLE_CALLBACK);
+//			wifi_uart_idle_callback();
+//		}
+//		if ( oldBits & (1U<<WIFI_STATION_MODE_INIT) ) {
+//			oldBits &=~ (1U<<WIFI_STATION_MODE_INIT);
+//			station_mode_init();
+//		}
+//		if ( oldBits & (1U<<WIFI_STA_AP_MODE_INIT) ) {
+//			oldBits &=~ (1U<<WIFI_STA_AP_MODE_INIT);
+//			station_and_ap_init();
+//		}
+//		if ( oldBits & (1U<<WIFI_SEND_HEART) ) {
+//			oldBits &=~ (1U<<WIFI_SEND_HEART);
+//			send_mqtt_heart();
+//		}
   }
 }
 void wifi_tcp_connect_task_fun(void const * argument) {
 	uint32_t newBits, oldBits = 0;
   for(;;) {
-		//xTaskNotifyWait( pdFALSE, portMAX_DELAY, &newBits, portMAX_DELAY );
+		xTaskNotifyWait( pdFALSE, portMAX_DELAY, &newBits, 1000 );
+		xTaskNotify(nrf_control_taskHandle, 1U<<NRF_TX_EVENT, eSetBits);
+		for ( ;; ) {
+			vTaskDelay(10);
+			xTaskNotify(nrf_control_taskHandle, 1U<<NRF_TX_EVENT, eSetBits);
+		}
+		
 		//xTaskNotifyWait( pdFALSE, portMAX_DELAY, &newBits, 10000 );
-		xTaskNotifyWait( pdFALSE, portMAX_DELAY, &newBits, 800 );
-		nrf_send_data();
+		//xTaskNotifyWait( pdFALSE, portMAX_DELAY, &newBits, 800 );
+		//nrf_send_data();
 
 		//printf("\r\n------ 单个任务堆栈的历史最小内存 总大小 / 历史最小内存 start ------\r\n");
 //		printf("\r\n--- all / min \r\n");
@@ -230,7 +236,8 @@ void wifi_tcp_connect_task_fun(void const * argument) {
 
 /*--------------- NRF24 ----------------*/
 void nrf_control_task_fun(void const * argument) {
-	uint32_t newBits, oldBits = 0;
+	uint32_t newBits, i, t_start, t_end, oldBits = 0;
+	uint8_t sta;
   for(;;) {
 		//xTaskNotifyWait( pdFALSE, ~(1U<<DEBUG_SEND_OK), &newBits, portMAX_DELAY );
 		xTaskNotifyWait( pdFALSE, portMAX_DELAY, &newBits, portMAX_DELAY );
@@ -241,18 +248,60 @@ void nrf_control_task_fun(void const * argument) {
 		}
 		if ( oldBits & (1U<<NRF_TX_EVENT) ) {
 			oldBits &=~ (1U<<NRF_TX_EVENT);
+			//printf("...tx\r\n");
+			HAL_NVIC_DisableIRQ(NRF_IRQ_EXTI_IRQn);
 			Tx_Mode();
-			vTaskDelay(100);
 			nrf_send_data();
-			vTaskDelay(100);
-			//Rx_Mode();
+			t_start = HAL_GetTick();
+			for ( i=0; i<0xFF; i++ ) {
+				sta = SPI_RW_Reg( NRF_READ_REG + STATUS, NOP );
+				if ( !(sta&0x01) ) { /*printf( "数据通道为空,i计数次数:%d\r\n", i );*/break; }
+			}
+			t_end = HAL_GetTick();
+			if ( i==0xFF ) {
+				printf("应答超时 清空发送缓存\r\n"); 
+			}
+			
+			//printf("tx time: %d\r\n", t_end-t_start);
+			Rx_Mode();
+			taskENTER_CRITICAL();
+			SPI_RW_Reg( NRF_WRITE_REG + STATUS, 0xF0 );
+			SPI_RW_Reg( FLUSH_RX,NOP );
+			SPI_RW_Reg( FLUSH_TX,NOP );
+			Rx_Mode();
+			taskEXIT_CRITICAL();
+			__HAL_GPIO_EXTI_CLEAR_IT(NRF_IRQ_Pin);
+			HAL_NVIC_EnableIRQ(NRF_IRQ_EXTI_IRQn);
 			
 		}
 		if ( oldBits & (1U<<NRF_RX_EVENT) ) {
 			oldBits &=~ (1U<<NRF_RX_EVENT);
+			//printf("...rx\r\n");
 			nrf_receive_data();
-			//vTaskDelay(500);
-			//xTaskNotify( nrf_control_taskHandle, 1U<<NRF_TX_EVENT, eSetBits );
+			
+//			nrf1_receive_data();
+//			vTaskDelay(500);
+//			HAL_NVIC_DisableIRQ(EXTI4_IRQn);
+//			Tx_Mode(&hspi1);
+//			nrf1_send_data();
+//			for ( i=10; i>0; i-- ) {
+//				sta = SPI_RW_Reg( NRF_READ_REG + STATUS, NOP, &hspi1 );
+//				//已发送
+//				if ( !(sta & 0x01) ) break;
+//				vTaskDelay(1);
+//			}
+//			//无应答,清空缓存
+//			if ( i == 0 ) { SPI_RW_Reg( FLUSH_RX,NOP, &hspi1 );}
+//			
+//			Rx_Mode(&hspi1);
+//			sta = SPI_RW_Reg( NRF_READ_REG + STATUS, NOP, &hspi1 );
+//			SPI_RW_Reg( NRF_WRITE_REG + STATUS, sta, &hspi1 );
+//			__HAL_GPIO_EXTI_CLEAR_IT(SPI1_IRQ_Pin);
+//			HAL_NVIC_EnableIRQ(EXTI4_IRQn);
+		}
+		if ( oldBits & (1U<<NRF_PARSE_DATA) ) {
+			oldBits &=~ (1U<<NRF_PARSE_DATA);
+			nrf_parse_data();
 		}
 		
   }

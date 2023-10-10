@@ -222,5 +222,23 @@ void USART1_IRQHandler(void)
 }
 
 /* USER CODE BEGIN 1 */
-
+void USART2_IRQHandler(void)
+{
+  /* USER CODE BEGIN USART1_IRQn 0 */
+	BaseType_t phpt;
+  /* USER CODE END USART1_IRQn 0 */
+  HAL_UART_IRQHandler(&huart2);
+  /* USER CODE BEGIN USART1_IRQn 1 */
+	if((__HAL_UART_GET_FLAG(&huart2,UART_FLAG_IDLE) != RESET)) {
+		__HAL_UART_CLEAR_IDLEFLAG(&huart2);  //清除空闲
+		xTaskNotifyFromISR( debugTaskHandle, 1U<<DEBUG_PARSE_DATA, eSetBits, &phpt );
+		portYIELD_FROM_ISR( phpt );
+	} 
+	/*else if ( __HAL_UART_GET_FLAG( &huart1, UART_FLAG_TC ) != RESET ) {
+		__HAL_UART_CLEAR_FLAG( &huart1, UART_FLAG_TC );
+		xTaskNotifyFromISR( wifi_control_taskHandle, 1U<<WIFI_SEND_OK, eSetBits, &phpt );
+		portYIELD_FROM_ISR( phpt );
+	}*/
+  /* USER CODE END USART1_IRQn 1 */
+}
 /* USER CODE END 1 */

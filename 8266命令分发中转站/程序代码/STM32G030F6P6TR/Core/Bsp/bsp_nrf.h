@@ -70,6 +70,7 @@
 #define NRF_INIT_EVENT	0
 #define NRF_TX_EVENT		1
 #define NRF_RX_EVENT		2
+#define NRF_PARSE_DATA	3
 /*-------------------- Task end --------------------*/
 
 
