@@ -176,8 +176,9 @@ void SystemClock_Config(void)
   */
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
+	static uint8_t keyTime = 0;
   /* USER CODE BEGIN Callback 0 */
-
+	BaseType_t phpt;
   /* USER CODE END Callback 0 */
   if (htim->Instance == TIM14) {
     HAL_IncTick();
@@ -186,9 +187,28 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 	if (htim->Instance == TIM1) {
   }
 	if (htim->Instance == TIM3) {
-		led_tim_callback();
-		send_mqtt_heart_isr();
-  }
+		//按键定时
+		if ( str.preKey == 1 ) {
+			LED0_ON();
+			keyTime++;
+			if ( keyTime > 4 ) {//2s
+				keyTime = 0;
+				str.preKey = 0;
+				if ( str.regSta != 1 ) LED0_OFF();
+				HAL_NVIC_EnableIRQ(CFG_KEY_EXTI_IRQn);
+			}
+		} else if ( str.regSta == 1 ) {
+			LED0_TOGGLE();
+			
+		} else if ( str.regSta == 2 ) {//通信定时,10s发一次心跳
+			nrf_str.heartTime++;
+			if ( nrf_str.heartTime > 20 ) {
+				nrf_str.heartTime = 0;
+				str.regSta = 3;
+				xTaskNotifyFromISR( nrf_control_taskHandle, 1U<<NRF_REGISTER_DEVICE, eSetBits, &phpt );//发送心跳
+			}
+		}
+	}
   /* USER CODE END Callback 1 */
 }
 

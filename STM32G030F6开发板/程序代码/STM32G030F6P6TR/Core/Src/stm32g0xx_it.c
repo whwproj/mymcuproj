@@ -104,6 +104,51 @@ void HardFault_Handler(void)
 /******************************************************************************/
 
 /**
+  * @brief This function handles EXTI line 0 and line 1 interrupts.
+  */
+void EXTI0_1_IRQHandler(void)
+{
+  /* USER CODE BEGIN EXTI0_1_IRQn 0 */	
+	BaseType_t phpt;
+  /* USER CODE END EXTI0_1_IRQn 0 */
+  //HAL_GPIO_EXTI_IRQHandler(NRF_IRQ_Pin);
+  /* USER CODE BEGIN EXTI0_1_IRQn 1 */
+	if(__HAL_GPIO_EXTI_GET_IT(NRF_IRQ_Pin) != RESET) {
+		__HAL_GPIO_EXTI_CLEAR_IT(NRF_IRQ_Pin);
+		HAL_NVIC_DisableIRQ(NRF_IRQ_EXTI_IRQn);
+		nrf_str.heartTime = 0;
+		xTaskNotifyFromISR( nrf_control_taskHandle, 1U<<NRF_PARSE_DATA, eSetBits, &phpt );
+		portYIELD_FROM_ISR(phpt);
+	}
+  /* USER CODE END EXTI0_1_IRQn 1 */
+}
+
+/**
+  * @brief This function handles EXTI line 4 to 15 interrupts.
+  */
+void EXTI4_15_IRQHandler(void)
+{
+  /* USER CODE BEGIN EXTI4_15_IRQn 0 */
+	BaseType_t phpt;
+  /* USER CODE END EXTI4_15_IRQn 0 */
+  //HAL_GPIO_EXTI_IRQHandler(LED7_Pin);
+  /* USER CODE BEGIN EXTI4_15_IRQn 1 */
+	if(__HAL_GPIO_EXTI_GET_IT(CFG_KEY_PIN) != RESET) {
+		__HAL_GPIO_EXTI_CLEAR_IT(CFG_KEY_PIN);
+		HAL_NVIC_DisableIRQ(CFG_KEY_EXTI_IRQn);
+		str.preKey = 1;//按键按下
+		if ( str.regSta != 1 ) {//未在注册,开启注册
+			str.regSta = 1;
+			xTaskNotifyFromISR( nrf_control_taskHandle, 1U<<NRF_REGISTER_DEVICE, eSetBits, &phpt );
+		} else {//正在注册中,停止注册
+			str.regSta = 0;
+		}
+		portYIELD_FROM_ISR(phpt);
+	}
+  /* USER CODE END EXTI4_15_IRQn 1 */
+}
+
+/**
   * @brief This function handles TIM3 global interrupt.
   */
 void TIM3_IRQHandler(void)

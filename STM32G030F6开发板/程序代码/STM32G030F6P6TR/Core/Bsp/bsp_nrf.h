@@ -3,6 +3,8 @@
 
 #include "../common.h"
 
+#define DEVICE_ID 1
+
 //********************NRF24L01*********************** ************** 
 #define TX_PLOAD_WIDTH 32  // 20 uints TX payload 
 #define RX_PLOAD_WIDTH 32  // 20 uints TX payload  
@@ -58,8 +60,8 @@
 #define NRF_SPI_Handle 	hspi1
 
 /*---------------------------- 位操作 -----------------------------------*/
-#define CSN_Low()						NRF_CSN_GPIO_Port->BRR = NRF_CSN_Pin
-#define CSN_High()					NRF_CSN_GPIO_Port->BSRR = NRF_CSN_Pin
+#define CSN_Low()						SPI_CSN_GPIO_Port->BRR = SPI_CSN_Pin
+#define CSN_High()					SPI_CSN_GPIO_Port->BSRR = SPI_CSN_Pin
 #define CE_Low()						NRF_CE_GPIO_Port->BRR = NRF_CE_Pin
 #define CE_High()						NRF_CE_GPIO_Port->BSRR = NRF_CE_Pin
 #define IRQ_isHigh()				(NRF_IRQ_GPIO_Port->IDR)&NRF_IRQ_Pin
@@ -68,8 +70,10 @@
 
 /*-------------------- Task start --------------------*/
 #define NRF_INIT_EVENT	0
-#define NRF_TX_EVENT		1
-#define NRF_RX_EVENT		2
+#define NRF_SEND_DATA		1
+#define NRF_PARSE_DATA	2
+#define NRF_REGISTER_DEVICE		3
+#define NRF_STOP_REGISTER_DEVICE		4
 /*-------------------- Task end --------------------*/
 
 
@@ -202,8 +206,14 @@
 
 
 typedef struct _NRF_STR {
-	uint8_t *txAddr;
-	uint8_t *rxAddr;
+	uint16_t code;
+	//uint8_t deviceReg;//0:不注册 1:开启设备注册 2:已注册
+	//uint8_t cfgKey;//按键状态 0:未按下 1:按下
+	uint8_t sessionSta;//0:默认状态 1:接收命令状态 2:注册状态
+	uint8_t txBuffEmpty;//0:txBuff为空 1:txBuff非空,正在发送数据
+	uint8_t heartTime;//注册成功后空闲计时,10s后发一次心跳包
+	uint8_t txAddr[4];
+	uint8_t rxAddr[4];
 	uint8_t *txBuf;
 	uint8_t *rxBuf;
 } NRF_STR;
@@ -232,11 +242,11 @@ typedef struct {
 	uint8_t RPD_;					/* 可用于检测信号强度	*/													/**** 仅可读 ****/
 	
 	uint8_t RX_ADDR_P0_[5];	/* 通道0地址 */
-	//uint8_t RX_ADDR_P1_[5];	/* 通道1地址 */
-	//uint8_t RX_ADDR_P2_[5];	/* 通道2地址 */
-	//uint8_t RX_ADDR_P3_[5];	/* 通道3地址 */
-	//uint8_t RX_ADDR_P4_[5];	/* 通道4地址 */
-	//uint8_t RX_ADDR_P5_[5];	/* 通道5地址 */
+	uint8_t RX_ADDR_P1_[5];	/* 通道1地址 */
+	uint8_t RX_ADDR_P2_[5];	/* 通道2地址 */
+	uint8_t RX_ADDR_P3_[5];	/* 通道3地址 */
+	uint8_t RX_ADDR_P4_[5];	/* 通道4地址 */
+	uint8_t RX_ADDR_P5_[5];	/* 通道5地址 */
 	
 	uint8_t TX_ADDR_[5];	/* 发送地址 */
 	
@@ -258,7 +268,6 @@ typedef struct {
 
 extern NRF_STR nrf_str;
 
-
 uint8_t SPI_RW_Reg( uint8_t reg, uint8_t value );//读取寄存器
 uint8_t SPI_Write_Buf( uint8_t reg, uint8_t *pBuf, uint8_t len );//多字节写入
 uint8_t SPI_Read_Buf( uint8_t reg, uint8_t *pBuf, uint8_t len );//多字节读取
@@ -267,8 +276,9 @@ void Tx_Mode( void );
 void Rx_Mode( void );
 
 void nrf_init( void );
-void nrf_receive_data( void );//接收数据
-void nrf_send_data( void );
+int nrf_send_data( void );
+void nrf_register_device( void );
+void nrf_parse_data( void );//解析数据
 
 #endif /*__BSP_NRF__H*/
 
