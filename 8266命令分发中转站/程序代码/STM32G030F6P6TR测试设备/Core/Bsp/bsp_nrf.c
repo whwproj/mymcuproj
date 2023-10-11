@@ -1,12 +1,11 @@
 #include "../Bsp/bsp_nrf.h"
 
-uint8_t TX_ADDRESS[5] = {0xA0,0xA1,0xA2,0xA3,0xA4}; //中转站地址
-//uint8_t RX_ADDRESS[5] = {0xAB,0xCD,0xB2,0xB3,0xB4}; //接收地址
-
-#define DEVICE_ID 0
-
 NRF_STR nrf_str;
 
+static uint16_t craeteGrowthCode( void );
+static void nrf_replay_cmd( char* replay );
+static void wait_tx_buff_empty( void );
+	
 uint8_t SPI_RW_Reg( uint8_t reg, uint8_t value ) {//读写寄存器
 	uint8_t status; 
 	CSN_Low();
@@ -106,13 +105,17 @@ void nrf_init(void) {
 	memset( &nrf, 0, sizeof(NRF24L01_TypeDef) );
 		
 	//初始化结构体
-	nrf_str.txAddr = TX_ADDRESS;
-	nrf_str.rxAddr = RX_ADDRESS;
+	//中转站地址 0xA0,0xA1,0xA2,0xA3
+	nrf_str.txAddr[0] = 0xA0;
+	nrf_str.txAddr[1] = 0xA1;
+	nrf_str.txAddr[2] = 0xA2;
+	nrf_str.txAddr[3] = 0xA3;
 	nrf_str.txBuf = pvPortMalloc(33);
 	nrf_str.rxBuf = pvPortMalloc(33);
 	memset(nrf_str.txBuf, 0, 33);
 	memset(nrf_str.rxBuf, 0, 33);
-	sprintf((char*)nrf_str.txBuf, "STM32G030F6 666");
+	
+	nrf_register_device();
 	
 	nrf.CONFIG_ = MASK_MAX_RT|MASK_TX_DS|EN_CRC|CRCO|PWR_UP|PRIM_RX;//RX
 	//nrf.CONFIG_ = MASK_MAX_RT|MASK_TX_DS|EN_CRC|CRCO|PWR_UP;//TX
@@ -137,31 +140,154 @@ void nrf_init(void) {
 	
 }
 
-void nrf_receive_data(void) {
-	uint8_t sta,temp;
-	sta = SPI_RW_Reg( NRF_READ_REG + STATUS, NOP );//0xFF空指令
-	if ( sta & RX_DR ) {
-		SPI_Read_Buf( RD_RX_PLOAD, nrf_str.rxBuf, RX_PLOAD_WIDTH );
-		printf("%s\n",nrf_str.rxBuf);
-		//SPI_RW_Reg(FLUSH_RX,NOP);
-	}
-	taskENTER_CRITICAL();
-	SPI_RW_Reg( NRF_WRITE_REG + STATUS, sta );
-	taskEXIT_CRITICAL();
-	HAL_NVIC_EnableIRQ(NRF_IRQ_EXTI_IRQn);
-}
-
-
+//发送数据
 void nrf_send_data( void ) {
-	SPI_Write_Buf(WR_TX_PLOAD , nrf_str.txBuf , 32 );
+	int res = 0;
+	uint8_t sta;
+	
+	HAL_NVIC_DisableIRQ( NRF_IRQ_EXTI_IRQn );
+	
+	for ( int i,n=0; ; n++ ) {
+		Tx_Mode();
+		SPI_Write_Buf( WR_TX_PLOAD , nrf_str.txBuf , 32 );
+		for ( i=0; i<0xFF; i++ ) {
+			sta = SPI_RW_Reg( NRF_READ_REG + STATUS, NOP );
+			if ( !(sta&0x01) ) { /*printf( "数据通道为空,i计数次数:%d\r\n", i );*/break; }
+		}
+		taskENTER_CRITICAL();
+		SPI_RW_Reg( NRF_WRITE_REG + STATUS, 0xF0 );
+		SPI_RW_Reg( FLUSH_RX,NOP );
+		SPI_RW_Reg( FLUSH_TX,NOP );
+		taskEXIT_CRITICAL();
+		if ( i == 0xFF ) {//发送失败
+			if ( nrf_str.sessionSta == 2 ) {//注册状态跳过,一直发送
+			} else {
+				if ( n >= 5 ) {//通信失败
+					//xTaskNotify( handle, 1U<<xxx, eSetBits );
+				}
+			}
+			vTaskDelay(100); 
+			
+		} else {//发送成功,转Rx
+			break;
+		}
+	}
+	
+	nrf_str.txBuffEmpty = 0;//标记发送空闲
+	nrf_str.sessionSta = 0;//标记默认会话状态
+	Rx_Mode();
+	__HAL_GPIO_EXTI_CLEAR_IT(NRF_IRQ_Pin);
+	HAL_NVIC_EnableIRQ(NRF_IRQ_EXTI_IRQn);	
+		
 }
 
 //解析数据
 void nrf_parse_data( void ) {
-	nrf_str.rxBuf
+	char *str;
+	
+	uint8_t sta,temp;
+	
+	//while( nrf_str.sessionSta != 0 ){ vTaskDelay(100); }//等待默认状态
+	sta = SPI_RW_Reg( NRF_READ_REG + STATUS, NOP );//0xFF空指令
+	if ( sta & RX_DR ) {
+		SPI_Read_Buf( RD_RX_PLOAD, nrf_str.rxBuf, RX_PLOAD_WIDTH );
+		printf("%s\n",nrf_str.rxBuf);
+	}
+	SPI_RW_Reg( NRF_WRITE_REG + STATUS, sta );
+	HAL_NVIC_EnableIRQ(NRF_IRQ_EXTI_IRQn);
+	
+	if ( nrf_str.rxAddr[0] != DEVICE_ID ) {
+		return;
+	}
+	nrf_str.code = nrf_str.rxAddr[1]<<8 | nrf_str.rxAddr[2];
+	if ( nrf_str.rxAddr[3] != 0x01 ) {//msgType: 1:命令 中转站->设备
+		return;
+	}
+	str = (char*)&nrf_str.rxAddr[4];
+	if ( strstr( str, "test" ) != NULL ) {
+		nrf_replay_cmd("test success!");
+		xTaskNotify( executive_taskHandle, 1U<<EXECUT_TEST, eSetBits );
+		
+	} else if ( strstr( str, "xxx" ) != NULL ) {
+		
+		
+	}
+	memset( nrf_str.rxAddr, 0 , 33 );
+	nrf_str.sessionSta = 0;
 }
 
+
+//---------------------- 装载数据 ----------------------
+//注册设备
 void nrf_register_device( void ) {
-
+	uint16_t code;
+	if ( nrf_str.sessionSta == 2 ) {
+		//注册状态,跳过等待
+	} else {
+		wait_tx_buff_empty();//等待TX非空
+	}
+	memset( nrf_str.txBuf, 0, 33 );
+	nrf_str.txBuf[0] = DEVICE_ID;
+	code = craeteGrowthCode();
+	nrf_str.txBuf[1] = code >> 8;
+	nrf_str.txBuf[2] = code;
+	nrf_str.txBuf[3] = 0;
+	memcpy( &nrf_str.txBuf[4], nrf_str.rxAddr, 4 );
 }
+
+//推送数据
+void nrf_push_data( char* pdata ) {
+	uint16_t code;
+	wait_tx_buff_empty();//等待TX非空
+	memset( nrf_str.txBuf, 0, 33 );
+	nrf_str.txBuf[0] = DEVICE_ID;
+	code = craeteGrowthCode();
+	nrf_str.txBuf[1] = code >> 8;
+	nrf_str.txBuf[2] = code;
+	nrf_str.txBuf[3] = 0x03;//msgType: 3:推送 设备->中转站
+	if ( strlen( pdata ) <= 28 ) {
+		sprintf( (char*)&nrf_str.txBuf[4], "%s", pdata );
+	} else {
+		sprintf( (char*)&nrf_str.txBuf[4], "data too long..." );
+	}
+	xTaskNotify( nrf_control_taskHandle, 1U<<NRF_TX_EVENT, eSetBits );
+}
+
+//回复命令
+static void nrf_replay_cmd( char* replay ) {
+	wait_tx_buff_empty();//等待TX非空
+	memset( nrf_str.txBuf, 0, 33 );
+	nrf_str.txBuf[0] = DEVICE_ID;
+	nrf_str.txBuf[1] = nrf_str.code >> 8;
+	nrf_str.txBuf[2] = nrf_str.code;
+	nrf_str.txBuf[3] = 2;//msgType: 2:回复 设备->中转站
+	if ( strlen( replay ) <= 28 ) {
+		sprintf( (char*)&nrf_str.txBuf[4], "%s", replay );
+	} else {
+		sprintf( (char*)&nrf_str.txBuf[4], "data too long..." );
+	}
+	xTaskNotify( nrf_control_taskHandle, 1U<<NRF_TX_EVENT, eSetBits );
+}
+
+//等待tx空闲
+static void wait_tx_buff_empty( void ) {
+	uint8_t i;
+	for ( i=10; nrf_str.txBuffEmpty!=0&&i>0; i-- ) {
+		vTaskDelay( 30 );
+	}
+	nrf_str.txBuffEmpty = 1;
+}
+
+
+//生成会话code
+static uint16_t craeteGrowthCode( void ) {
+	static uint16_t code = 0;
+	return ++code;
+}
+
+
+
+
+
+
 
