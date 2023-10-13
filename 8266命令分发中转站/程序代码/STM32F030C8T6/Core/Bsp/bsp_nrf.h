@@ -150,8 +150,8 @@
 /* ---------------------------------------------------------------------- */
 #define RF_PWR_n18dB		0x00/* 发射功率-18dBm	*/
 #define RF_PWR_n12dB		0x02/* 发射功率-12dBm	*/
-#define RF_PWR_n6dB			0x04/* 发射功率-6dBm		*/
-#define RF_PWR_0dB			0x06/* 发射功率 0dBm		*/
+#define RF_PWR_n6dB			0x04/* 发射功率-6dBm	*/
+#define RF_PWR_0dB			0x06/* 发射功率 0dBm	*/
 /* ---------------------------------------------------------------------- */
 
 
@@ -247,6 +247,13 @@ typedef struct {
 
 } NRF24L01_TypeDef;
 
+typedef struct _NRF_STR {
+	uint16_t code;
+	uint8_t txAddr[4];
+	uint8_t *txBuf;
+	uint8_t *rxBuf;
+} NRF_STR;
+extern NRF_STR nrf_str;
 
 uint8_t SPI_RW_Reg( uint8_t reg, uint8_t value );//读取寄存器
 uint8_t SPI_Write_Buf( uint8_t reg, uint8_t *pBuf, uint8_t len );//多字节写入
@@ -256,7 +263,7 @@ void Tx_Mode( void );
 void Rx_Mode( void );
 
 void nrf_init( void );
-void nrf1_receive_data( void );//接收数据
+void nrf_receive_data( void );//接收数据
 void nrf2_send_data( void );
 
 #endif /*__BSP_NRF__H*/

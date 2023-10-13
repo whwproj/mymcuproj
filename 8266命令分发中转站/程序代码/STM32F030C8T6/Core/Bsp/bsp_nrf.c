@@ -1,13 +1,11 @@
 #include "../Bsp/bsp_nrf.h"
+#include <stdio.h>
+#include <string.h>
 
 uint8_t Long;
-//uint8_t TX_ADDRESS[5] = {0x34,0x43,0x10,0x10,0x01}; //本地地址 
-//uint8_t RX_ADDRESS[5] = {0x34,0x43,0x10,0x10,0x01}; //接收地址
-uint8_t TX_ADDRESS[5] = {0xA2,0xA5,0xA2,0xA5,0xA2}; //中转站地址
-uint8_t RX_ADDRESS[5] = {0xA2,0xA5,0xA2,0xA5,0xA2}; //接收地址
-uint8_t tx_buf[]={"这是来自G030F6P6的消息\r\n"};
 uint8_t rx_buf[224];
 
+static uint16_t craeteGrowthCode( void );//生成会话code
 
 uint8_t SPI_RW_Reg( uint8_t reg, uint8_t value ) {//读写寄存器
 	uint8_t status; 
@@ -82,25 +80,32 @@ uint8_t Nrf24l01_Init( NRF24L01_TypeDef *nrf ) {
 
 void Tx_Mode( void ) {
 	uint8_t status;
+	CE_Low();osDelay(1);
 	CSN_Low();
 	status = SPI_RW_Reg( RD_RX_PLOAD + EN_AA, NOP ) & ( ~(PRIM_RX) );
 	SPI_RW_Reg( NRF_WRITE_REG + EN_AA, status );
 	CSN_High();
+	CE_High();osDelay(1);
 }
 
 void Rx_Mode( void ) {
 	uint8_t status;
+	CE_Low();osDelay(1);
 	CSN_Low();
 	status = SPI_RW_Reg( RD_RX_PLOAD + EN_AA, NOP ) | ( PRIM_RX );
 	SPI_RW_Reg( NRF_WRITE_REG + EN_AA, status );
 	CSN_High();
+	CE_High();osDelay(1);
 }
 
 void nrf_init(void) {
 	NRF24L01_TypeDef nrf;
+	uint8_t txaddr_t[4] = {0x0A,0x0B,0x0C,0x0D};
 	memset( &nrf, 0, sizeof(NRF24L01_TypeDef) );
-	//nrf.CONFIG_ = EN_CRC|CRCO|PWR_UP|PRIM_RX;//RX
-	nrf.CONFIG_ = EN_CRC|CRCO|PWR_UP;//TX
+	memcpy( nrf.RX_ADDR_P0_, udata.snId, 4 );
+	memcpy( nrf.TX_ADDR_, txaddr_t, 4 );
+	
+	nrf.CONFIG_ = MASK_RX_DR|MASK_MAX_RT|EN_CRC|CRCO|PWR_UP|PRIM_RX;//RX
 	nrf.EN_AA_ = ENAA_P0;//|ENAA_P1|ENAA_P2|ENAA_P3|ENAA_P4|ENAA_P5;
 	nrf.EN_RXADDR_ = ERX_P0;//|ERX_P1|ERX_P2|ERX_P3|ERX_P4|ERX_P5;
 	nrf.SETUP_AW_ = AW_WIDTH_4_BYTE;
@@ -108,8 +113,6 @@ void nrf_init(void) {
 	nrf.RF_CH_ = 2;//2402MHz
 	nrf.RF_SETUP_ = RF_DR_1Mbps|RF_PWR_0dB;
 	nrf.STATUS_ = RX_DR|TX_DS|MAX_RT;//清空标志
-	memcpy( nrf.RX_ADDR_P0_, TX_ADDRESS, 5 );
-	memcpy( nrf.TX_ADDR_, TX_ADDRESS, 5 );
 	nrf.RX_PW_P0_ = 32;
 	nrf.DYNPD_ = 0;
 	nrf.FEATURE_ = 0;
@@ -119,34 +122,52 @@ void nrf_init(void) {
 	} else {
 		printf("nrf1 初始化成功!\r\n");
 	}
-	
 }
 
+//数据头:
+//deviceId	1byte
+//code			2byte
+//msgType		1byte 0:注册设备 1:命令(转发->设备) 2:回复(设备->转发) 3:推送(设备->转发)
 void nrf_receive_data(void) {
-	uint8_t sta;//,temp;
+	char *str;
+	uint8_t sta, temp;
+	uint32_t nrf_addr;
+	
 	sta = SPI_RW_Reg( NRF_READ_REG + STATUS, NOP );//0xFF空指令
 	if ( sta & RX_DR ) {
-		SPI_Read_Buf( RD_RX_PLOAD, rx_buf, RX_PLOAD_WIDTH );
-		printf("%s\n",rx_buf);
-		//SPI_RW_Reg(FLUSH_RX,NOP);
-		SPI_RW_Reg( NRF_WRITE_REG + STATUS, sta );
+		SPI_Read_Buf( RD_RX_PLOAD, nrf_str.rxBuf, RX_PLOAD_WIDTH );
+		//printf("%s\n",nrf_str.rxBuf);
+		switch( nrf_str.rxBuf[3] ) {//msgType
+			case 0://设备绑定:根据deviceId查询nrfAddr是否一致,一致跳过,不一致或不存在则更新或添加
+				nrf_addr = get_nrfaddr_by_deviceId( nrf_str.rxBuf[0] );
+				if ( nrf_str.rxBuf[4]!=nrf_str.txAddr[0] || nrf_str.rxBuf[5]!=nrf_str.txAddr[1] ||
+						 nrf_str.rxBuf[6]!=nrf_str.txAddr[2] || nrf_str.rxBuf[7]!=nrf_str.txAddr[3] ) {
+					insert_nrfaddr( nrf_str.rxBuf[0] );
+				}
+				break;
+			
+			case 1: break;
+			
+			case 2://设备回复:携带pcode转发mqtt
+				break;
+			
+			case 3://设备推送:转发mqtt
+				break;
+		}
 	}
-	//HAL_NVIC_EnableIRQ(EXTI17_IRQn);
+	SPI_RW_Reg( NRF_WRITE_REG + STATUS, sta );
+	HAL_NVIC_EnableIRQ(NRF_IRQ_EXTI_IRQn);
 }
 
 void nrf_send_data( void ) {
-	SPI_Write_Buf(WR_TX_PLOAD , tx_buf , 32 );
+	//SPI_Write_Buf(WR_TX_PLOAD , tx_buf , 32 );
 }
 
-void receive( void ) {
-	uint8_t sta;
-	//if ( HAL_GPIO_ReadPin( NRF_IRQ_GPIO_Port, NRF_IRQ_Pin ) == GPIO_PIN_SET ) {
-		sta = SPI_RW_Reg( NRF_READ_REG + STATUS, NOP );//0xFF空指令
-		if ( sta & RX_DR ) {
-			SPI_Read_Buf( RD_RX_PLOAD, rx_buf, RX_PLOAD_WIDTH );
-			printf("收到NRF数据: %s\r\n",rx_buf);
-			//SPI_RW_Reg(FLUSH_RX,NOP);
-			SPI_RW_Reg( NRF_WRITE_REG + STATUS, sta );
-		}
-	//}
+
+
+//生成会话code
+static uint16_t craeteGrowthCode( void ) {
+	static uint16_t code = 0;
+	return ++code;
 }
+

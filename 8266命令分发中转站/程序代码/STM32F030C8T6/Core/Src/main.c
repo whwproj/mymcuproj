@@ -226,4 +226,23 @@ void assert_failed(uint8_t *file, uint32_t line)
      ex: printf("Wrong parameters value: file %s on line %d\r\n", file, line) */
   /* USER CODE END 6 */
 }
+
+//1.修复wifi通信卡死问题
+//2.增加iwdg加强系统稳定性
+//3.优化网络切换等
+
+
+//1.修復wifi通信卡死問題
+//2.增加iwdg加強系統穩定性
+//3.優化網絡切換等
+
+
+//1.Fix wifi communication card 
+//problem.
+//2.Increase iwdg to strengthen 
+//system stability.
+//3.Optimize network switching, etc.
+
 #endif /* USE_FULL_ASSERT */
+
+

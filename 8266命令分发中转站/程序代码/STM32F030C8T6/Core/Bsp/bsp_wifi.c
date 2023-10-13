@@ -60,6 +60,8 @@ void station_mode_init( void ) {
 		//开中断
 		__HAL_UART_ENABLE_IT( &WIFIHUART, UART_IT_IDLE );
 		__HAL_UART_ENABLE_IT( &WIFIHUART, UART_IT_TC );
+		//初始化NRF
+		xTaskNotify( nrf_control_taskHandle, 1U<<NRF_INIT_EVENT, eSetBits );
 		
 	} else {
 		//连接失败,转入station+AP模式
@@ -155,10 +157,10 @@ void wifi_uart_idle_callback( void ) {
 				}
 				
 				//解析主题,载荷,返回载荷长度
-				dataStr = pvPortMalloc(108);
-				topic = pvPortMalloc(20);
-				memset(dataStr, 0, 108);
-				memset(topic, 0, 20);
+				dataStr = pvPortMalloc(120);
+				topic = pvPortMalloc(8);
+				memset(dataStr, 0, 120);
+				memset(topic, 0, 8);
 				len_t = mqttParseData( (uint8_t*)str, (uint8_t*)topic, (uint8_t*)dataStr, &qos, &mqttId);
 				
 				if ( qos == 1 ) {
@@ -176,20 +178,16 @@ void wifi_uart_idle_callback( void ) {
 					w_str.txBuff[3] = mqttId;
 					wifi_tcp_send_data( 1|NOT_STR );
 				}
-				
-				//printf("\r\n长度:%d\r\n", len_t);
-				//printf("\r\n主题:%s\r\n", topic);
-				//printf("\r\njson:%s\r\n", dataStr);
 				jsonStr = cjson_pase_method( (uint8_t*)dataStr );
-				//printf("\r\njsonStr:%s\r\n", jsonStr);
 				vPortFree( topic );
 				vPortFree( dataStr );
 				if ( jsonStr != NULL ) {
-					//封装mqtt报文
+					//
+					/*//封装mqtt报文
 					w_str.txLen = GetDataPUBLISH( (unsigned char *)(w_str.txBuff), 0, 1, 0, MQTT_PUBTopic, jsonStr );
 					vPortFree( jsonStr );
 					wifi_tcp_send_data( 1|ENABLE_IT|NOT_STR );
-					goto end;
+					goto end;*/
 				}
 				
 			} else if ( (uint8_t)str[0]==0x62 ) {//作为接收端应答报文

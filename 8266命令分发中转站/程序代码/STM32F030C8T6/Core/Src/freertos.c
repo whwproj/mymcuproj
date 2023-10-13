@@ -116,6 +116,7 @@ void MX_FREERTOS_Init(void) {
   /* add threads, ... */
 	osThreadDef(debugTask, debugTaskFun, osPriorityNormal, 0, debugTaskSize);
   debugTaskHandle = osThreadCreate(osThread(debugTask), NULL);
+	
 	osThreadDef(wifi_control_task, wifi_control_task_fun, osPriorityNormal, 0, wifi_control_taskSize);
   wifi_control_taskHandle = osThreadCreate(osThread(wifi_control_task), NULL);
 	
@@ -161,7 +162,6 @@ void StartDefaultTask(void const * argument)
 		xTaskNotify( wifi_control_taskHandle, 1U<<WIFI_DEVICE_RESET, eSetBits );
 		vTaskDelay(1200);
 		xTaskNotify( wifi_control_taskHandle, 1U<<WIFI_STATION_MODE_INIT, eSetBits );
-		
 		vTaskDelay(1000);
 		printf("init ok\r\n");
 #endif
@@ -265,14 +265,15 @@ void nrf_control_task_fun(void const * argument) {
 			oldBits &=~ (1U<<NRF_INIT_EVENT);
 			nrf_init();
 		}
+		if ( oldBits & (1U<<NRF_RX_EVENT) ) {
+			oldBits &=~ (1U<<NRF_RX_EVENT);
+		  nrf_receive_data();
+		}
 		if ( oldBits & (1U<<NRF_TX_EVENT) ) {
 			oldBits &=~ (1U<<NRF_TX_EVENT);
 			//debug_parse_data_fun();
 		}
-		if ( oldBits & (1U<<NRF_RX_EVENT) ) {
-			oldBits &=~ (1U<<NRF_RX_EVENT);
-		 //debug_parse_data_fun();
-		}
+		
 		
 		
   }

@@ -20,6 +20,9 @@
 #define FLASH_ADDR_PAGE14	0x08007000
 #define FLASH_ADDR_PAGE15	0x08007800
 
+#define FLASH_NRFADDR_MEM 0x800F800
+#define FLASH_NRFADDR			0x800FC00
+
 
 typedef struct _USER_DATA {
 	char wssid[33];//最长32byte
@@ -28,8 +31,8 @@ typedef struct _USER_DATA {
 	char mqusername[51];//mqtt username 50byte
 	char mqpasswd[33];//mqtt password 32byte
 	uint16_t tcpport;
-	
-	char duid[7];//设备id
+	char duid[7];
+	uint8_t snId[4];
 } USER_DATA;
 
 extern USER_DATA udata;
@@ -38,6 +41,8 @@ void user_flash_erase( void );//擦除用户flash
 void read_data_from_flash( void );//从flash中读取数据
 void write_data_into_flash( void );//写入数据到flash
 
+uint32_t get_nrfaddr_by_deviceId( uint8_t id );//根据deviceId查找nrfAddr
+int insert_nrfaddr( uint8_t id );//对应deviceId新增/更新nrfAddr
 
 #endif /*__BSP__FLASH__H*/
 

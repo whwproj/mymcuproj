@@ -49,19 +49,6 @@ void read_data_from_flash( void ) {
 		if ( j >= 2 ) { pudata[1] = da_t>>16; }
 		if ( j == 3 ) { pudata[2] = da_t>>8; }
 	}
-	
-	sprintf(udata.duid, "AABBCC");
-	sprintf(udata.mqpasswd, "fcbfa8ffddfca54945ca549955cfa2cc");
-	sprintf(udata.mqusername, "thingidp@anvntlw|esp8266|0|MD5");
-	udata.tcpport = 1883;
-	sprintf(udata.tcpurl, "anvntlw.iot.gz.baidubce.com");
-//	udata.tcpport = 44169;
-//	sprintf(udata.tcpurl, "server.natappfree.cc");
-	
-	sprintf(udata.wpswd, "wuhanwei");
-	sprintf(udata.wssid, "MI");
-	//sprintf(udata.wpswd, "Ufidev888");
-	//sprintf(udata.wssid, "UFI-Dev");
 }
 
 
@@ -109,7 +96,74 @@ void write_data_into_flash( void ) {
 }
 
 
+//FLASH_BANK1 	0x8000000 - 0x80003FF
+//FLASH_BANK2 	0x8000400 - 0x80007FF
+//FLASH_BANK63 	0x800F800 - 0x800FBFF
+//FLASH_BANK64 	0x800FC00 - 0x800FFFF
+//存储NRF设备地址的FLASH选用 FLASH_BANK63 和 FLASH_BANK64
+//为节省内存,FLASH_BANK63 做为 FLASH_BANK64 读取的缓存
+//根据deviceId查找nrfAddr:
+uint32_t get_nrfaddr_by_deviceId( uint8_t id ) {
+	uint32_t *flash_add, nrf_addr;
+	uint16_t offset;
+	offset = id * 4;//存储方式: xxxx xxxx xxxx
+	
+	flash_add = (uint32_t *)FLASH_NRFADDR + offset;
+	nrf_addr = (uint32_t)(* flash_add);
+	if ( nrf_addr==0 || nrf_addr==0xFFFFFFFF ) {
+		return 0;//不存在id
+	}
+	nrf_str.txAddr[0] = (uint8_t)nrf_addr;
+	nrf_str.txAddr[1] = (uint8_t)nrf_addr>>8;
+	nrf_str.txAddr[2] = (uint8_t)nrf_addr>>16;
+	nrf_str.txAddr[3] = (uint8_t)nrf_addr>>24;
+	return nrf_addr;
+}
 
-
+//对应deviceId新增/更新nrfAddr
+int insert_nrfaddr( uint8_t id ) {
+	uint32_t SectorError, flash_addr_mem, flash_addr, nrf_addr;
+	FLASH_EraseInitTypeDef eraseType;
+	
+	nrf_addr = (uint32_t)(nrf_str.txAddr[3]<<24 | nrf_str.txAddr[2]<<16 |
+												nrf_str.txAddr[1]<<8  | nrf_str.txAddr[0]);
+	HAL_FLASH_Unlock();
+	
+	//1.擦除 FLASH_NRFADDR_MEM, 将 FLASH_NRFADDR 复制到 FLASH_NRFADDR_MEM
+	eraseType.PageAddress = FLASH_NRFADDR_MEM;
+	eraseType.NbPages = 1;
+	eraseType.TypeErase = FLASH_TYPEERASE_PAGES;
+	__HAL_FLASH_CLEAR_FLAG( FLASH_FLAG_EOP | FLASH_FLAG_WRPERR);
+	HAL_FLASHEx_Erase(&eraseType, &SectorError);
+	
+	flash_addr_mem = FLASH_NRFADDR_MEM;
+	flash_addr = FLASH_NRFADDR;
+	for ( uint16_t i=0; i<256; i++ ) {
+		HAL_FLASH_Program(FLASH_TYPEPROGRAM_WORD, flash_addr_mem, *((uint32_t *)flash_addr));
+		flash_addr_mem += 4;
+		flash_addr += 4;
+	}
+	
+	//2.擦除 FLASH_NRFADDR, 将 FLASH_NRFADDR_MEM 分段读取处理新增nrfAddr后存入 FLASH_NRFADDR
+	eraseType.PageAddress = FLASH_NRFADDR;
+	__HAL_FLASH_CLEAR_FLAG( FLASH_FLAG_EOP | FLASH_FLAG_WRPERR);
+	HAL_FLASHEx_Erase(&eraseType, &SectorError);
+	
+	flash_addr_mem = FLASH_NRFADDR_MEM;
+	flash_addr = FLASH_NRFADDR;
+	for ( uint16_t i=0; i<256; i++ ) {
+		if ( i == id ) {
+			HAL_FLASH_Program(FLASH_TYPEPROGRAM_WORD, flash_addr, nrf_addr);
+			flash_addr += 4;
+			flash_addr_mem += 4;
+		} else {
+			HAL_FLASH_Program(FLASH_TYPEPROGRAM_WORD, flash_addr, *((uint32_t *)flash_addr_mem));
+			flash_addr += 4;
+			flash_addr_mem += 4;
+		}
+	}
+	
+	HAL_FLASH_Lock();
+}
 
 
