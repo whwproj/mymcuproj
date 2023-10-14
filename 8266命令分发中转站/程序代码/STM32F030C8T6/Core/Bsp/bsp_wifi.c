@@ -157,9 +157,9 @@ void wifi_uart_idle_callback( void ) {
 				}
 				
 				//解析主题,载荷,返回载荷长度
-				dataStr = pvPortMalloc(120);
+				dataStr = pvPortMalloc(100);//主题长度-主题-标识
 				topic = pvPortMalloc(8);
-				memset(dataStr, 0, 120);
+				memset(dataStr, 0, 100);
 				memset(topic, 0, 8);
 				len_t = mqttParseData( (uint8_t*)str, (uint8_t*)topic, (uint8_t*)dataStr, &qos, &mqttId);
 				
@@ -178,17 +178,20 @@ void wifi_uart_idle_callback( void ) {
 					w_str.txBuff[3] = mqttId;
 					wifi_tcp_send_data( 1|NOT_STR );
 				}
-				jsonStr = cjson_pase_method( (uint8_t*)dataStr );
-				vPortFree( topic );
-				vPortFree( dataStr );
 				if ( jsonStr != NULL ) {
-					//
+					xQueueSend( wifi_data_handle, dataStr, portMAX_DELAY );
+					xTaskNotify( data_task_handle, 1U<<PARSE_WIFI_DATA, eSetBits );
+					vPortFree( dataStr );
+					__HAL_UART_ENABLE_IT( &WIFIHUART, UART_IT_IDLE );
+					__HAL_UART_ENABLE_IT( &WIFIHUART, UART_IT_TC );
+					//发送到消息队列
 					/*//封装mqtt报文
 					w_str.txLen = GetDataPUBLISH( (unsigned char *)(w_str.txBuff), 0, 1, 0, MQTT_PUBTopic, jsonStr );
 					vPortFree( jsonStr );
 					wifi_tcp_send_data( 1|ENABLE_IT|NOT_STR );
 					goto end;*/
 				}
+				vPortFree( topic );
 				
 			} else if ( (uint8_t)str[0]==0x62 ) {//作为接收端应答报文
 				w_str.txBuff[0]=0x70; w_str.txBuff[1]=0x02;
@@ -247,6 +250,7 @@ void send_mqtt_heart_isr( void ) {
 //发送心跳
 void send_mqtt_heart( void ) {
 	if ( w_str.sendLock ) {
+		w_str.sendLock = 0;//上锁
 		w_str.heartBeatTime++;
 		if ( w_str.heartBeatTime > 2 ) {//重连mqtt
 			led_nrf_flicker_on();//重连灯闪烁
@@ -257,7 +261,6 @@ void send_mqtt_heart( void ) {
 			xTaskNotify( wifi_control_taskHandle, 1U<<WIFI_STATION_MODE_INIT, eSetBits );
 			return;
 		}
-		w_str.sendLock = 0;//上锁
 		GetDataPINGREQ( w_str.txBuff );
 		w_str.txLen = 2;
 		wifi_tcp_send_data( 1|ENABLE_IT|NOT_STR );
@@ -334,7 +337,7 @@ static int esp_connect_tcp1 ( void ) {
 	}
 	if ( i == 0 ) {
 		//printf("TCP1 连接超时 5s后重连...\r\n");
-		xTaskNotify( wifi_tcp_connect_taskHandle, 1U<<WIFI_CONNECT_TCP1_DELAY, eSetBits );
+		//xTaskNotify( wifi_tcp_connect_taskHandle, 1U<<WIFI_CONNECT_TCP1_DELAY, eSetBits );
 	}
 	w_str.tcp1_errnum = 0;
 	HAL_UART_AbortReceive( &WIFIHUART );
@@ -652,4 +655,48 @@ static int post_param_handle( char* param ) {
 	
 	return res;
 }
+
+//回复设备未注册
+void send_device_not_register( void ) {
+	char *jsonStr;
+	if ( w_str.sendLock ) {
+		w_str.sendLock = 0;//上锁
+		jsonStr = cjson_reply_template( nrf_str.txBuf[1]<<8|nrf_str.txBuf[2], -2, "Device not register!" );
+		nrf_str.notEmpty = 0;
+		GetDataPUBLISH( w_str.txBuff, 0, 1, 0, MQTT_PUBTopic, jsonStr );
+		vPortFree( jsonStr );
+		wifi_tcp_send_data( 1|ENABLE_IT );
+		w_str.sendLock = 1;//解锁
+	}
+}
+
+//回复设备不在线
+void send_device_not_online( void ) {
+	char *jsonStr;
+	if ( w_str.sendLock ) {
+		w_str.sendLock = 0;//上锁
+		jsonStr = cjson_reply_template( nrf_str.txBuf[1]<<8|nrf_str.txBuf[2], -1, "Device not online!" );
+		nrf_str.notEmpty = 0;
+		GetDataPUBLISH( w_str.txBuff, 0, 1, 0, MQTT_PUBTopic, jsonStr );
+		vPortFree( jsonStr );
+		wifi_tcp_send_data( 1|ENABLE_IT );
+		w_str.sendLock = 1;//解锁
+	}
+}
+
+//转发成功
+void send_forward_success( void ) {
+	char *jsonStr;
+	if ( w_str.sendLock ) {
+		w_str.sendLock = 0;//上锁
+		jsonStr = cjson_reply_template( nrf_str.txBuf[1]<<8|nrf_str.txBuf[2], 0, "success" );
+		nrf_str.notEmpty = 0;
+		GetDataPUBLISH( w_str.txBuff, 0, 1, 0, MQTT_PUBTopic, jsonStr );
+		vPortFree( jsonStr );
+		wifi_tcp_send_data( 1|ENABLE_IT );
+		w_str.sendLock = 1;//解锁
+	}
+}
+
+
 

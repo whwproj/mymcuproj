@@ -248,6 +248,7 @@ typedef struct {
 } NRF24L01_TypeDef;
 
 typedef struct _NRF_STR {
+	uint8_t notEmpty;//0:结构体空,可封装数据包 1:已封装数据包,等待发送
 	uint16_t code;
 	uint8_t txAddr[4];
 	uint8_t *txBuf;
@@ -259,13 +260,13 @@ uint8_t SPI_RW_Reg( uint8_t reg, uint8_t value );//读取寄存器
 uint8_t SPI_Write_Buf( uint8_t reg, uint8_t *pBuf, uint8_t len );//多字节写入
 uint8_t SPI_Read_Buf( uint8_t reg, uint8_t *pBuf, uint8_t len );//多字节读取
 uint8_t Nrf24l01_Init( NRF24L01_TypeDef* nrf );
-void Tx_Mode( void );
+int Tx_Mode( void );
 void Rx_Mode( void );
 
 void nrf_init( void );
 void nrf_receive_data( void );//接收数据
-void nrf2_send_data( void );
-
+void nrf_pack_data( uint8_t did, uint16_t code, char* pdata );//nrf发送数据
+void nrf_send_data( void );
 #endif /*__BSP_NRF__H*/
 
 

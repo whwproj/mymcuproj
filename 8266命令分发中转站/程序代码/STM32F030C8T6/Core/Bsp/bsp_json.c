@@ -1,54 +1,43 @@
 #include "../Bsp/bsp_json.h"
 
-static char* cjson_reply_template( uint32_t pvcode, uint8_t sta, char* msg );
 
-
-char* cjson_pase_method( uint8_t *pdBuff ) {
+//解析JSON数据,解析结果存入结构体 DATA_STR
+void cjson_pase_method( uint8_t *pdBuff ) {
 	cJSON *trunk = NULL;
 	cJSON *code = NULL;
 	cJSON *nrfid = NULL;
+
 	cJSON *data = NULL;
-	char *daStr, *jsonStr;
-	uint32_t pvCode;
-	uint8_t nrfid_v;
-	
 	trunk = cJSON_Parse((char *)pdBuff);
-	if (trunk == NULL) return NULL;
+	if (trunk == NULL) return;
 
 	code = cJSON_GetObjectItemCaseSensitive(trunk, "code");
 	if ( !cJSON_IsNumber(code) || (code->valueint == 0) ) {
 		cJSON_Delete( trunk );
-		return NULL;
+		return;
 	}
-	pvCode = code->valueint;
+	data_str.code = code->valueint;
 	
 	nrfid = cJSON_GetObjectItemCaseSensitive(trunk, "nrfid");
 	if ( !cJSON_IsNumber(nrfid) || (nrfid->valueint == 0) ) {
 		cJSON_Delete( trunk );
-		return NULL;
+		return;
 	}
-	nrfid_v = nrfid->valueint;
+	data_str.nrfid = nrfid->valueint;
 	
 	data = cJSON_GetObjectItemCaseSensitive(trunk, "data");
 	if ( !cJSON_IsString(data) || (data->valuestring == NULL) ) {
 		cJSON_Delete( trunk );
-		return NULL;
+		return;
 	}
-	daStr = pvPortMalloc( strlen(data->valuestring) );
-	sprintf( daStr, "%s", data->valuestring );
-	//printf("\r\ndaStr:%s\r\n", daStr);
-	vPortFree( daStr );
+	data_str.data = pvPortMalloc( strlen(data->valuestring) );
+	sprintf( data_str.data, "%s", data->valuestring );
 	
 	cJSON_Delete( trunk );
-
-	//Test
-	jsonStr = cjson_reply_template( pvCode, 1, "sucess" );
-	//printf("\r\nTest:%s\r\n", jsonStr);
-	return jsonStr;
 }
 
-
-static char* cjson_reply_template( uint32_t pvcode, uint8_t sta, char* msg ) {
+//错误码errCode: -2:设备未注册 -1:设备离线 0:无 1:执行错误
+char* cjson_reply_template( uint32_t pvcode, int errCode, char* msg ) {
 	/*cJSON *trunk = NULL;
 	char *string;
 	trunk = cJSON_CreateObject();
@@ -58,16 +47,11 @@ static char* cjson_reply_template( uint32_t pvcode, uint8_t sta, char* msg ) {
 	string = cJSON_Print( trunk );
 	cJSON_Delete( trunk );
 	return string;*/
-	char *string = pvPortMalloc(128);
+	char *string = pvPortMalloc(100);
 	char *str_t = pvPortMalloc(6);
-	if ( sta == 0 ) {
-		sprintf(str_t, "false");
-	} else {
-		sprintf(str_t, "true");
-	}
-	sprintf( string, "%s%d%s%s%s%s%s",
+	sprintf( string, "%s%d%s%d%s%s%s",
 								PRINT_STR_0, pvcode, 
-								PRINT_STR_1, str_t, 
+								PRINT_STR_1, errCode, 
 								PRINT_STR_2, msg,
 								PRINT_STR_END);
 	vPortFree( str_t );

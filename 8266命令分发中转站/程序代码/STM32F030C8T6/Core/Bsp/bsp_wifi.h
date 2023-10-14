@@ -72,24 +72,18 @@
 #define DEFAULT_HEART	60
 
 /*---- wifi task bits start ----------------*/
+
 //*****	wifi_control_task_fun
-
-#define WIFI_PARSE_DATA 		1
-#define WIFI_CONNECT_TCP0_	2
-#define WIFI_CONNECT_TCP1_	3
-#define WIFI_TCP0_SEND			4
-#define WIFI_TCP1_SEND			5
-#define WIFI_SEND_HEART			6
-#define WIFI_SEND_OK				7
-#define WIFI_DATA_CLASS			8
-
-#define WIFI_DEVICE_RESET 	0
-#define WIFI_UART_IDLE_CALLBACK	10
-#define WIFI_STA_AP_MODE_INIT				9
-#define WIFI_STATION_MODE_INIT		11
-
-
+#define WIFI_DEVICE_RESET 				0
+#define WIFI_UART_IDLE_CALLBACK		1
+#define WIFI_STA_AP_MODE_INIT			2
+#define WIFI_STATION_MODE_INIT		3
+#define WIFI_SEND_HEART						4
+#define DEVICE_NOT_REGISTER				5
+#define DEVICE_NOT_ONLINE					6
+#define	FORWARD_SUCCESS						7
 //*****	wifi_control_task_fun 
+
 #define WIFI_CONNECT_TCP0_DELAY	0
 #define WIFI_CONNECT_TCP1_DELAY	1
 /*---- wifi task bits end ----------------*/
@@ -154,7 +148,9 @@ void station_and_ap_init( void );//station+AP模式初始化,供用户设置wifi
 void wifi_uart_idle_callback( void );//wifi空闲中断回调执行函数
 void send_mqtt_heart_isr( void );//发送心跳ISR
 void send_mqtt_heart( void );//发送心跳
-
+void send_device_not_register( void );//回复设备未注册
+void send_device_not_online( void );//回复设备不在线
+void send_forward_success( void );//转发成功
 #endif /*__BSP_WIFI__H*/
 
 

@@ -31,6 +31,7 @@
 #include "../Bsp/bsp_led.h"
 #include "../Bsp/bsp_flash.h"
 #include "../Bsp/bsp_json.h"
+#include "../Bsp/bsp_data.h"
 
 /*---- Tools -------------------------*/
 #include "../Tools/tool_url.h"
@@ -41,14 +42,14 @@
 
 #define 	debugTaskSize								256
 #define 	wifi_control_taskSize				192
-#define 	wifi_tcp_connect_taskSize		128
 #define 	nrf_control_taskSize				192
+#define 	data_task_size							128
 
 extern TaskHandle_t debugTaskHandle;
 extern TaskHandle_t wifi_control_taskHandle;
-extern TaskHandle_t wifi_tcp_connect_taskHandle;
+extern TaskHandle_t data_task_handle;
 extern TaskHandle_t nrf_control_taskHandle;
-
+extern QueueHandle_t wifi_data_handle;
 
 
 void getSnByDeviceId_setClientId( void );//通过唯一设备ID获取SN
