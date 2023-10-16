@@ -126,7 +126,7 @@ void wifi_uart_idle_callback( void ) {
 		}
 	
 	} else if ( w_str.wifiMode == STATION_MODE ) {
-		while( w_str.sendLock == 0 ){osDelay(5);}
+		while ( !w_str.sendLock ) { osDelay(5); }
 		w_str.sendLock = 0;//上锁不可发
 		if ( strstr( (char*)w_str.rxBuff, "+IPD,1," ) != NULL ) {//TCP1消息(MQTT)
 			//解析mqtt
@@ -661,8 +661,8 @@ void send_device_not_register( void ) {
 	char *jsonStr;
 	if ( w_str.sendLock ) {
 		w_str.sendLock = 0;//上锁
-		jsonStr = cjson_reply_template( nrf_str.txBuf[1]<<8|nrf_str.txBuf[2], -2, "Device not register!" );
-		nrf_str.notEmpty = 0;
+		jsonStr = cjson_reply_template( w_str.session.code, -2, "Device not register!" );
+		//nrf_str.notEmpty = 0;
 		GetDataPUBLISH( w_str.txBuff, 0, 1, 0, MQTT_PUBTopic, jsonStr );
 		vPortFree( jsonStr );
 		wifi_tcp_send_data( 1|ENABLE_IT );
@@ -671,17 +671,19 @@ void send_device_not_register( void ) {
 }
 
 //回复设备不在线
-void send_device_not_online( void ) {
+int send_device_not_online( void ) {
 	char *jsonStr;
 	if ( w_str.sendLock ) {
 		w_str.sendLock = 0;//上锁
-		jsonStr = cjson_reply_template( nrf_str.txBuf[1]<<8|nrf_str.txBuf[2], -1, "Device not online!" );
-		nrf_str.notEmpty = 0;
+		jsonStr = cjson_reply_template( w_str.session.code, -1, "Device not online!" );
+		//nrf_str.notEmpty = 0;
 		GetDataPUBLISH( w_str.txBuff, 0, 1, 0, MQTT_PUBTopic, jsonStr );
 		vPortFree( jsonStr );
 		wifi_tcp_send_data( 1|ENABLE_IT );
 		w_str.sendLock = 1;//解锁
+		return 0;
 	}
+	return -1;
 }
 
 //转发成功
@@ -689,8 +691,8 @@ void send_forward_success( void ) {
 	char *jsonStr;
 	if ( w_str.sendLock ) {
 		w_str.sendLock = 0;//上锁
-		jsonStr = cjson_reply_template( nrf_str.txBuf[1]<<8|nrf_str.txBuf[2], 0, "success" );
-		nrf_str.notEmpty = 0;
+		jsonStr = cjson_reply_template( w_str.session.code, 0, "success" );
+		//nrf_str.notEmpty = 0;
 		GetDataPUBLISH( w_str.txBuff, 0, 1, 0, MQTT_PUBTopic, jsonStr );
 		vPortFree( jsonStr );
 		wifi_tcp_send_data( 1|ENABLE_IT );
@@ -698,5 +700,18 @@ void send_forward_success( void ) {
 	}
 }
 
+//推送数据
+void push_data_fun( char *data ) {
+	char *jsonStr;
+	while( !w_str.sendLock ) {osDelay(5);}
+	w_str.sendLock = 0;//上锁
+	jsonStr = cjson_send_data_template( w_str.session.code, data );
+	GetDataPUBLISH( w_str.txBuff, 0, 1, 0, MQTT_PUBTopic, jsonStr );
+	vPortFree( jsonStr );
+	wifi_tcp_send_data( 1|ENABLE_IT );
+	w_str.sendLock = 1;//解锁
+}
+	
+	
 
 

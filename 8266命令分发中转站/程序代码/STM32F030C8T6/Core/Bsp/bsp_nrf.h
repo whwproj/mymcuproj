@@ -73,7 +73,6 @@
 /*-------------------- Task end --------------------*/
 
 
-
 /** @defgroup CONFIG_Define 工作模式配置寄存器
   * @{
   */
@@ -247,12 +246,18 @@ typedef struct {
 
 } NRF24L01_TypeDef;
 
+typedef struct __SESSION {
+	uint8_t deviceId;
+	uint16_t code;
+} SESSION;
+
 typedef struct _NRF_STR {
 	uint8_t notEmpty;//0:结构体空,可封装数据包 1:已封装数据包,等待发送
-	uint16_t code;
+	//uint16_t code;
 	uint8_t txAddr[4];
 	uint8_t *txBuf;
 	uint8_t *rxBuf;
+	SESSION session;
 } NRF_STR;
 extern NRF_STR nrf_str;
 
@@ -267,6 +272,8 @@ void nrf_init( void );
 void nrf_receive_data( void );//接收数据
 void nrf_pack_data( uint8_t did, uint16_t code, char* pdata );//nrf发送数据
 void nrf_send_data( void );
+
+
 #endif /*__BSP_NRF__H*/
 
 

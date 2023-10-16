@@ -526,6 +526,16 @@
               <FileType>1</FileType>
               <FilePath>..\Core\Bsp\bsp_json.c</FilePath>
             </File>
+            <File>
+              <FileName>common.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\Core\common.h</FilePath>
+            </File>
+            <File>
+              <FileName>bsp_data.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Core\Bsp\bsp_data.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>

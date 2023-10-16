@@ -37,7 +37,7 @@ void cjson_pase_method( uint8_t *pdBuff ) {
 }
 
 //错误码errCode: -2:设备未注册 -1:设备离线 0:无 1:执行错误
-char* cjson_reply_template( uint32_t pvcode, int errCode, char* msg ) {
+char* cjson_reply_template( uint16_t pvcode, int errCode, char* msg ) {
 	/*cJSON *trunk = NULL;
 	char *string;
 	trunk = cJSON_CreateObject();
@@ -58,4 +58,24 @@ char* cjson_reply_template( uint32_t pvcode, int errCode, char* msg ) {
 	return string;
 }
 
+
+char* cjson_send_data_template( uint16_t pvcode, char* data ) {
+	/*cJSON *trunk = NULL;
+	char *string;
+	trunk = cJSON_CreateObject();
+	cJSON_AddItemToObject( trunk, "pvcode", cJSON_CreateNumber( pvcode ) );
+	cJSON_AddItemToObject( trunk, "sta", cJSON_CreateBool( sta ) );
+	cJSON_AddItemToObject( trunk, "msg", cJSON_CreateString( msg ) );
+	string = cJSON_Print( trunk );
+	cJSON_Delete( trunk );
+	return string;*/
+	char *string = pvPortMalloc(100);
+	char *str_t = pvPortMalloc(6);
+	sprintf( string, "%s%d%s%s%s",
+								PRINT_STR_0, pvcode, 
+								PRINT_STR_3, data, 
+								PRINT_STR_END);
+	vPortFree( str_t );
+	return string;
+}
 

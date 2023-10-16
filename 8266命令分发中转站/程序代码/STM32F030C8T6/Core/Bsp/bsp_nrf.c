@@ -152,9 +152,14 @@ void nrf_receive_data(void) {
 			case 1: break;
 			
 			case 2://设备回复:携带pcode转发mqtt
+				while ( !w_str.sendLock ) { osDelay(1); }
+				w_str.session.deviceId = nrf_str.rxBuf[0];
+				w_str.session.code = (nrf_str.txAddr[1]<<8) | nrf_str.txAddr[2];
+				send_forward_success();
 				break;
 			
 			case 3://设备推送:转发mqtt
+				push_data_fun((char*)&nrf_str.rxBuf[4]);
 				break;
 		}
 	}
@@ -191,7 +196,9 @@ void nrf_send_data( void ) {
 	
 	for ( int i,n=0; ; n++ ) {
 		if ( Tx_Mode() != 0 ) {
-			//发送设备未注册事件 执行完成: nrf_str.notEmpty = 0;
+			//发送设备未注册事件
+			w_str.session.deviceId = nrf_str.txBuf[0];
+			w_str.session.code = (nrf_str.txBuf[1]<<8) | nrf_str.txBuf[2];
 			xTaskNotify( wifi_control_taskHandle, 1U<<DEVICE_NOT_REGISTER, eSetBits );
 			break;
 		}
@@ -207,19 +214,24 @@ void nrf_send_data( void ) {
 		taskEXIT_CRITICAL();
 		if ( i == 0xFF ) {//发送失败
 			if ( n >= 5 ) {//通信失败
-				//发送设备离线事件 执行完成: nrf_str.notEmpty = 0;
+				//发送设备离线事件 
+				//nrf_str.notEmpty = 0;
+				w_str.session.deviceId = nrf_str.txBuf[0];
+				w_str.session.code = (nrf_str.txBuf[1]<<8)|nrf_str.txBuf[2];
 				xTaskNotify( wifi_control_taskHandle, 1U<<DEVICE_NOT_ONLINE, eSetBits );
 				break;
 			}
 			vTaskDelay(100); 
 			
 		} else {//发送成功,转Rx
-			//发送转发成功事件 执行完成: nrf_str.notEmpty = 0;
-			//xTaskNotify( wifi_control_taskHandle, 1U<<DEVICE_NOT_REGISTER, eSetBits );
-			nrf_str.notEmpty = 0;
+			//发送转发成功事件
+			//计时等待10ms应答
+			add_data_to_list_fun( nrf_str.txBuf[0], (nrf_str.txBuf[1]<<8)|nrf_str.txBuf[2] );
+			xTaskNotify( time_task_handle, 1U<<NRF_SEND_TIME, eSetBits );
 			break;
 		}
 	}
+	nrf_str.notEmpty = 0;//解锁
 	Rx_Mode();
 	__HAL_GPIO_EXTI_CLEAR_IT(NRF_IRQ_Pin);
 	HAL_NVIC_EnableIRQ(NRF_IRQ_EXTI_IRQn);	

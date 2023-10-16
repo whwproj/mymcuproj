@@ -106,7 +106,10 @@
 #define NO_SESSION 						2
 /*---- check task bits end ----------------*/
 
-
+typedef struct ___SESSION {
+	uint8_t deviceId;
+	uint16_t code;
+} _SESSION;
 typedef struct _WIFI_STR {
 	uint8_t *txBuff;
 	uint8_t *rxBuff;
@@ -121,6 +124,8 @@ typedef struct _WIFI_STR {
 	uint8_t sendLock;//mqtt心跳,mqtt数据不可同时发送,0:需等待 1:可发送
 	uint8_t mqttSta;//0:未连接 1:建立连接订阅主题完毕
 	uint8_t heartBeatTime;//mqtt心跳包
+	
+	_SESSION session;
 } WIFI_STR;
 
 extern WIFI_STR w_str;
@@ -149,8 +154,9 @@ void wifi_uart_idle_callback( void );//wifi空闲中断回调执行函数
 void send_mqtt_heart_isr( void );//发送心跳ISR
 void send_mqtt_heart( void );//发送心跳
 void send_device_not_register( void );//回复设备未注册
-void send_device_not_online( void );//回复设备不在线
+int send_device_not_online( void );//回复设备不在线
 void send_forward_success( void );//转发成功
+void push_data_fun( char *data );//推送数据
 #endif /*__BSP_WIFI__H*/
 
 

@@ -164,6 +164,9 @@ int insert_nrfaddr( uint8_t id ) {
 	}
 	
 	HAL_FLASH_Lock();
+	
+	return 0;
 }
+
 
 
