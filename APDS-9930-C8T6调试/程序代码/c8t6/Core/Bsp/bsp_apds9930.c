@@ -970,22 +970,23 @@ int wireReadDataBlock( uint8_t reg, uint8_t *val, unsigned int len) {
  */
 uint8_t APDS9930_init( void ) {
     uint8_t id;
+		uint16_t threshold = 0;
      
     /* Read ID register and check against known values for APDS-9930 */
     if( !wireReadDataByte(APDS9930_ID, &id) ) {
-        printf("ID read err!\r\n");
+        //printf("ID read err!\r\n");
         return 0;
     }
     if( !(id == APDS9930_ID_1 || id == APDS9930_ID_2) ) {
-        printf("ID check err\r\n");
+        //printf("ID check err\r\n");
         return 0;
     } else {
-		printf("ID check is %d\r\n", id);
+		//printf("ID check is %d\r\n", id);
 	}
      
     /* Set ENABLE register to 0 (disable all features) */
     if( !setMode(ALL, OFF) ) {
-        printf("Regs off\r\n");
+        //printf("Regs off\r\n");
         return 0;
     }
     
@@ -1032,7 +1033,48 @@ uint8_t APDS9930_init( void ) {
     if( !wireWriteDataByte(APDS9930_PERS, DEFAULT_PERS) ) {
         return 0;
     }
-
+		
+		// Set high and low interrupt thresholds
+		if ( !setLightIntLowThreshold(LIGHT_INT_LOW) ) {
+		 //printf("Error writing low threshold\r\n");
+			return 0;
+		}
+		if ( !setLightIntHighThreshold(LIGHT_INT_HIGH) ) {
+			//printf("Error writing high threshold\r\n");
+			return 0;
+		}
+		
+		// Start running the APDS-9930 light sensor (no interrupts)
+		if ( !enableLightSensor(0) ) {
+			//printf("Light sensor is now running\r\n");
+			return 0;
+		} else {
+			//printf("Something went wrong during light sensor init!\r\n");
+			return 0;
+		}
+	 
+		// Read high and low interrupt thresholds
+		if ( !getLightIntLowThreshold(&threshold) ) {
+			//printf("Error reading low threshold\r\n");
+			return 0;
+		} else {
+			//printf("Low Threshold: %d\r\n", threshold);
+			return 0;
+		}
+		if ( !getLightIntHighThreshold(&threshold) ) {
+			//printf("Error reading high threshold\r\n");
+			return 0;
+		} else {
+			//printf("High Threshold: %d\r\n", threshold);
+			return 0;
+		}
+		
+		// Enable interrupts
+		if ( !setAmbientLightIntEnable(1) ) {
+			//printf("Error enabling interrupts\r\n");
+			return 0;
+		}
+	
     return 1;
 }
 
@@ -1046,11 +1088,11 @@ void APDS9930_interrupt( void ) {
 	if ( !readAmbientLightLux(&ambient_light) ||
 			 !readCh0Light(&ch0) || 
 			 !readCh1Light(&ch1) ) {
-		printf("Error reading light values\r\n");
+		//printf("Error reading light values\r\n");
 	} else {
-		printf("Interrupt! Ambient:%f  ", ambient_light);
-		printf("Ch0:%d  ", ch0 );
-		printf("Ch1:%d\r\n", ch1 );
+		//printf("Interrupt! Ambient:%f  ", ambient_light);
+		//printf("Ch0:%d  ", ch0 );
+		//printf("Ch1:%d\r\n", ch1 );
 	}
 	
 	// Turn on LED for a half a second
@@ -1060,7 +1102,7 @@ void APDS9930_interrupt( void ) {
 	
 	// Reset flag and clear APDS-9930 interrupt (IMPORTANT!)
 	if ( !clearAmbientLightInt() ) {
-		printf("Error clearing interrupt\r\n");
+		//printf("Error clearing interrupt\r\n");
 	}
 	HAL_NVIC_EnableIRQ(EXTI9_5_IRQn);
 }

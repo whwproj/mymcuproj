@@ -130,8 +130,7 @@ void MX_FREERTOS_Init(void) {
 void StartDefaultTask(void const * argument)
 {
   /* USER CODE BEGIN StartDefaultTask */
-	uint16_t threshold = 0;
-
+	
   /* Infinite loop */
   for(;;) {
 		LED_OFF();
@@ -139,43 +138,13 @@ void StartDefaultTask(void const * argument)
 		//OLED_Init();
 		//OLED_ShowString(3, 3, "aa");
 		
-		if ( APDS9930_init() == -1 ) {
+		if ( !APDS9930_init() ) {
 			printf( "APDS9930 init fail!\r\n" );
 		} else {
 			printf( "APDS9930 init success!\r\n" );
 		}
 		
- // Set high and low interrupt thresholds
-  if ( setLightIntLowThreshold(LIGHT_INT_LOW) == -1 ) {
-   printf("Error writing low threshold\r\n");
-  }
-  if ( setLightIntHighThreshold(LIGHT_INT_HIGH) == -1  ) {
-    printf("Error writing high threshold\r\n");
-  }
   
-  // Start running the APDS-9930 light sensor (no interrupts)
-  if ( enableLightSensor(0) != -1 ) {
-    printf("Light sensor is now running\r\n");
-  } else {
-    printf("Something went wrong during light sensor init!\r\n");
-  }
- 
-  // Read high and low interrupt thresholds
-  if ( getLightIntLowThreshold(&threshold) == -1 ) {
-    printf("Error reading low threshold\r\n");
-  } else {
-    printf("Low Threshold: %d\r\n", threshold);
-  }
-  if ( getLightIntHighThreshold(&threshold) == -1 ) {
-    printf("Error reading high threshold\r\n");
-  } else {
-    printf("High Threshold: %d\r\n", threshold);
-  }
-  
-  // Enable interrupts
-  if ( setAmbientLightIntEnable(1) == -1 ) {
-    printf("Error enabling interrupts\r\n");
-  }
 	
 		osDelay(500);
 	

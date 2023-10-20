@@ -206,6 +206,9 @@ uint8_t wireWriteDataBlock(uint8_t reg, uint8_t *val, unsigned int len);
 uint8_t wireReadDataByte(uint8_t reg, uint8_t *val);
 int wireReadDataBlock(uint8_t reg, uint8_t *val, unsigned int len);
 
+uint8_t APDS9930_init( void );
+void APDS9930_interrupt( void );
+
 #endif /*__BSP_APDS9930__H*/
 
 
