@@ -1,6 +1,9 @@
 #ifndef __COMMON__H
 #define __COMMON__H
 
+// Constants
+#define LIGHT_INT_HIGH  1000 // High light level for interrupt
+#define LIGHT_INT_LOW   35   // Low light level for interrupt
 
 /* LIB ------------------------------------------------------------*/
 #include <stdio.h>
