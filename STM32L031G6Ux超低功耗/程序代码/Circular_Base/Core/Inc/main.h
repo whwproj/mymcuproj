@@ -63,18 +63,24 @@ void Error_Handler(void);
 #define NRF_CE_GPIO_Port GPIOC
 #define NRF_IRQ_Pin GPIO_PIN_0
 #define NRF_IRQ_GPIO_Port GPIOA
+#define ADC_Pin GPIO_PIN_1
+#define ADC_GPIO_Port GPIOA
 #define APDS9930_INT_Pin GPIO_PIN_4
 #define APDS9930_INT_GPIO_Port GPIOA
-#define TIM22_PWM_Pin GPIO_PIN_6
-#define TIM22_PWM_GPIO_Port GPIOA
+#define PWM_LED_Pin GPIO_PIN_6
+#define PWM_LED_GPIO_Port GPIOA
 #define W25Q_CS_Pin GPIO_PIN_1
 #define W25Q_CS_GPIO_Port GPIOB
-#define TIM2_CH_Pin GPIO_PIN_8
-#define TIM2_CH_GPIO_Port GPIOA
-#define BLT_AT_EN_Pin GPIO_PIN_3
-#define BLT_AT_EN_GPIO_Port GPIOB
-#define BLT_SLEEP_Pin GPIO_PIN_7
-#define BLT_SLEEP_GPIO_Port GPIOB
+#define PWM_IR_Pin GPIO_PIN_8
+#define PWM_IR_GPIO_Port GPIOA
+#define LED3_Pin GPIO_PIN_15
+#define LED3_GPIO_Port GPIOA
+#define LED2_Pin GPIO_PIN_3
+#define LED2_GPIO_Port GPIOB
+#define LED1_Pin GPIO_PIN_6
+#define LED1_GPIO_Port GPIOB
+#define APDS9930_INTB7_Pin GPIO_PIN_7
+#define APDS9930_INTB7_GPIO_Port GPIOB
 
 /* USER CODE BEGIN Private defines */
 
