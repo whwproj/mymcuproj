@@ -18,14 +18,13 @@
 #include "main.h"
 #include "cmsis_os.h"
 #include "tim.h"
-#include "usart.h"
 #include "gpio.h"
 #include "spi.h"
 
 
 /*---- Bsp -------------------------*/
-#include "../Bsp/bsp_debug.h"
 #include "../Bsp/bsp_nrf.h"
+#include "../Bsp/bsp_apds9930.h"
 
 
 #define 	debugTaskSize					128

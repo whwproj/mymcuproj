@@ -65,8 +65,10 @@ void Error_Handler(void);
 #define NRF_IRQ_GPIO_Port GPIOA
 #define ADC_Pin GPIO_PIN_1
 #define ADC_GPIO_Port GPIOA
-#define APDS9930_INT_Pin GPIO_PIN_4
+#define APDS9930_INT_Pin GPIO_PIN_2
 #define APDS9930_INT_GPIO_Port GPIOA
+#define LED1_Pin GPIO_PIN_4
+#define LED1_GPIO_Port GPIOA
 #define PWM_LED_Pin GPIO_PIN_6
 #define PWM_LED_GPIO_Port GPIOA
 #define W25Q_CS_Pin GPIO_PIN_1
@@ -77,10 +79,8 @@ void Error_Handler(void);
 #define LED3_GPIO_Port GPIOA
 #define LED2_Pin GPIO_PIN_3
 #define LED2_GPIO_Port GPIOB
-#define LED1_Pin GPIO_PIN_6
-#define LED1_GPIO_Port GPIOB
-#define APDS9930_INTB7_Pin GPIO_PIN_7
-#define APDS9930_INTB7_GPIO_Port GPIOB
+#define DHT22_Pin GPIO_PIN_7
+#define DHT22_GPIO_Port GPIOB
 
 /* USER CODE BEGIN Private defines */
 

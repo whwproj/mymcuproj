@@ -1096,14 +1096,14 @@ void APDS9930_interrupt( void ) {
 	}
 	
 	// Turn on LED for a half a second
-	LED_ON();
+	//LED_ON();
 	osDelay(500);
-	LED_OFF();
+	//LED_OFF();
 	
 	// Reset flag and clear APDS-9930 interrupt (IMPORTANT!)
 	if ( !clearAmbientLightInt() ) {
 		//printf("Error clearing interrupt\r\n");
 	}
-	HAL_NVIC_EnableIRQ(EXTI9_5_IRQn);
+	//HAL_NVIC_EnableIRQ(EXTI9_5_IRQn);
 }
 
