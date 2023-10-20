@@ -29,6 +29,7 @@
 /*---- Bsp -------------------------*/
 #include "../Bsp/bsp_debug.h"
 #include "../Bsp/bsp_apds9930.h"
+#include "../Bsp/bsp_wkup.h"
 
 /*---- Tools -------------------------*/
 

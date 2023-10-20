@@ -84,6 +84,8 @@ int main(void)
   SystemClock_Config();
 
   /* USER CODE BEGIN SysInit */
+	//HAL_PWR_DisableWakeUpPin(PWR_WAKEUP_PIN1);
+	//__HAL_PWR_CLEAR_FLAG(PWR_FLAG_WU);
   /* USER CODE END SysInit */
 
   /* Initialize all configured peripherals */
@@ -150,6 +152,14 @@ void SystemClock_Config(void)
 }
 
 /* USER CODE BEGIN 4 */
+
+void HAL_GPIO_EXTI_Callback ( uint16_t GPIO_Pin ) {
+	BaseType_t phpt;
+	if ( GPIO_Pin == GPIO_PIN_0 ) {//GPIO0
+		xTaskNotifyFromISR( APDS9930TaskHandle, 1U<<CHECK_ENTER_STANDBYMODE, eSetBits, &phpt );
+		portYIELD_FROM_ISR( phpt );
+	}
+}
 
 /* USER CODE END 4 */
 
