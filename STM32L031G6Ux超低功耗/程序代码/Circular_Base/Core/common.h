@@ -20,11 +20,16 @@
 #include "tim.h"
 #include "gpio.h"
 #include "spi.h"
+#include "i2c.h"
 
 
 /*---- Bsp -------------------------*/
 #include "../Bsp/bsp_nrf.h"
 #include "../Bsp/bsp_apds9930.h"
+#include "../Bsp/bsp_w25qxx.h"
+#include "../Bsp/bsp_wkup.h"
+#include "../Bsp/bsp_oled.h"
+#include "../Bsp/bsp_olde_font.h"
 
 
 #define 	debugTaskSize					128

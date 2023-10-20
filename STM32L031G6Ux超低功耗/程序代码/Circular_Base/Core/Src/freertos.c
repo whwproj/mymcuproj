@@ -25,7 +25,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "../common.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -125,6 +125,49 @@ void StartDefaultTask(void const * argument)
   for(;;)
   {
     osDelay(1);
+		
+		Tx_Mode();
+		Rx_Mode();
+		nrf_init();
+		nrf_send_data();
+		nrf_register_device();
+		nrf_parse_data();//解析数据
+		
+		APDS9930_init(  );
+		APDS9930_interrupt(  );
+		
+		
+		W25Qx_ReadDeviceID();//读取DeviceID
+		W25Qx_ReadJedecDeviceID();//读取JedecDeviceID
+		Erase_W25Qx_Chip();//擦除整块芯片
+		Erase_Write_data_Sector(0,0);//擦除需要写入数据空间的块
+		W25Qx_Write_Page(NULL,0, 0);//多页写入数据
+		W25Qx_Read_data(NULL,0,0);//读取多页数据
+		W25Qx_PowerDown();//掉电模式
+		W25Qx_WAKEUP();//唤醒
+		w25qFlash_read();//读取应用掉电保存的信息
+		
+		Wkup0_Check_Up_OS(  );
+		Wkup0_Check_Up_HAL(  );
+		enter_standbyMode(  );
+		judge_if_Rest();
+		
+		
+		
+		OLED_Init();
+		OLED_Clear();
+		OLED_ShowChar(0, 0, (char)0);
+		OLED_ShowString(0, 0, NULL);
+		OLED_ShowNum(0, 0, 0, 0);
+		OLED_ShowSignedNum(0, 0, 0, 0);
+		OLED_ShowHexNum(0, 0, 0, 0);
+		OLED_ShowBinNum(0, 0, 0, 0);
+		OLED_Clear_Part(0, 0, 0);
+		OLED_ShowWord(0, 0, 0);
+		OLED_ShowChinese(0, 0, NULL,0);
+
+
+		vTaskDelete(defaultTaskHandle);
   }
   /* USER CODE END StartDefaultTask */
 }

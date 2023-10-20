@@ -162,7 +162,7 @@ void I2C1_IRQHandler(void)
     HAL_I2C_ER_IRQHandler(&hi2c1);
   } else {
     HAL_I2C_EV_IRQHandler(&hi2c1);
-  } 
+  }
   /* USER CODE BEGIN I2C1_IRQn 1 */
 
   /* USER CODE END I2C1_IRQn 1 */

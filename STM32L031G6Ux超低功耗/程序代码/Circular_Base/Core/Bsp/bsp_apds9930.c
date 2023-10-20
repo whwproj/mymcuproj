@@ -1050,7 +1050,6 @@ uint8_t APDS9930_init( void ) {
 			return 0;
 		} else {
 			//printf("Something went wrong during light sensor init!\r\n");
-			return 0;
 		}
 	 
 		// Read high and low interrupt thresholds
@@ -1059,14 +1058,12 @@ uint8_t APDS9930_init( void ) {
 			return 0;
 		} else {
 			//printf("Low Threshold: %d\r\n", threshold);
-			return 0;
 		}
 		if ( !getLightIntHighThreshold(&threshold) ) {
 			//printf("Error reading high threshold\r\n");
 			return 0;
 		} else {
 			//printf("High Threshold: %d\r\n", threshold);
-			return 0;
 		}
 		
 		// Enable interrupts
