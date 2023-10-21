@@ -169,11 +169,11 @@ void StartDefaultTask(void const * argument)
 		led_nrf_flicker_on();
 		led_con_flicker_on();
 	
-		//xTaskNotify( wifi_control_taskHandle, 1U<<WIFI_DEVICE_RESET, eSetBits );
-		//vTaskDelay(1200);
-		//xTaskNotify( wifi_control_taskHandle, 1U<<WIFI_STATION_MODE_INIT, eSetBits );
-		//vTaskDelay(1000);
-		//xTaskNotify( nrf_control_taskHandle, 1U<<NRF_INIT_EVENT, eSetBits );
+		xTaskNotify( wifi_control_taskHandle, 1U<<WIFI_DEVICE_RESET, eSetBits );
+		vTaskDelay(1200);
+		xTaskNotify( wifi_control_taskHandle, 1U<<WIFI_STATION_MODE_INIT, eSetBits );
+		vTaskDelay(1000);
+		xTaskNotify( nrf_control_taskHandle, 1U<<NRF_INIT_EVENT, eSetBits );
 		
 #endif
 		printf("init ok\r\n");
@@ -213,7 +213,7 @@ void wifi_control_task_fun(void const * argument) {
 		}
 		if ( oldBits & (1U<<WIFI_UART_IDLE_CALLBACK) ) {
 			oldBits &=~ (1U<<WIFI_UART_IDLE_CALLBACK);
-			wifi_uart_idle_callback();
+			//wifi_uart_idle_callback();
 		}
 		if ( oldBits & (1U<<WIFI_STATION_MODE_INIT) ) {
 			oldBits &=~ (1U<<WIFI_STATION_MODE_INIT);
@@ -221,6 +221,7 @@ void wifi_control_task_fun(void const * argument) {
 		}
 		if ( oldBits & (1U<<WIFI_STA_AP_MODE_INIT) ) {
 			oldBits &=~ (1U<<WIFI_STA_AP_MODE_INIT);
+			printf("ap init\r\n");
 			station_and_ap_init();
 		}
 		if ( oldBits & (1U<<WIFI_SEND_HEART) ) {
@@ -285,8 +286,8 @@ void data_task_handle_fun(void const * argument) {
 void nrf_control_task_fun(void const * argument) {
 	uint32_t newBits, oldBits = 0;
   for(;;) {
-		//xTaskNotifyWait( pdFALSE, portMAX_DELAY, &newBits, portMAX_DELAY );
-		xTaskNotifyWait( pdFALSE, portMAX_DELAY, &newBits, 5000 );
+		xTaskNotifyWait( pdFALSE, portMAX_DELAY, &newBits, portMAX_DELAY );
+		//xTaskNotifyWait( pdFALSE, portMAX_DELAY, &newBits, 5000 );
 		oldBits |= newBits;
 		if ( oldBits & (1U<<NRF_INIT_EVENT) ) {
 			oldBits &=~ (1U<<NRF_INIT_EVENT);

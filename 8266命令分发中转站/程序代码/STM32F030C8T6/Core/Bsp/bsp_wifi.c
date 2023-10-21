@@ -16,6 +16,7 @@ static int mqtt_connect( void );
 void wifi_reset( void ) {
 	memset( &w_str, 0, sizeof( WIFI_STR ) );	
 	//复位ESP
+	HAL_GPIO_WritePin( ESP_IO0_GPIO_Port, ESP_IO0_Pin, GPIO_PIN_SET );
 	HAL_GPIO_WritePin( ESP_EN_GPIO_Port, ESP_EN_Pin, GPIO_PIN_SET );
 	HAL_GPIO_WritePin( ESP_RST_GPIO_Port, ESP_RST_Pin, GPIO_PIN_RESET );
 	vTaskDelay( 100 );
@@ -26,19 +27,18 @@ void wifi_reset( void ) {
 //station模式初始化
 void station_mode_init( void ) {
 	wifi_dma_init( STATION_MODE );
-	printf("wifi - init\r\n");
 	send_at_commond( "AT+RST\r\n", "OK", 50 );
 	vTaskDelay(500);
 	
 	if ( connect_wifi( udata.wssid, udata.wpswd ) == 0 ) {//连接成功
-		//printf("wifi连接连接成功\r\n");
+		printf("wifi连接连接成功\r\n");
 		led_nrf_flicker_off(0);
-		if ( w_str.updateLink == 1 ) { write_data_into_flash(); }//wifi连接变更,存入flash
+		if ( w_str.updateLink == 1 ) { write_data_to_w25qFlash();/*write_data_into_flash();*/ }//wifi连接变更,存入flash
 		send_at_commond( "AT+CWMODE=1\r\n", "OK", 50 );
 		send_at_commond( "AT+CIPMUX=1\r\n", "OK", 50 );
 		if ( esp_connect_tcp1() == -1 ) {
 			//连接失败,转入station+AP模式
-			//printf("连接失败,转入station+AP模式\r\n");
+			printf("连接失败,转入station+AP模式\r\n");
 			led_con_flicker_off(1);
 			wifi_dma_reinit();
 			xTaskNotify( wifi_control_taskHandle, 1U<<WIFI_STA_AP_MODE_INIT, eSetBits );
@@ -47,7 +47,7 @@ void station_mode_init( void ) {
 		//建立mqtt连接,订阅主题
 		if ( mqtt_connect() == -1 ) {
 			//连接失败,转入station+AP模式
-			//printf("mqtt连接失败, 转入station+AP模式\r\n");
+			printf("mqtt连接失败, 转入station+AP模式\r\n");
 			led_con_flicker_off(1);
 			wifi_dma_reinit();
 			xTaskNotify( wifi_control_taskHandle, 1U<<WIFI_STA_AP_MODE_INIT, eSetBits );
@@ -65,7 +65,7 @@ void station_mode_init( void ) {
 		
 	} else {
 		//连接失败,转入station+AP模式
-		//printf("连接失败,转入station+AP模式\r\n");
+		printf("连接失败,转入station+AP模式\r\n");
 		led_nrf_flicker_off(1);
 		led_con_flicker_off(1);
 		wifi_dma_reinit();
@@ -77,7 +77,7 @@ void station_mode_init( void ) {
 void station_and_ap_init( void ) {
 	send_at_commond( "AT+RST\r\n", "OK", 50 );
 	vTaskDelay(500);
-	//printf("station+AP模式初始化...\r\n");
+	printf("station+AP模式初始化...\r\n");
 	wifi_dma_init( STATION_AP_MODE );
 	send_at_commond( "AT+CWMODE=3\r\n", "OK", 50 );
 	send_at_commond( "AT+CIPMUX=1\r\n", "OK", 50 );
@@ -470,14 +470,14 @@ static int connect_wifi( const char* const wifiName, const char* const wifiPassw
 	while( pdTRUE ) {
 		vTaskDelay(10);
 		if ( strstr( (char*)w_str.rxBuff, "OK" ) != NULL ) {
-			//printf( "wifi连接成功!\r\n" );
+			printf( "wifi连接成功!\r\n" );
 			res = 0;
 			break;
 		} else if ( strstr( (char*)w_str.rxBuff, "ERROR" ) != NULL ) {
-			//printf( "wifi连接失败!\r\n" );
+			printf( "wifi连接失败!\r\n" );
 			break;
 		} else if ( strstr( (char*)w_str.rxBuff, "FAIL" ) != NULL ) {
-			//printf( "wifi连接失败!\r\n" );
+			printf( "wifi连接失败!\r\n" );
 			break;
 		}
 	}
@@ -506,8 +506,8 @@ static int send_at_commond( char* cmd, char* reply, uint16_t timeout_10ms ) {
 	HAL_UART_AbortReceive( &WIFIHUART );
 	memset( w_str.rxBuff, 0, WIFI_RXBUFF_SIZE );
 	//开中断
-	__HAL_UART_ENABLE_IT( &WIFIHUART, UART_IT_IDLE );
-	__HAL_UART_ENABLE_IT( &WIFIHUART, UART_IT_TC );
+	//__HAL_UART_ENABLE_IT( &WIFIHUART, UART_IT_IDLE );
+	//__HAL_UART_ENABLE_IT( &WIFIHUART, UART_IT_TC );
 	return res;
 }
 
