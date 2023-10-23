@@ -3,6 +3,9 @@
 
 #include "../common.h"
 
+#define NRF_TXBUFF_SIZE		128
+#define NRF_RXBUFF_SIZE		128
+
 //********************NRF24L01*********************** ************** 
 #define TX_PLOAD_WIDTH 32  // 20 uints TX payload 
 #define RX_PLOAD_WIDTH 32  // 20 uints TX payload  

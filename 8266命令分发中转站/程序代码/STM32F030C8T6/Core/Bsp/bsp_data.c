@@ -77,7 +77,7 @@ void nrf_send_time_fun( void ) {
 				ask_str.list &=~ (1<<fastIdx);
 				ask_str.deviceIds[fastIdx] = 0;
 				ask_str.sendTicks[fastIdx] = 0;
-				xTaskNotify( wifi_control_taskHandle, 1U<<DEVICE_NOT_ONLINE, eSetBits );
+				//xTaskNotify( wifi_control_taskHandle, 1U<<DEVICE_NOT_ONLINE, eSetBits );
 				
 			} else {
 				ask_str.useing = 0;

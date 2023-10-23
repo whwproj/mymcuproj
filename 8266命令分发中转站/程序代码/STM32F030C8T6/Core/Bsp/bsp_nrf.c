@@ -106,6 +106,8 @@ void nrf_init(void) {
 	NRF24L01_TypeDef nrf;
 	uint8_t txaddr_t[4] = {0x0A,0x0B,0x0C,0x0D};
 	memset( &nrf, 0, sizeof(NRF24L01_TypeDef) );
+	nrf_str.txBuf = pvPortMalloc(120);
+	nrf_str.rxBuf = pvPortMalloc(120);
 	memcpy( nrf.RX_ADDR_P0_, udata.snId, 4 );
 	memcpy( nrf.TX_ADDR_, txaddr_t, 4 );
 	
@@ -120,7 +122,7 @@ void nrf_init(void) {
 	nrf.RX_PW_P0_ = 32;
 	nrf.DYNPD_ = 0;
 	nrf.FEATURE_ = 0;
-	
+
 	if ( Nrf24l01_Init( &nrf ) != pdTRUE ) {
 		printf("***spi1 nrf24l01 初始化失败!\r\n");
 	} else {
@@ -142,9 +144,9 @@ void nrf_receive_data(void) {
 		//printf("%s\n",nrf_str.rxBuf);
 		switch( nrf_str.rxBuf[3] ) {//msgType
 			case 0://设备绑定:根据deviceId查询nrfAddr是否一致,一致跳过,不一致或不存在则更新或添加
-				get_nrfaddr_by_deviceId( nrf_str.rxBuf[0] );
-				if ( nrf_str.rxBuf[4]!=nrf_str.txAddr[0] || nrf_str.rxBuf[5]!=nrf_str.txAddr[1] ||
-						 nrf_str.rxBuf[6]!=nrf_str.txAddr[2] || nrf_str.rxBuf[7]!=nrf_str.txAddr[3] ) {
+				if ( !get_nrfaddr_by_deviceId(nrf_str.rxBuf[0]) ||
+						nrf_str.rxBuf[4]!=nrf_str.txAddr[0] || nrf_str.rxBuf[5]!=nrf_str.txAddr[1] ||
+						nrf_str.rxBuf[6]!=nrf_str.txAddr[2] || nrf_str.rxBuf[7]!=nrf_str.txAddr[3] ) {
 					insert_nrfaddr( nrf_str.rxBuf[0] );
 				}
 				break;
@@ -180,7 +182,7 @@ void nrf_pack_data( uint8_t did, uint16_t code, char* pdata ) {
 	nrf_str.txBuf[0] = did;
 	nrf_str.txBuf[1] = code >> 8;
 	nrf_str.txBuf[2] = code;
-	nrf_str.txBuf[3] = 1;
+	nrf_str.txBuf[3] = 1;//msgType
 	if ( strlen( pdata ) <= 28 ) {
 		sprintf( (char*)&nrf_str.txBuf[4], "%s", pdata );
 	} else {

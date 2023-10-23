@@ -51,6 +51,7 @@ void HardFault_Handler(void);
 void EXTI4_15_IRQHandler(void);
 void DMA1_Channel2_3_IRQHandler(void);
 void DMA1_Channel4_5_IRQHandler(void);
+void TIM3_IRQHandler(void);
 void TIM17_IRQHandler(void);
 void USART1_IRQHandler(void);
 void USART2_IRQHandler(void);

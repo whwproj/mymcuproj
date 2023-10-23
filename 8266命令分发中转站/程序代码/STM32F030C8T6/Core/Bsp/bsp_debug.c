@@ -67,9 +67,17 @@ void debug_parse_data_fun( void ) {
 	} else if ( strstr( (char *)ds.rxBuff, "cled_off" ) != NULL ) {
 		led_con_flicker_off(0);
 		
-	} else if ( strstr( (char *)ds.rxBuff, "decodeURL" ) != NULL ) {
-		decodeURL( "mqusername=thingidp%40anvntlw%7Cesp8266%7C0%7CMD5" );
+	} else if ( strstr( (char *)ds.rxBuff, "flashr" ) != NULL ) {
+		read_data_from_w25qFlash();
 		
+	} else if ( strstr( (char *)ds.rxBuff, "flashw" ) != NULL ) {
+		write_data_to_w25qFlash();
+		printf("write ok\r\n");
+		
+	} else if ( strstr( (char *)ds.rxBuff, "nrfinit" ) != NULL ) {
+		nrf_init();
+		printf("nrf_init ok\r\n");
+				
 	} else if ( strstr( (char *)ds.rxBuff, "nled_speed:" ) != NULL ) {
 		if ( led_nrf_speed_set(ds.rxBuff[strlen("nled_speed:")]-'0') == 0 ) {
 			printf("nled_speed设置成功\r\n");
@@ -84,32 +92,39 @@ void debug_parse_data_fun( void ) {
 			printf("cled_speed设置失败\r\n");
 		}
 		
-//	} else if ( strstr( (char *)ds.rxBuff, "param:" ) != NULL ) {
-//		if ( post_param_handle((char*)ds.rxBuff+6) == 0 ) {
-//			printf("解析成功:\r\n");
-//			printf("wssid: %s\r\n", udata.wssid );
-//			printf("wpswd: %s\r\n", udata.wpswd );
-//			printf("tcpurl: %s\r\n", udata.tcpurl );
-//			printf("mqusername: %s\r\n", udata.mqusername );
-//			printf("mqpasswd: %s\r\n", udata.mqpasswd );
-//			printf("tcpport: %d\r\n", udata.tcpport );
-//		} else {
-//			printf("err\r\n");
-//		}
+	} else if ( strstr( (char *)ds.rxBuff, "nrfaddr" ) != NULL ) {
+		nrf_str.rxBuf[0] = 0;
+		nrf_str.rxBuf[4] = 0xF0;
+		nrf_str.rxBuf[5] = 0xF1;
+		nrf_str.rxBuf[6] = 0xF2;
+		nrf_str.rxBuf[7] = 0xF0;
+		if ( !get_nrfaddr_by_deviceId(nrf_str.rxBuf[0]) ||
+						nrf_str.rxBuf[4]!=nrf_str.txAddr[0] || nrf_str.rxBuf[5]!=nrf_str.txAddr[1] ||
+						nrf_str.rxBuf[6]!=nrf_str.txAddr[2] || nrf_str.rxBuf[7]!=nrf_str.txAddr[3] ) {
+			insert_nrfaddr( nrf_str.rxBuf[0] );
+			printf("insert ok\r\n");
+		} else {
+			printf("addr is : 0x%.2X 0x%.2X 0x%.2X 0x%.2X\r\n",
+				nrf_str.txAddr[0], nrf_str.txAddr[1], nrf_str.txAddr[2], nrf_str.txAddr[3] );
+		}	
+		
 		
 	} else if ( strstr( (char *)ds.rxBuff, "查询内存" ) != NULL ) {
 	
 #if (INCLUDE_uxTaskGetStackHighWaterMark == 1)
 		printf("\r\n------ 单个任务堆栈的历史最小内存 总大小 / 历史最小内存 start ------\r\n");
+		if ( debugTaskHandle != NULL ) printf("%d / %ld   debugTaskHandle\r\n", debugTaskSize, uxTaskGetStackHighWaterMark(debugTaskHandle) );
 		if ( wifi_control_taskHandle != NULL ) printf("%d / %ld   wifi_control_taskHandle\r\n", wifi_control_taskSize, uxTaskGetStackHighWaterMark(wifi_control_taskHandle) );
-		//if ( wifi_tcp_connect_taskHandle != NULL ) printf("%d / %ld  wifi_tcp_connect_taskHandle\r\n", wifi_tcp_connect_taskSize ,uxTaskGetStackHighWaterMark(wifi_tcp_connect_taskHandle));
+		if ( data_task_handle != NULL ) printf("%d / %ld   data_task_handle\r\n", data_taskSize, uxTaskGetStackHighWaterMark(data_task_handle) );
+		if ( debugTaskHandle != NULL ) printf("%d / %ld   debugTaskHandle\r\n", debugTaskSize, uxTaskGetStackHighWaterMark(debugTaskHandle) );
+		if ( nrf_control_taskHandle != NULL ) printf("%d / %ld   nrf_control_taskHandle\r\n", nrf_control_taskSize, uxTaskGetStackHighWaterMark(nrf_control_taskHandle) );
+		if ( time_task_handle != NULL ) printf("%d / %ld  time_task_handle\r\n", time_taskSize ,uxTaskGetStackHighWaterMark(time_task_handle));
 		printf("内存剩余：%d Byte 历史最小内存剩余：%d Byte\r\n", xPortGetFreeHeapSize(), xPortGetMinimumEverFreeHeapSize());
 		printf("------ 单个任务堆栈的历史最小内存 end ------\r\n");
 #else
 		printf("\r\n------ 内存剩余：%d Byte 历史最小内存剩余：%d Byte\r\n\r\n", xPortGetFreeHeapSize(), xPortGetMinimumEverFreeHeapSize());
-#endif 
+#endif
 	}
-
 //	else if ( strstr( (char *)ds.rxBuff, "clear reg" ) != NULL ) {
 //		SPI_RW_Reg(NRF_WRITE_REG + STATUS, 0xf0 );//0xFF空指令
 //		printf("clear reg ok\r\n");

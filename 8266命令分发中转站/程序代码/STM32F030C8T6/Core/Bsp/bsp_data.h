@@ -4,7 +4,7 @@
 #include "../common.h"
 
 /*----------  ------------*/
-#define PARSE_WIFI_DATA			0
+//#define PARSE_WIFI_DATA			0
 /*----------  ------------*/
 
 /*-------------------- TIME start --------------------*/

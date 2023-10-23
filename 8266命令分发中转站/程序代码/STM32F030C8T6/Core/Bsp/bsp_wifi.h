@@ -82,6 +82,7 @@
 #define DEVICE_NOT_REGISTER				5
 #define DEVICE_NOT_ONLINE					6
 #define	FORWARD_SUCCESS						7
+#define PARSE_WIFI_DATA						8
 //*****	wifi_control_task_fun 
 
 #define WIFI_CONNECT_TCP0_DELAY	0

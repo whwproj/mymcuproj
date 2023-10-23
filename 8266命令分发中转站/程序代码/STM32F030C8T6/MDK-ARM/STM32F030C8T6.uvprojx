@@ -310,7 +310,7 @@
           </ArmAdsMisc>
           <Cads>
             <interw>1</interw>
-            <Optim>0</Optim>
+            <Optim>1</Optim>
             <oTime>0</oTime>
             <SplitLS>0</SplitLS>
             <OneElfS>1</OneElfS>
@@ -535,6 +535,11 @@
               <FileName>bsp_data.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\Core\Bsp\bsp_data.c</FilePath>
+            </File>
+            <File>
+              <FileName>bsp_w25qxx.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Core\Bsp\bsp_w25qxx.c</FilePath>
             </File>
           </Files>
         </Group>

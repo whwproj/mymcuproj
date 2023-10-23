@@ -3,7 +3,6 @@
 
 
 //#define WIFIDEBUG
-//#define DEBUG_ENABLE
 //INCLUDE_uxTaskGetStackHighWaterMark 0
 
 /* LIB ------------------------------------------------------------*/
@@ -32,6 +31,7 @@
 #include "../Bsp/bsp_flash.h"
 #include "../Bsp/bsp_json.h"
 #include "../Bsp/bsp_data.h"
+#include "../Bsp/bsp_w25qxx.h"
 
 /*---- Tools -------------------------*/
 #include "../Tools/tool_url.h"
@@ -40,11 +40,11 @@
 #include "../Tools/crc.h"
 
 
-#define 	debugTaskSize								256
+#define 	debugTaskSize								128
 #define 	wifi_control_taskSize				192
 #define 	nrf_control_taskSize				192
-#define 	data_task_size							128
-#define		time_task_size							64
+#define 	data_taskSize								128
+#define		time_taskSize								64
 
 extern TaskHandle_t debugTaskHandle;
 extern TaskHandle_t wifi_control_taskHandle;

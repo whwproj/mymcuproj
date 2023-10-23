@@ -6,7 +6,7 @@
 #define DEBUG_HUART					huart2
 #define DEBUG_HDMA_USART_RX	hdma_usart2_rx
 #define DEBUG_HDMA_USART_TX	hdma_usart2_tx
-#define DEBUG_BUFF_SIZE	256
+#define DEBUG_BUFF_SIZE	50
 
 /*---- debug task bits start ----------------*/
 #define DEBUG_DEVICE_INIT 0

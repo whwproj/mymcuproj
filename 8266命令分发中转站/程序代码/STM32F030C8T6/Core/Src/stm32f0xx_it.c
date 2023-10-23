@@ -22,6 +22,7 @@
 #include "stm32f0xx_it.h"
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include "../common.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -55,6 +56,7 @@
 /* USER CODE END 0 */
 
 /* External variables --------------------------------------------------------*/
+extern TIM_HandleTypeDef htim3;
 extern DMA_HandleTypeDef hdma_usart1_rx;
 extern DMA_HandleTypeDef hdma_usart1_tx;
 extern DMA_HandleTypeDef hdma_usart2_rx;
@@ -150,6 +152,20 @@ void DMA1_Channel4_5_IRQHandler(void)
 }
 
 /**
+  * @brief This function handles TIM3 global interrupt.
+  */
+void TIM3_IRQHandler(void)
+{
+  /* USER CODE BEGIN TIM3_IRQn 0 */
+
+  /* USER CODE END TIM3_IRQn 0 */
+  HAL_TIM_IRQHandler(&htim3);
+  /* USER CODE BEGIN TIM3_IRQn 1 */
+
+  /* USER CODE END TIM3_IRQn 1 */
+}
+
+/**
   * @brief This function handles TIM17 global interrupt.
   */
 void TIM17_IRQHandler(void)
@@ -169,11 +185,15 @@ void TIM17_IRQHandler(void)
 void USART1_IRQHandler(void)
 {
   /* USER CODE BEGIN USART1_IRQn 0 */
-
+	BaseType_t phpt;
   /* USER CODE END USART1_IRQn 0 */
   HAL_UART_IRQHandler(&huart1);
   /* USER CODE BEGIN USART1_IRQn 1 */
-
+	if((__HAL_UART_GET_FLAG(&huart1,UART_FLAG_IDLE) != RESET)) {
+		__HAL_UART_CLEAR_IDLEFLAG(&huart1);//清除空闲
+		xTaskNotifyFromISR( wifi_control_taskHandle, 1U<<WIFI_UART_IDLE_CALLBACK, eSetBits, &phpt );
+		portYIELD_FROM_ISR( phpt );
+	} 
   /* USER CODE END USART1_IRQn 1 */
 }
 
@@ -183,11 +203,15 @@ void USART1_IRQHandler(void)
 void USART2_IRQHandler(void)
 {
   /* USER CODE BEGIN USART2_IRQn 0 */
-
+	BaseType_t phpt;
   /* USER CODE END USART2_IRQn 0 */
   HAL_UART_IRQHandler(&huart2);
   /* USER CODE BEGIN USART2_IRQn 1 */
-
+	if((__HAL_UART_GET_FLAG(&huart2,UART_FLAG_IDLE) != RESET)) {
+		__HAL_UART_CLEAR_IDLEFLAG(&huart2);  //清除空闲
+		xTaskNotifyFromISR( debugTaskHandle, 1U<<DEBUG_PARSE_DATA, eSetBits, &phpt );
+		portYIELD_FROM_ISR( phpt );
+	} 
   /* USER CODE END USART2_IRQn 1 */
 }
 

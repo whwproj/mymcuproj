@@ -60,7 +60,7 @@ osThreadId defaultTaskHandle;
 void debugTaskFun(void const * argument);
 void wifi_control_task_fun(void const * argument);
 void nrf_control_task_fun(void const * argument);
-void data_task_handle_fun(void const * argument);
+//void data_task_handle_fun(void const * argument);
 void time_task_fun(void const * argument);
 /* USER CODE END FunctionPrototypes */
 
@@ -118,8 +118,8 @@ void MX_FREERTOS_Init(void) {
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
-	osThreadDef(debugTask, debugTaskFun, osPriorityNormal, 0, debugTaskSize);
-  debugTaskHandle = osThreadCreate(osThread(debugTask), NULL);
+	/*osThreadDef(debugTask, debugTaskFun, osPriorityNormal, 0, debugTaskSize);
+  debugTaskHandle = osThreadCreate(osThread(debugTask), NULL);*/
 	
 	osThreadDef(wifi_control_task, wifi_control_task_fun, osPriorityNormal, 0, wifi_control_taskSize);
   wifi_control_taskHandle = osThreadCreate(osThread(wifi_control_task), NULL);
@@ -127,10 +127,10 @@ void MX_FREERTOS_Init(void) {
 	osThreadDef(nrf_control_task, nrf_control_task_fun, osPriorityNormal, 0, nrf_control_taskSize);
   nrf_control_taskHandle = osThreadCreate(osThread(nrf_control_task), NULL);
 	
-	osThreadDef(data_task, data_task_handle_fun, osPriorityNormal, 0, data_task_size);
-  data_task_handle = osThreadCreate(osThread(data_task), NULL);
+//	osThreadDef(data_task, data_task_handle_fun, osPriorityNormal, 0, data_taskSize);
+//  data_task_handle = osThreadCreate(osThread(data_task), NULL);
 	
-	osThreadDef(time_task, time_task_fun, osPriorityNormal, 0, time_task_size);
+	osThreadDef(time_task, time_task_fun, osPriorityNormal, 0, time_taskSize);
   time_task_handle = osThreadCreate(osThread(time_task), NULL);
 
   /* USER CODE END RTOS_THREADS */
@@ -148,33 +148,38 @@ void StartDefaultTask(void const * argument)
 {
   /* USER CODE BEGIN StartDefaultTask */
   /* Infinite loop */
+
   for(;;)
   {
 #ifdef WIFIDEBUG
 		//复位ESP
 		HAL_GPIO_WritePin( ESP_EN_GPIO_Port, ESP_EN_Pin, GPIO_PIN_SET );
+		HAL_GPIO_WritePin( ESP_IO0_GPIO_Port, ESP_IO0_Pin, GPIO_PIN_RESET );
 		HAL_GPIO_WritePin( ESP_RST_GPIO_Port, ESP_RST_Pin, GPIO_PIN_RESET );
 		vTaskDelay( 500 );
 		HAL_GPIO_WritePin( ESP_RST_GPIO_Port, ESP_RST_Pin, GPIO_PIN_SET );
 		vTaskDelay( 2000 );
 #else
-		read_data_from_flash();
+		read_data_from_w25qFlash();
 		led_init();
-		debug_init();
+		//debug_init();
 		
 		HAL_TIM_Base_Start_IT( &htim3 );
 		HAL_TIM_Base_Start( &htim3 );
 		led_nrf_flicker_on();
 		led_con_flicker_on();
 	
-		xTaskNotify( wifi_control_taskHandle, 1U<<WIFI_DEVICE_RESET, eSetBits );
-		vTaskDelay(1200);
-		xTaskNotify( wifi_control_taskHandle, 1U<<WIFI_STATION_MODE_INIT, eSetBits );
-		vTaskDelay(1000);
-		printf("init ok\r\n");
+		//xTaskNotify( wifi_control_taskHandle, 1U<<WIFI_DEVICE_RESET, eSetBits );
+		//vTaskDelay(1200);
+		//xTaskNotify( wifi_control_taskHandle, 1U<<WIFI_STATION_MODE_INIT, eSetBits );
+		//vTaskDelay(1000);
+		//xTaskNotify( nrf_control_taskHandle, 1U<<NRF_INIT_EVENT, eSetBits );
+		
 #endif
+		printf("init ok\r\n");
 		vTaskDelete( defaultTaskHandle );
   }
+	
   /* USER CODE END StartDefaultTask */
 }
 
@@ -234,6 +239,13 @@ void wifi_control_task_fun(void const * argument) {
 			oldBits &=~ (1U<<FORWARD_SUCCESS);
 			send_forward_success();
 		}
+		if ( oldBits & (1U<<PARSE_WIFI_DATA) ) {
+			oldBits &=~ (1U<<PARSE_WIFI_DATA);
+			if ( parse_wifi_data_fun() != 0 ) {
+				xTaskNotify( wifi_control_taskHandle, 1U<<PARSE_WIFI_DATA, eSetBits );
+			}
+		}
+		
 		/*if ( oldBits & (1U<<PUSH_DATA) ) {
 			oldBits &=~ (1U<<PUSH_DATA);
 			//push_data_fun();
@@ -273,7 +285,8 @@ void data_task_handle_fun(void const * argument) {
 void nrf_control_task_fun(void const * argument) {
 	uint32_t newBits, oldBits = 0;
   for(;;) {
-		xTaskNotifyWait( pdFALSE, portMAX_DELAY, &newBits, portMAX_DELAY );
+		//xTaskNotifyWait( pdFALSE, portMAX_DELAY, &newBits, portMAX_DELAY );
+		xTaskNotifyWait( pdFALSE, portMAX_DELAY, &newBits, 5000 );
 		oldBits |= newBits;
 		if ( oldBits & (1U<<NRF_INIT_EVENT) ) {
 			oldBits &=~ (1U<<NRF_INIT_EVENT);
@@ -287,6 +300,7 @@ void nrf_control_task_fun(void const * argument) {
 			oldBits &=~ (1U<<NRF_TX_EVENT);
 			nrf_send_data();
 		}
+		printf("\r\n------ 内存剩余：%d Byte 历史最小内存剩余：%d Byte\r\n\r\n", xPortGetFreeHeapSize(), xPortGetMinimumEverFreeHeapSize());
   }
 }
 /*--------------- NRF24 ----------------*/

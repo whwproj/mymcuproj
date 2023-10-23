@@ -26,7 +26,7 @@ void wifi_reset( void ) {
 //station模式初始化
 void station_mode_init( void ) {
 	wifi_dma_init( STATION_MODE );
-	
+	printf("wifi - init\r\n");
 	send_at_commond( "AT+RST\r\n", "OK", 50 );
 	vTaskDelay(500);
 	
@@ -180,7 +180,7 @@ void wifi_uart_idle_callback( void ) {
 				}
 				if ( jsonStr != NULL ) {
 					xQueueSend( wifi_data_handle, dataStr, portMAX_DELAY );
-					xTaskNotify( data_task_handle, 1U<<PARSE_WIFI_DATA, eSetBits );
+					xTaskNotify( wifi_control_taskHandle, 1U<<PARSE_WIFI_DATA, eSetBits );
 					vPortFree( dataStr );
 					__HAL_UART_ENABLE_IT( &WIFIHUART, UART_IT_IDLE );
 					__HAL_UART_ENABLE_IT( &WIFIHUART, UART_IT_TC );

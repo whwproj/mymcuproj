@@ -29,7 +29,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "../common.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -95,7 +95,7 @@ int main(void)
   MX_GPIO_Init();
   MX_DMA_Init();
   MX_ADC_Init();
-  MX_IWDG_Init();
+  //MX_IWDG_Init();
   MX_SPI1_Init();
   MX_USART1_UART_Init();
   MX_USART2_UART_Init();
@@ -192,7 +192,10 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
     HAL_IncTick();
   }
   /* USER CODE BEGIN Callback 1 */
-
+	if (htim->Instance == TIM3) {
+		led_tim_callback();
+		send_mqtt_heart_isr();
+  }
   /* USER CODE END Callback 1 */
 }
 
@@ -226,23 +229,4 @@ void assert_failed(uint8_t *file, uint32_t line)
      ex: printf("Wrong parameters value: file %s on line %d\r\n", file, line) */
   /* USER CODE END 6 */
 }
-
-//1.修复wifi通信卡死问题
-//2.增加iwdg加强系统稳定性
-//3.优化网络切换等
-
-
-//1.修復wifi通信卡死問題
-//2.增加iwdg加強系統穩定性
-//3.優化網絡切換等
-
-
-//1.Fix wifi communication card 
-//problem.
-//2.Increase iwdg to strengthen 
-//system stability.
-//3.Optimize network switching, etc.
-
 #endif /* USE_FULL_ASSERT */
-
-
