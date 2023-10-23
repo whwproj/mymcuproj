@@ -378,11 +378,6 @@
           <GroupName>Application/User/Bsp</GroupName>
           <Files>
             <File>
-              <FileName>bsp_wifi.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\Core\Bsp\bsp_wifi.c</FilePath>
-            </File>
-            <File>
               <FileName>bsp_nrf.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\Core\Bsp\bsp_nrf.c</FilePath>

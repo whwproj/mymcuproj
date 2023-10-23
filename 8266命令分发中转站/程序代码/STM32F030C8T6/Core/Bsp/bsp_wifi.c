@@ -37,8 +37,8 @@ void station_mode_init( void ) {
 		send_at_commond( "AT+CWMODE=1\r\n", "OK", 50 );
 		send_at_commond( "AT+CIPMUX=1\r\n", "OK", 50 );
 		if ( esp_connect_tcp1() == -1 ) {
-			//连接失败,转入station+AP模式
-			printf("连接失败,转入station+AP模式\r\n");
+			//TCP连接失败,转入station+AP模式
+			printf("TCP连接失败,转入station+AP模式\r\n");
 			led_con_flicker_off(1);
 			wifi_dma_reinit();
 			xTaskNotify( wifi_control_taskHandle, 1U<<WIFI_STA_AP_MODE_INIT, eSetBits );
@@ -64,8 +64,8 @@ void station_mode_init( void ) {
 		xTaskNotify( nrf_control_taskHandle, 1U<<NRF_INIT_EVENT, eSetBits );
 		
 	} else {
-		//连接失败,转入station+AP模式
-		printf("连接失败,转入station+AP模式\r\n");
+		//WIFI连接失败,转入station+AP模式
+		printf("WIFI连接失败,转入station+AP模式\r\n");
 		led_nrf_flicker_off(1);
 		led_con_flicker_off(1);
 		wifi_dma_reinit();
@@ -75,13 +75,18 @@ void station_mode_init( void ) {
 
 //station+AP模式初始化,供用户设置wifi账号密码并存入flash
 void station_and_ap_init( void ) {
-	send_at_commond( "AT+RST\r\n", "OK", 50 );
-	vTaskDelay(500);
+	wifi_reset();
+	//send_at_commond( "AT+RST\r\n", "OK", 50 );
+	//vTaskDelay(500);
 	printf("station+AP模式初始化...\r\n");
 	wifi_dma_init( STATION_AP_MODE );
 	send_at_commond( "AT+CWMODE=3\r\n", "OK", 50 );
 	send_at_commond( "AT+CIPMUX=1\r\n", "OK", 50 );
 	send_at_commond( "AT+CIPSERVER=1,8266\r\n", "OK", 50 );
+	//开中断
+	__HAL_UART_CLEAR_IDLEFLAG( &WIFIHUART );//清除空闲中断标志
+	__HAL_UART_ENABLE_IT( &WIFIHUART, UART_IT_IDLE );
+	__HAL_UART_ENABLE_IT( &WIFIHUART, UART_IT_TC );
 	HAL_UART_DMAStop( &WIFIHUART );
 	HAL_UART_Receive_DMA( &WIFIHUART, w_str.rxBuff, WIFI_APRXBUFF_SIZE );
 }
@@ -95,11 +100,11 @@ void wifi_uart_idle_callback( void ) {
 	if ( w_str.wifiMode == STATION_AP_MODE ) {
 		
 		if ( strstr( (char*)w_str.rxBuff, "+STA_CONNECTED:" ) ) {
-			//printf("设备WIFI连接AP\r\n");
+			printf("设备WIFI连接AP\r\n");
 			
 		} else if ( strstr( (char*)w_str.rxBuff, "GET /" ) ) {
 			pid = *(strstr((char*)w_str.rxBuff,"+IPD,")+5)-'0';
-			//printf("TCP%d 建立连接\r\n", pid);
+			printf("TCP%d 建立连接\r\n", pid);
 			len_t = strlen(HTML_BODY_START) + strlen(HTML_CONTENT_1) + strlen(HTML_BODY_END);
 			sprintf( (char*)w_str.txBuff, "%s%d%s%s%s%s", (char*)&HTML_HEAD_START, len_t, (char*)&HTML_HEAD_END,
 				(char*)&HTML_BODY_START, (char*)&HTML_CONTENT_1, (char*)&HTML_BODY_END );
@@ -111,14 +116,15 @@ void wifi_uart_idle_callback( void ) {
 			if ( post_param_handle(str) == 0 ) {
 				led_nrf_flicker_on();
 				led_con_flicker_on();
-				//printf("参数设置成功\r\n");
+				printf("参数设置成功\r\n");
 				len_t = strlen(HTML_BODY_START) + strlen(HTML_CONTENT_2) + strlen(HTML_BODY_END);
 				sprintf( (char*)w_str.txBuff, "%s%d%s%s%s%s", (char*)&HTML_HEAD_START, len_t, (char*)&HTML_HEAD_END,
 					(char*)&HTML_BODY_START, (char*)&HTML_CONTENT_2, (char*)&HTML_BODY_END );
 				wifi_tcp_send_data( pid|ENABLE_IT );
 				//重连WIFI
+				vTaskDelay(400);
 				send_at_commond( "AT+RST\r\n", "OK", 50 );
-				vTaskDelay(500);
+				vTaskDelay(400);
 				w_str.updateLink = 1;
 				wifi_dma_reinit();
 				xTaskNotify( wifi_control_taskHandle, 1U<<WIFI_STATION_MODE_INIT, eSetBits );
@@ -178,7 +184,7 @@ void wifi_uart_idle_callback( void ) {
 					w_str.txBuff[3] = mqttId;
 					wifi_tcp_send_data( 1|NOT_STR );
 				}
-				if ( jsonStr != NULL ) {
+				if ( dataStr != NULL ) {
 					xQueueSend( wifi_data_handle, dataStr, portMAX_DELAY );
 					xTaskNotify( wifi_control_taskHandle, 1U<<PARSE_WIFI_DATA, eSetBits );
 					vPortFree( dataStr );
@@ -208,7 +214,7 @@ void wifi_uart_idle_callback( void ) {
 				goto end;
 				
 			} else if ( (uint8_t)str[0]==0xD0 && (uint8_t)str[1]==0x00 ) {//收到心跳包应答
-				//printf("----应答心跳\r\n");
+				printf("----应答心跳\r\n");
 				w_str.heartBeatTime = 0;
 			}
 			
@@ -221,11 +227,11 @@ void wifi_uart_idle_callback( void ) {
 	HAL_UART_AbortReceive( &WIFIHUART );
 	if ( w_str.wifiMode == STATION_MODE ) {
 		len_t = WIFI_RXBUFF_SIZE - __HAL_DMA_GET_COUNTER( &WIFI_HDMA_HUART_RX );
-		memset( w_str.rxBuff, 0, len_t );
+		memset( w_str.rxBuff, 0, WIFI_RXBUFF_SIZE );
 		HAL_UART_Receive_DMA( &WIFIHUART, w_str.rxBuff, WIFI_RXBUFF_SIZE );
 	} else {
 		len_t = WIFI_APRXBUFF_SIZE - __HAL_DMA_GET_COUNTER( &WIFI_HDMA_HUART_RX );
-		memset( w_str.rxBuff, 0, len_t );
+		memset( w_str.rxBuff, 0, WIFI_APRXBUFF_SIZE );
 		HAL_UART_Receive_DMA( &WIFIHUART, w_str.rxBuff, WIFI_APRXBUFF_SIZE );
 	}
 	
@@ -315,7 +321,7 @@ static int esp_connect_tcp1 ( void ) {
 		//__set_FAULTMASK(1);
 		NVIC_SystemReset();
 	}
-	//printf("TCP1 连接中...\r\n");
+	printf("TCP1 连接中...\r\n");
 	HAL_UART_AbortReceive( &WIFIHUART );
 	memset( w_str.rxBuff, 0, WIFI_RXBUFF_SIZE ); 
 	sprintf( (char*)w_str.txBuff, "AT+CIPSTART=1,\"TCP\",\"%s\",%d\r\n", udata.tcpurl, udata.tcpport );
@@ -323,20 +329,20 @@ static int esp_connect_tcp1 ( void ) {
 	HAL_UART_Transmit( &WIFIHUART, w_str.txBuff, strlen((char*)w_str.txBuff), portMAX_DELAY );
 	for ( i=1000; i>0; i-- ) {
 		if ( strstr( (void*)w_str.rxBuff, "CONNECT" ) != NULL ) {
-			//printf("TCP1 连接成功\r\n");
+			printf("TCP1 连接成功\r\n");
 			res = 1;
 			break;
 		} else if ( strstr( (void*)w_str.rxBuff, "DNS Fail" ) != NULL ) {
-			//printf("TCP1 DNS Fail 连接失败\r\n");
+			printf("TCP1 DNS Fail 连接失败\r\n");
 			i=0; break;
 		} else if ( strstr( (void*)w_str.rxBuff, "CLOSED" ) != NULL ) {
-			//printf("TCP1 CLOSED 连接失败\r\n");
+			printf("TCP1 CLOSED 连接失败\r\n");
 			i=0; break;
 		}
 		vTaskDelay(10);
 	}
 	if ( i == 0 ) {
-		//printf("TCP1 连接超时 5s后重连...\r\n");
+		printf("TCP1 连接超时 5s后重连...\r\n");
 		//xTaskNotify( wifi_tcp_connect_taskHandle, 1U<<WIFI_CONNECT_TCP1_DELAY, eSetBits );
 	}
 	w_str.tcp1_errnum = 0;
@@ -369,33 +375,33 @@ static int mqtt_connect( void ) {
 	//建立连接
 	GetDataConnet( w_str.txBuff );
 	if ( static_mqtt_commont_t(0x20) == -1 ) {//连接确认
-		//printf("mqtt连接失败\r\n");
+		printf("mqtt连接失败\r\n");
 		goto end;
 	}
 	memset( w_str.txBuff, 0, WIFI_TXBUFF_SIZE );
 	memset( w_str.rxBuff, 0, WIFI_RXBUFF_SIZE );
-	//printf("mqtt连接成功\r\n");
+	printf("mqtt连接成功\r\n");
 	
 	
 	//订阅主题
 	GetDataSUBSCRIBE( w_str.txBuff, MQTT_SUB1Topic, 1 );
 	if ( static_mqtt_commont_t(0x90) == -1 ) {//订阅确认
-		//printf("mqtt订阅主题1失败\r\n");
+		printf("mqtt订阅主题1失败\r\n");
 		goto end;
 	}
 	memset( w_str.txBuff, 0, WIFI_TXBUFF_SIZE );
 	memset( w_str.rxBuff, 0, WIFI_RXBUFF_SIZE );
-	//printf("mqtt订阅主题1成功\r\n");
+	printf("mqtt订阅主题1成功\r\n");
 	
 	//订阅主题
 	GetDataSUBSCRIBE( w_str.txBuff, MQTT_SUB2Topic, 1 );
 	if ( static_mqtt_commont_t(0x90) == -1 ) {//订阅确认
-		//printf("mqtt订阅主题2失败\r\n");
+		printf("mqtt订阅主题2失败\r\n");
 		goto end;
 	}
 	memset( w_str.txBuff, 0, WIFI_TXBUFF_SIZE );
 	memset( w_str.rxBuff, 0, WIFI_RXBUFF_SIZE );
-	//printf("mqtt订阅主题2成功\r\n");
+	printf("mqtt订阅主题2成功\r\n");
 	res = 0;
 	
 	end:
@@ -457,12 +463,13 @@ static int connect_wifi( const char* const wifiName, const char* const wifiPassw
 	int res = -1;
 	if ( strlen(wifiName)==0 || (uint8_t)wifiName[0]==0xff ) return res;
 	
-	//printf("wifi连接中...\r\n");
+	printf("wifi连接中...\r\n");
 	
 	//关中断
+	__HAL_UART_CLEAR_IDLEFLAG( &WIFIHUART );//清除空闲中断标志
+	HAL_UART_DMAStop( &WIFIHUART );
 	__HAL_UART_DISABLE_IT( &WIFIHUART, UART_IT_IDLE );
 	__HAL_UART_DISABLE_IT( &WIFIHUART, UART_IT_TC );
-	HAL_UART_DMAStop( &WIFIHUART );
 	memset( w_str.rxBuff, 0, WIFI_RXBUFF_SIZE );
 	HAL_UART_Receive_DMA( &WIFIHUART, w_str.rxBuff, WIFI_RXBUFF_SIZE );
 	sprintf( (char*)w_str.txBuff, "AT+CWJAP=\"%s\",\"%s\"\r\n", wifiName, wifiPasswd );
@@ -530,6 +537,7 @@ static void wifi_dma_init( uint8_t mode ) {
 	}
 	//开启串口中断
 	HAL_UART_DMAStop( &WIFIHUART );
+	__HAL_UART_CLEAR_IDLEFLAG( &WIFIHUART );//清除空闲中断标志
 	__HAL_UART_ENABLE_IT( &WIFIHUART, UART_IT_IDLE );
 	__HAL_UART_ENABLE_IT( &WIFIHUART, UART_IT_TC );
 }
@@ -547,7 +555,7 @@ static void wifi_dma_reinit( void ) {
 static int post_param_handle( char* param ) {
 	uint16_t len_t;
 	char *str_t, *str, *str1_t, *str2_t;
-	int res = -1;//成功更新过,并且校验所有参数合法时res=0
+	int res = 0;//成功更新过,并且校验所有参数合法时res=0
 	
 	if ( param == NULL ) return res;
 	
@@ -632,13 +640,24 @@ static int post_param_handle( char* param ) {
 		vPortFree( str );
 		res = 0;
 	}
-	
-	//mqpasswd
+
+	//mqpasswd=1,CON
 	str1_t = str2_t + 10;
-	if ( strlen(str1_t)>0 && (uint8_t)str1_t[0]!=0xFF ) {
+	//printf("***** str1_t: %s\r\n", str1_t);
+	str2_t = strstr(str1_t, ",CONNECT");
+	//printf("***** str2_t: %s\r\n", str2_t);
+	if ( str1_t != NULL ) {
+		len_t = (str2_t!=NULL) ? (uint16_t)((uint32_t)str2_t-(uint32_t)str1_t)-1 : strlen(str1_t);
+	} else {
+		len_t = 0;
+	}
+	//printf("***** len_t: %d\r\n", len_t);
+	if ( len_t>0&&len_t<33 && (uint8_t)str1_t[0]!=0xFF ) {
 		memset( udata.mqpasswd, 0, 33 );
 		str_t = pvPortMalloc( 33 );
-		sprintf( str_t, "%s", str1_t );
+		memcpy( str_t, str1_t, len_t );
+		str_t[len_t] = '\0';
+		//printf("***** str_t: %s\r\n", str_t);
 		//URL转义解码,去除%XX
 		str = decodeURL( str_t );
 		sprintf( udata.mqpasswd, "%s", str );
@@ -663,9 +682,9 @@ void send_device_not_register( void ) {
 		w_str.sendLock = 0;//上锁
 		jsonStr = cjson_reply_template( w_str.session.code, -2, "Device not register!" );
 		//nrf_str.notEmpty = 0;
-		GetDataPUBLISH( w_str.txBuff, 0, 1, 0, MQTT_PUBTopic, jsonStr );
+		w_str.txLen = GetDataPUBLISH( w_str.txBuff, 0, 1, 0, MQTT_PUBTopic, jsonStr );
 		vPortFree( jsonStr );
-		wifi_tcp_send_data( 1|ENABLE_IT );
+		wifi_tcp_send_data( 1|NOT_STR|ENABLE_IT );
 		w_str.sendLock = 1;//解锁
 	}
 }
@@ -677,9 +696,9 @@ int send_device_not_online( void ) {
 		w_str.sendLock = 0;//上锁
 		jsonStr = cjson_reply_template( w_str.session.code, -1, "Device not online!" );
 		//nrf_str.notEmpty = 0;
-		GetDataPUBLISH( w_str.txBuff, 0, 1, 0, MQTT_PUBTopic, jsonStr );
+		w_str.txLen = GetDataPUBLISH( w_str.txBuff, 0, 1, 0, MQTT_PUBTopic, jsonStr );
 		vPortFree( jsonStr );
-		wifi_tcp_send_data( 1|ENABLE_IT );
+		wifi_tcp_send_data( 1|NOT_STR|ENABLE_IT );
 		w_str.sendLock = 1;//解锁
 		return 0;
 	}

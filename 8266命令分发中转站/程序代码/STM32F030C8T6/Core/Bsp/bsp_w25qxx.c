@@ -258,7 +258,7 @@ void read_data_from_w25qFlash( void ) {
 	printf("mqpasswd: %s\r\n", udata.mqpasswd);
 	printf("tcpport: %d\r\n", udata.tcpport);
 	printf("duid: %s\r\n", udata.duid);
-	printf("snId: %d%d%d%d\r\n", udata.snId[0],udata.snId[1],udata.snId[2],udata.snId[3]);
+	printf("snId: %.02X%.02X%.02X%.02X\r\n", udata.snId[0],udata.snId[1],udata.snId[2],udata.snId[3]);
 }
 
 

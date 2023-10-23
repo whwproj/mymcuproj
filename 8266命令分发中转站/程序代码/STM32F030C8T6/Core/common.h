@@ -41,14 +41,14 @@
 
 
 #define 	debugTaskSize								128
-#define 	wifi_control_taskSize				192
-#define 	nrf_control_taskSize				192
-#define 	data_taskSize								128
+#define 	wifi_control_taskSize				256
+#define 	nrf_control_taskSize				100
+//#define 	data_taskSize								128
 #define		time_taskSize								64
 
 extern TaskHandle_t debugTaskHandle;
 extern TaskHandle_t wifi_control_taskHandle;
-extern TaskHandle_t data_task_handle;
+//extern TaskHandle_t data_task_handle;
 extern TaskHandle_t nrf_control_taskHandle;
 extern QueueHandle_t wifi_data_handle;
 extern TaskHandle_t time_task_handle;

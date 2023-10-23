@@ -154,6 +154,19 @@ void nrf_receive_data(void) {
 			case 1: break;
 			
 			case 2://设备回复:携带pcode转发mqtt
+				//删除超时未应答链表节点
+				while( ask_str.useing ) { osDelay(1); }
+				ask_str.useing = 1;
+				for ( int i=0; i<5; i++ ) {
+					if ( ask_str.deviceIds[i] == nrf_str.rxBuf[0] ) {
+						ask_str.list &=~ (1<<i);
+						ask_str.deviceIds[i] = 0;
+						ask_str.sendTicks[i] = 0;
+						ask_str.pcode[i] = 0;
+					}
+				}
+				ask_str.useing = 0;
+			
 				while ( !w_str.sendLock ) { osDelay(1); }
 				w_str.session.deviceId = nrf_str.rxBuf[0];
 				w_str.session.code = (nrf_str.txAddr[1]<<8) | nrf_str.txAddr[2];
@@ -188,6 +201,7 @@ void nrf_pack_data( uint8_t did, uint16_t code, char* pdata ) {
 	} else {
 		sprintf( (char*)&nrf_str.txBuf[4], "data too long..." );
 	}
+	vPortFree( data_str.data );
 }
 
 //NRF发送数据

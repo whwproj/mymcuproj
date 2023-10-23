@@ -115,7 +115,7 @@ void debug_parse_data_fun( void ) {
 		printf("\r\n------ 单个任务堆栈的历史最小内存 总大小 / 历史最小内存 start ------\r\n");
 		if ( debugTaskHandle != NULL ) printf("%d / %ld   debugTaskHandle\r\n", debugTaskSize, uxTaskGetStackHighWaterMark(debugTaskHandle) );
 		if ( wifi_control_taskHandle != NULL ) printf("%d / %ld   wifi_control_taskHandle\r\n", wifi_control_taskSize, uxTaskGetStackHighWaterMark(wifi_control_taskHandle) );
-		if ( data_task_handle != NULL ) printf("%d / %ld   data_task_handle\r\n", data_taskSize, uxTaskGetStackHighWaterMark(data_task_handle) );
+		//if ( data_task_handle != NULL ) printf("%d / %ld   data_task_handle\r\n", data_taskSize, uxTaskGetStackHighWaterMark(data_task_handle) );
 		if ( debugTaskHandle != NULL ) printf("%d / %ld   debugTaskHandle\r\n", debugTaskSize, uxTaskGetStackHighWaterMark(debugTaskHandle) );
 		if ( nrf_control_taskHandle != NULL ) printf("%d / %ld   nrf_control_taskHandle\r\n", nrf_control_taskSize, uxTaskGetStackHighWaterMark(nrf_control_taskHandle) );
 		if ( time_task_handle != NULL ) printf("%d / %ld  time_task_handle\r\n", time_taskSize ,uxTaskGetStackHighWaterMark(time_task_handle));

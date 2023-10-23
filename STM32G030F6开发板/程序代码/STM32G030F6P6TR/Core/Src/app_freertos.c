@@ -123,7 +123,7 @@ void StartDefaultTask(void const * argument)
   /* Infinite loop */
   for(;;)
   {
-		getSnByDeviceId_setClientId();
+		//getSnByDeviceId_setClientId();
 		//read_data_from_flash();
 		//#ifdef DEBUG_ENABLE
 		//	debug_init();
@@ -132,8 +132,11 @@ void StartDefaultTask(void const * argument)
 		//HAL_TIM_Base_Start( &htim3 );
 		
 		xTaskNotify( nrf_control_taskHandle, 1U<<NRF_INIT_EVENT, eSetBits );
+		xTaskNotify( executive_taskHandle, 1U<<LED_MODE_OFF, eSetBits );
+		LED0_ON();
 		printf("init ok\r\n");
-
+		vTaskDelay(100);
+		xTaskNotify( nrf_control_taskHandle, 1U<<NRF_REGISTER_DEVICE, eSetBits );
 		vTaskDelete( defaultTaskHandle );
   }
   /* USER CODE END StartDefaultTask */
