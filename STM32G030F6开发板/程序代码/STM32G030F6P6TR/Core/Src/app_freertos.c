@@ -133,7 +133,10 @@ void StartDefaultTask(void const * argument)
 		
 		xTaskNotify( nrf_control_taskHandle, 1U<<NRF_INIT_EVENT, eSetBits );
 		xTaskNotify( executive_taskHandle, 1U<<LED_MODE_OFF, eSetBits );
+		LED0_ON();
 		printf("init ok\r\n");
+		vTaskDelay(100);
+		xTaskNotify( nrf_control_taskHandle, 1U<<NRF_REGISTER_DEVICE, eSetBits );
 		vTaskDelete( defaultTaskHandle );
   }
   /* USER CODE END StartDefaultTask */

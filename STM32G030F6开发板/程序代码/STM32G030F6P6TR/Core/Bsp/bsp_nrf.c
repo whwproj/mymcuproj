@@ -105,17 +105,15 @@ void nrf_init(void) {
 	memset( &nrf, 0, sizeof(NRF24L01_TypeDef) );
 		
 	//初始化结构体
-	//中转站地址 0xA0,0xA1,0xA2,0xA3
-	nrf_str.txAddr[0] = 0xA0;
-	nrf_str.txAddr[1] = 0xA1;
-	nrf_str.txAddr[2] = 0xA2;
-	nrf_str.txAddr[3] = 0xA3;
+	//中转站地址 0x0A,0x0B,0x0C,0x0D
+	nrf_str.txAddr[0] = 0x0A;
+	nrf_str.txAddr[1] = 0x0B;
+	nrf_str.txAddr[2] = 0x0C;
+	nrf_str.txAddr[3] = 0x0D;
 	nrf_str.txBuf = pvPortMalloc(33);
 	nrf_str.rxBuf = pvPortMalloc(33);
 	memset(nrf_str.txBuf, 0, 33);
 	memset(nrf_str.rxBuf, 0, 33);
-	
-	nrf_register_device();
 	
 	nrf.CONFIG_ = MASK_MAX_RT|MASK_TX_DS|EN_CRC|CRCO|PWR_UP|PRIM_RX;//RX
 	//nrf.CONFIG_ = MASK_MAX_RT|MASK_TX_DS|EN_CRC|CRCO|PWR_UP;//TX
