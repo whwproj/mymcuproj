@@ -123,20 +123,26 @@ void StartDefaultTask(void const * argument)
   /* Infinite loop */
   for(;;)
   {
-		//getSnByDeviceId_setClientId();
-		//read_data_from_flash();
-		//#ifdef DEBUG_ENABLE
-		//	debug_init();
-		//#endif
-		//HAL_TIM_Base_Start_IT( &htim3 );
-		//HAL_TIM_Base_Start( &htim3 );
+//		//getSnByDeviceId_setClientId();
+//		//read_data_from_flash();
+//		//#ifdef DEBUG_ENABLE
+//		//	debug_init();
+//		//#endif
+//		//HAL_TIM_Base_Start_IT( &htim3 );
+//		//HAL_TIM_Base_Start( &htim3 );
+//		
+//		xTaskNotify( nrf_control_taskHandle, 1U<<NRF_INIT_EVENT, eSetBits );
+//		xTaskNotify( executive_taskHandle, 1U<<LED_MODE_OFF, eSetBits );
+//		LED0_ON();
+//		printf("init ok\r\n");
+//		vTaskDelay(100);
+//		xTaskNotify( nrf_control_taskHandle, 1U<<NRF_REGISTER_DEVICE, eSetBits );
 		
-		xTaskNotify( nrf_control_taskHandle, 1U<<NRF_INIT_EVENT, eSetBits );
-		xTaskNotify( executive_taskHandle, 1U<<LED_MODE_OFF, eSetBits );
-		LED0_ON();
-		printf("init ok\r\n");
+		LED_ALL_OFF();
+		nrf_init();
 		vTaskDelay(100);
-		xTaskNotify( nrf_control_taskHandle, 1U<<NRF_REGISTER_DEVICE, eSetBits );
+		printf("init ok\r\n");
+
 		vTaskDelete( defaultTaskHandle );
   }
   /* USER CODE END StartDefaultTask */
@@ -180,7 +186,8 @@ void nrf_control_task_fun(void const * argument) {
 		}
 		if ( oldBits & (1U<<NRF_PARSE_DATA) ) {
 			oldBits &=~ (1U<<NRF_PARSE_DATA);
-			nrf_parse_data();
+			//nrf_parse_data();
+			nrf_receive_test();
 		}
 		if ( oldBits & (1U<<NRF_REGISTER_DEVICE) ) {
 			oldBits &=~ (1U<<NRF_REGISTER_DEVICE);

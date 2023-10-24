@@ -44,7 +44,10 @@ uint8_t Nrf24l01_Init( NRF24L01_TypeDef *nrf ) {
 	SPI_RW_Reg( FLUSH_RX, NOP );//清空FIFO
 	SPI_RW_Reg( NRF_WRITE_REG + CONFIG, nrf->CONFIG_ );//CONFIG 工作模式配置寄存器
 	i = SPI_RW_Reg( NRF_READ_REG + CONFIG, NOP );
+	printf( "CONFIG: %d\r\n", i );
 	SPI_RW_Reg( NRF_WRITE_REG + EN_AA, nrf->EN_AA_ );//EN_AA 使能自动确认功能(Enhanced ShockBurst)
+	i = SPI_RW_Reg( NRF_READ_REG + EN_AA, nrf->EN_AA_ );
+	printf( "EN_AA: %d\r\n", i );
 	SPI_RW_Reg( NRF_WRITE_REG + EN_RXADDR, nrf->EN_RXADDR_ );//EN_RXADDR 使能接收通道(0~5)
 	SPI_RW_Reg( NRF_WRITE_REG + SETUP_AW, nrf->SETUP_AW_ );//SETUP_AW 设置地址宽度[3-5]byte
 	SPI_RW_Reg( NRF_WRITE_REG + SETUP_RETR, nrf->SETUP_RETR_ );//SETUP_RETR 设置自动重传
@@ -99,23 +102,24 @@ void Rx_Mode( void ) {
 }
 
 
-
+//中转站地址 0x1A,0x2B,0x3C,0x4D,0x5E
 void nrf_init(void) {
 	NRF24L01_TypeDef nrf;
-	memset( &nrf, 0, sizeof(NRF24L01_TypeDef) );
-		
+	//uint8_t tx_t[5] = {0x1A,0x2B,0x3C,0x4D,0x5E};
+	//uint8_t rx_t[5] = {0x0A,0x0B,0x0C,0x0D,0x11};
+	uint8_t tx_t[5] = {0xA3,0xA3,0xA3,0xA3,0xA3};
+	uint8_t rx_t[5] = {0xA3,0xA3,0xA3,0xA3,0xA3};
 	//初始化结构体
-	//中转站地址 0x0A,0x0B,0x0C,0x0D
-	nrf_str.txAddr[0] = 0x0A;
-	nrf_str.txAddr[1] = 0x0B;
-	nrf_str.txAddr[2] = 0x0C;
-	nrf_str.txAddr[3] = 0x0D;
+	memset( &nrf, 0, sizeof(NRF24L01_TypeDef) );
+	
+	memcpy( nrf_str.rxAddr, rx_t, 5 );
+	memcpy( nrf_str.txAddr, tx_t, 5 );
 	nrf_str.txBuf = pvPortMalloc(33);
 	nrf_str.rxBuf = pvPortMalloc(33);
 	memset(nrf_str.txBuf, 0, 33);
 	memset(nrf_str.rxBuf, 0, 33);
 	
-	nrf.CONFIG_ = MASK_MAX_RT|MASK_TX_DS|EN_CRC|CRCO|PWR_UP|PRIM_RX;//RX
+	nrf.CONFIG_ = EN_CRC|CRCO|PWR_UP|PRIM_RX;//RX
 	//nrf.CONFIG_ = MASK_MAX_RT|MASK_TX_DS|EN_CRC|CRCO|PWR_UP;//TX
 	nrf.EN_AA_ = ENAA_P0;//|ENAA_P1|ENAA_P2|ENAA_P3|ENAA_P4|ENAA_P5;
 	nrf.EN_RXADDR_ = ERX_P0;//|ERX_P1|ERX_P2|ERX_P3|ERX_P4|ERX_P5;
@@ -306,6 +310,17 @@ static uint16_t craeteGrowthCode( void ) {
 }
 
 
+void nrf_receive_test(void) {
+	uint8_t sta,temp;
+	sta = SPI_RW_Reg( NRF_READ_REG + STATUS, NOP );//0xFF空指令
+	if ( sta & RX_DR ) {
+		SPI_Read_Buf( RD_RX_PLOAD, nrf_str.rxBuf, RX_PLOAD_WIDTH );
+		printf("%s\n",nrf_str.rxBuf);
+	}
+	SPI_RW_Reg( NRF_WRITE_REG + STATUS, 0xF0 );
+	SPI_RW_Reg( NRF_WRITE_REG + STATUS, sta );
+	HAL_NVIC_EnableIRQ(NRF_IRQ_EXTI_IRQn);
+}
 
 
 

@@ -32,7 +32,6 @@ typedef struct _USER_DATA {
 	char mqpasswd[33];//mqtt password 32byte
 	uint16_t tcpport;
 	char duid[9];//mqtt连接时的ClientId
-	uint8_t snId[4];//NRF的地址
 } USER_DATA;
 
 extern USER_DATA udata;
@@ -43,6 +42,7 @@ void write_data_into_flash( void );//写入数据到flash
 
 uint32_t get_nrfaddr_by_deviceId( uint8_t id );//根据deviceId查找nrfAddr
 int insert_nrfaddr( uint8_t id );//对应deviceId新增/更新nrfAddr
+uint32_t create_deviceId( uint8_t id );//生成新的deviceId并存入nrfAddr
 
 #endif /*__BSP__FLASH__H*/
 

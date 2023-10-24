@@ -99,13 +99,13 @@ void debug_parse_data_fun( void ) {
 		nrf_str.rxBuf[6] = 0xF2;
 		nrf_str.rxBuf[7] = 0xF0;
 		if ( !get_nrfaddr_by_deviceId(nrf_str.rxBuf[0]) ||
-						nrf_str.rxBuf[4]!=nrf_str.txAddr[0] || nrf_str.rxBuf[5]!=nrf_str.txAddr[1] ||
-						nrf_str.rxBuf[6]!=nrf_str.txAddr[2] || nrf_str.rxBuf[7]!=nrf_str.txAddr[3] ) {
+						nrf_str.rxBuf[4]!=nrf_str.TS_txAddr[0] || nrf_str.rxBuf[5]!=nrf_str.TS_txAddr[1] ||
+						nrf_str.rxBuf[6]!=nrf_str.TS_txAddr[2] || nrf_str.rxBuf[7]!=nrf_str.TS_txAddr[3] ) {
 			insert_nrfaddr( nrf_str.rxBuf[0] );
 			printf("insert ok\r\n");
 		} else {
 			printf("addr is : 0x%.2X 0x%.2X 0x%.2X 0x%.2X\r\n",
-				nrf_str.txAddr[0], nrf_str.txAddr[1], nrf_str.txAddr[2], nrf_str.txAddr[3] );
+				nrf_str.TS_txAddr[0], nrf_str.TS_txAddr[1], nrf_str.TS_txAddr[2], nrf_str.TS_txAddr[3] );
 		}	
 		
 		

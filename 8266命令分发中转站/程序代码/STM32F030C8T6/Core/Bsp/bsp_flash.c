@@ -51,7 +51,6 @@ void read_data_from_flash( void ) {
 	}
 }
 
-
 //写入数据到flash
 void write_data_into_flash( void ) {
 	uint8_t i, j, *pudata;
@@ -95,7 +94,6 @@ void write_data_into_flash( void ) {
 	HAL_FLASH_Lock(); 
 }
 
-
 //FLASH_BANK1 	0x8000000 - 0x80003FF
 //FLASH_BANK2 	0x8000400 - 0x80007FF
 //FLASH_BANK63 	0x800F800 - 0x800FBFF
@@ -106,18 +104,36 @@ void write_data_into_flash( void ) {
 uint32_t get_nrfaddr_by_deviceId( uint8_t id ) {
 	uint32_t *flash_add, nrf_addr;
 	uint16_t offset;
-	offset = id * 4;//存储方式: xxxx xxxx xxxx
 	
+	offset = id * 4;//存储方式: xxxx xxxx xxxx
 	flash_add = (uint32_t *)(FLASH_NRFADDR + offset);
 	nrf_addr = (uint32_t)(* flash_add);
 	if ( nrf_addr==0 || nrf_addr==0xFFFFFFFF ) {
 		return 0;//不存在id
 	}
-	nrf_str.txAddr[0] = (uint8_t)(nrf_addr);
-	nrf_str.txAddr[1] = (uint8_t)(nrf_addr>>8);
-	nrf_str.txAddr[2] = (uint8_t)(nrf_addr>>16);
-	nrf_str.txAddr[3] = (uint8_t)(nrf_addr>>24);
+	nrf_str.rxAddr[0] = (uint8_t)(nrf_addr);
+	nrf_str.rxAddr[1] = (uint8_t)(nrf_addr>>8);
+	nrf_str.rxAddr[2] = (uint8_t)(nrf_addr>>16);
+	nrf_str.rxAddr[3] = (uint8_t)(nrf_addr>>24);
 	return nrf_addr;
+}
+
+//生成新的deviceId并存入nrfAddr
+uint32_t create_deviceId( uint8_t id ) {
+	uint32_t *flash_add, nrf_addr;
+	uint16_t offset;
+	uint8_t i;
+	//新设备首次注册,分配ID
+	for ( i=0; i<255; i++ ) {
+		offset = i * 4;
+		flash_add = (uint32_t *)(FLASH_NRFADDR + offset);
+		nrf_addr = (uint32_t)(* flash_add);
+		if ( nrf_addr==0 || nrf_addr==0xFFFFFFFF ) {
+			insert_nrfaddr(i);//新增nrfAddr
+			break;
+		}
+	}
+	return i;
 }
 
 //对应deviceId新增/更新nrfAddr
