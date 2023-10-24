@@ -108,7 +108,7 @@ void MX_FREERTOS_Init(void) {
 
   /* USER CODE BEGIN RTOS_QUEUES */
   /* add queues, ... */
-	wifi_data_handle = xQueueCreate( 3, 100 );
+	wifi_data_handle = xQueueCreate( 2, 100 );
   /* USER CODE END RTOS_QUEUES */
 
   /* Create the thread(s) */
@@ -161,6 +161,7 @@ void StartDefaultTask(void const * argument)
 		vTaskDelay( 2000 );
 #else
 		read_data_from_w25qFlash();
+		getSnByDeviceId_setClientId();
 		led_init();
 		//debug_init();
 		
@@ -169,11 +170,9 @@ void StartDefaultTask(void const * argument)
 		led_nrf_flicker_on();
 		led_con_flicker_on();
 	
-		//xTaskNotify( wifi_control_taskHandle, 1U<<WIFI_DEVICE_RESET, eSetBits );
-		//vTaskDelay(1200);
-		//xTaskNotify( wifi_control_taskHandle, 1U<<WIFI_STATION_MODE_INIT, eSetBits );
-		//vTaskDelay(1000);
-		//xTaskNotify( nrf_control_taskHandle, 1U<<NRF_INIT_EVENT, eSetBits );
+		xTaskNotify( wifi_control_taskHandle, 1U<<WIFI_DEVICE_RESET, eSetBits );
+		vTaskDelay(1200);
+		xTaskNotify( wifi_control_taskHandle, 1U<<WIFI_STATION_MODE_INIT, eSetBits );
 		
 #endif
 		printf("init ok\r\n");
@@ -286,7 +285,7 @@ void nrf_control_task_fun(void const * argument) {
 	uint32_t newBits, oldBits = 0;
   for(;;) {
 		//xTaskNotifyWait( pdFALSE, portMAX_DELAY, &newBits, portMAX_DELAY );
-		xTaskNotifyWait( pdFALSE, portMAX_DELAY, &newBits, 5000 );
+		xTaskNotifyWait( pdFALSE, portMAX_DELAY, &newBits, 10000 );
 		oldBits |= newBits;
 		if ( oldBits & (1U<<NRF_INIT_EVENT) ) {
 			oldBits &=~ (1U<<NRF_INIT_EVENT);
@@ -300,7 +299,15 @@ void nrf_control_task_fun(void const * argument) {
 			oldBits &=~ (1U<<NRF_TX_EVENT);
 			nrf_send_data();
 		}
-		printf("\r\n------ 内存剩余：%d Byte 历史最小内存剩余：%d Byte\r\n\r\n", xPortGetFreeHeapSize(), xPortGetMinimumEverFreeHeapSize());
+		
+		printf("\r\n------ 单个任务堆栈的历史最小内存 总大小 / 历史最小内存 start ------\r\n");
+		if ( debugTaskHandle != NULL ) printf("%d / %ld   debugTaskHandle\r\n", debugTaskSize, uxTaskGetStackHighWaterMark(debugTaskHandle) );
+		if ( wifi_control_taskHandle != NULL ) printf("%d / %ld   wifi_control_taskHandle\r\n", wifi_control_taskSize, uxTaskGetStackHighWaterMark(wifi_control_taskHandle) );
+		if ( debugTaskHandle != NULL ) printf("%d / %ld   debugTaskHandle\r\n", debugTaskSize, uxTaskGetStackHighWaterMark(debugTaskHandle) );
+		if ( nrf_control_taskHandle != NULL ) printf("%d / %ld   nrf_control_taskHandle\r\n", nrf_control_taskSize, uxTaskGetStackHighWaterMark(nrf_control_taskHandle) );
+		if ( time_task_handle != NULL ) printf("%d / %ld  time_task_handle\r\n", time_taskSize ,uxTaskGetStackHighWaterMark(time_task_handle));
+		printf("内存剩余：%d Byte 历史最小内存剩余：%d Byte\r\n", xPortGetFreeHeapSize(), xPortGetMinimumEverFreeHeapSize());
+		printf("------ 单个任务堆栈的历史最小内存 end ------\r\n");
   }
 }
 /*--------------- NRF24 ----------------*/

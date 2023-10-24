@@ -28,7 +28,6 @@ char* decodeURL( const char * const url ) {
 	
 	//printf("url: %s\r\n", url);
 	str1 = (char*)url;
-	str2 = (char*)url;
 	str2 = strstr( str1, "%" );
 	
 	while( str2 != NULL ) {
@@ -41,6 +40,9 @@ char* decodeURL( const char * const url ) {
 		newStr++;
 		str1 = str2 + 2;
 		str2 = strstr( str1, "%" );
+	}
+	if ( str1 != NULL ) {
+		sprintf( newStr, "%s", str1 );
 	}
 	//printf("str: %s\r\n", cpyStr);
 	return cpyStr;

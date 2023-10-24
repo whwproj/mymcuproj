@@ -12,7 +12,7 @@
 
 char* cjson_reply_template( uint16_t pvcode, int errCode, char* msg );
 char* cjson_send_data_template( uint16_t pvcode, char* data );
-void cjson_pase_method( uint8_t *pdBuff );//解析JSON数据
+int cjson_pase_method( uint8_t *pdBuff );//解析JSON数据
 
 
 

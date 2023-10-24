@@ -7,17 +7,21 @@ ASK_STR ask_str;
 UBaseType_t parse_wifi_data_fun( void ) {
 	char* jsonStr = pvPortMalloc(100);
 	if ( xQueueReceive( wifi_data_handle, jsonStr, pdFALSE ) ) {
-		
+
 		//解析json
-		cjson_pase_method( (uint8_t*)jsonStr );
+		if ( cjson_pase_method( (uint8_t*)jsonStr ) == -1 ) {
+			printf("json数据无效\r\n");
+			vPortFree(jsonStr);
+			return uxQueueMessagesWaiting( wifi_data_handle );
+		}
 		
 		//封装nrfData
 		nrf_pack_data( data_str.nrfid, data_str.code, data_str.data );
 
 		//发送nrfData
 		xTaskNotify( nrf_control_taskHandle, 1U<<NRF_TX_EVENT, eSetBits );
-		osDelay(2);
 	}
+	vPortFree(jsonStr);
 	return uxQueueMessagesWaiting( wifi_data_handle );
 }
 
@@ -56,7 +60,10 @@ void nrf_send_time_fun( void ) {
 		while( ask_str.useing ) { osDelay(1); }
 		ask_str.useing = 1;
 		
-		if ( (ask_str.list & 0x1F) == 0 ) break;
+		if ( (ask_str.list & 0x1F) == 0 ) { 
+			ask_str.useing = 0;
+			break;
+		}
 		nowTick = HAL_GetTick();
 		for ( i=0; i<5; i++ ) {
 			if ( ( ask_str.list & (1U<<i) ) ) {

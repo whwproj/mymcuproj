@@ -31,8 +31,8 @@ typedef struct _USER_DATA {
 	char mqusername[51];//mqtt username 50byte
 	char mqpasswd[33];//mqtt password 32byte
 	uint16_t tcpport;
-	char duid[7];
-	uint8_t snId[4];
+	char duid[9];//mqtt连接时的ClientId
+	uint8_t snId[4];//NRF的地址
 } USER_DATA;
 
 extern USER_DATA udata;

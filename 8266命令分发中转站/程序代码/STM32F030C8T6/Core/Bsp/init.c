@@ -26,7 +26,7 @@ void getSnByDeviceId_setClientId( void ) {
 	memcpy( udata.snId, sn, 4 );
 	
 	sprintf( (char*)udata.duid, "%.02X%.02X%.02X%.02X", sn[0], sn[1], sn[2], sn[3] );
-	printf("设备snid:%.02X%.02X%.02X%.02X", sn[0], sn[1], sn[2], sn[3]);
+	printf("设备snid:%.02X%.02X%.02X%.02X\r\n", sn[0], sn[1], sn[2], sn[3]);
 	
 }
 

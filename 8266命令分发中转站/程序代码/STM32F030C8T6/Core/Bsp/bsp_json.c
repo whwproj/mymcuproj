@@ -2,38 +2,39 @@
 
 
 //解析JSON数据,解析结果存入结构体 DATA_STR
-void cjson_pase_method( uint8_t *pdBuff ) {
+int cjson_pase_method( uint8_t *pdBuff ) {
 	cJSON *trunk = NULL;
 	cJSON *code = NULL;
 	cJSON *nrfid = NULL;
 
 	cJSON *data = NULL;
 	trunk = cJSON_Parse((char *)pdBuff);
-	if (trunk == NULL) return;
+	if (trunk == NULL) return -1;
 
 	code = cJSON_GetObjectItemCaseSensitive(trunk, "code");
 	if ( !cJSON_IsNumber(code) || (code->valueint == 0) ) {
 		cJSON_Delete( trunk );
-		return;
+		return -1;
 	}
 	data_str.code = code->valueint;
 	
 	nrfid = cJSON_GetObjectItemCaseSensitive(trunk, "nrfid");
 	if ( !cJSON_IsNumber(nrfid) || (nrfid->valueint == 0) ) {
 		cJSON_Delete( trunk );
-		return;
+		return -1;
 	}
 	data_str.nrfid = nrfid->valueint;
 	
 	data = cJSON_GetObjectItemCaseSensitive(trunk, "data");
 	if ( !cJSON_IsString(data) || (data->valuestring == NULL) ) {
 		cJSON_Delete( trunk );
-		return;
+		return -1;
 	}
 	data_str.data = pvPortMalloc( strlen(data->valuestring) );
 	sprintf( data_str.data, "%s", data->valuestring );
 	
 	cJSON_Delete( trunk );
+	return 0;
 }
 
 //错误码errCode: -2:设备未注册 -1:设备离线 0:无 1:执行错误

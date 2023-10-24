@@ -258,7 +258,7 @@ void read_data_from_w25qFlash( void ) {
 	printf("mqpasswd: %s\r\n", udata.mqpasswd);
 	printf("tcpport: %d\r\n", udata.tcpport);
 	printf("duid: %s\r\n", udata.duid);
-	printf("snId: %d%d%d%d\r\n", udata.snId[0],udata.snId[1],udata.snId[2],udata.snId[3]);
+	printf("snId: %.02X%.02X%.02X%.02X\r\n", udata.snId[0],udata.snId[1],udata.snId[2],udata.snId[3]);
 }
 
 
@@ -266,14 +266,6 @@ void read_data_from_w25qFlash( void ) {
 void write_data_to_w25qFlash( void ) {
 	W25Qx_WAKEUP();
 	Erase_Write_data_Sector(STR_ADDR1,sizeof(USER_DATA));
-	sprintf(udata.wssid, "udata.wssid111");
-	sprintf(udata.wpswd, "udata.wpswd222");
-	sprintf(udata.tcpurl, "udata.tcpurl333");
-	sprintf(udata.mqusername, "udata.mqusername444");
-	sprintf(udata.mqpasswd, "udata.mqpasswd555");
-	sprintf(udata.duid, "duid");
-	udata.tcpport = 9988;
-	sprintf((char*)udata.snId, "snId");
 	W25Qx_Write_Page((uint8_t*)&udata ,STR_ADDR1 ,sizeof(USER_DATA) );
 	W25Qx_PowerDown();
 }
