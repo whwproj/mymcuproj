@@ -111,7 +111,7 @@ void nrf_init(void) {
 	memcpy( nrf.RX_ADDR_P0_, udata.snId, 4 );
 	memcpy( nrf.TX_ADDR_, txaddr_t, 4 );
 	
-	nrf.CONFIG_ = MASK_RX_DR|MASK_MAX_RT|EN_CRC|CRCO|PWR_UP|PRIM_RX;//RX
+	nrf.CONFIG_ = MASK_TX_DS|MASK_MAX_RT|EN_CRC|CRCO|PWR_UP|PRIM_RX;//RX
 	nrf.EN_AA_ = ENAA_P0;//|ENAA_P1|ENAA_P2|ENAA_P3|ENAA_P4|ENAA_P5;
 	nrf.EN_RXADDR_ = ERX_P0;//|ERX_P1|ERX_P2|ERX_P3|ERX_P4|ERX_P5;
 	nrf.SETUP_AW_ = AW_WIDTH_4_BYTE;
