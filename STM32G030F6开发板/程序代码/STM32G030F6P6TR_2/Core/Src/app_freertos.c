@@ -123,23 +123,32 @@ void StartDefaultTask(void const * argument)
   /* Infinite loop */
   for(;;)
   {
-		LED_ALL_OFF();
-		LED0_ON();
-		//getSnByDeviceId_setClientId();
-		//read_data_from_flash();
-		//#ifdef DEBUG_ENABLE
-		//	debug_init();
-		//#endif
-		HAL_TIM_Base_Start_IT( &htim3 );
-		HAL_TIM_Base_Start( &htim3 );
-		
-		xTaskNotify( nrf_control_taskHandle, 1U<<NRF_INIT_EVENT, eSetBits );
+//		LED_ALL_OFF();
+//		//LED0_ON();
+//		//getSnByDeviceId_setClientId();
+//		//read_data_from_flash();
+//		//#ifdef DEBUG_ENABLE
+//		//	debug_init();
+//		//#endif
+//		HAL_TIM_Base_Start_IT( &htim3 );
+//		HAL_TIM_Base_Start( &htim3 );
+//		
+//		xTaskNotify( nrf_control_taskHandle, 1U<<NRF_INIT_EVENT, eSetBits );
 
-		
+//		
+//		vTaskDelay(100);
+//		//LED0_OFF();
+////		xTaskNotify( nrf_control_taskHandle, 1U<<NRF_REGISTER_DEVICE, eSetBits );
+		LED_ALL_OFF();
+		nrf_init();
 		vTaskDelay(100);
-		LED0_OFF();
-//		xTaskNotify( nrf_control_taskHandle, 1U<<NRF_REGISTER_DEVICE, eSetBits );
 		printf("init ok\r\n");
+		
+		for ( ;; ) {
+			vTaskDelay(300);
+			nrf_send_test();
+		}
+		
 		vTaskDelete( defaultTaskHandle );
   }
   /* USER CODE END StartDefaultTask */

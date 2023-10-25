@@ -104,14 +104,22 @@ void Rx_Mode( void ) {
 
 void nrf_init(void) {
 	NRF24L01_TypeDef nrf;
+#ifdef NRF_DEBUG
+	//uint8_t txaddr_t[4] = {0x1A,0x1B,0x1C,0x1D};
 	uint8_t txaddr_t[4] = {0x0A,0x0B,0x0C,0x0D};
+	uint8_t rxaddr_t[4] = {0x1A,0x1B,0x1C,0x1D};
+	memcpy( nrf.RX_ADDR_P0_, rxaddr_t, 4 );
+	memcpy( nrf.TX_ADDR_, txaddr_t, 4 );
+#else
+	uint8_t txaddr_t[4] = {0x0A,0x0B,0x0C,0x0D};
+	memcpy( nrf.RX_ADDR_P0_, udata.snId, 4 );
+	memcpy( nrf.TX_ADDR_, txaddr_t, 4 );
+#endif
 	memset( &nrf, 0, sizeof(NRF24L01_TypeDef) );
 	nrf_str.txBuf = pvPortMalloc(120);
 	nrf_str.rxBuf = pvPortMalloc(120);
-	memcpy( nrf.RX_ADDR_P0_, udata.snId, 4 );
-	memcpy( nrf.TX_ADDR_, txaddr_t, 4 );
-	
-	nrf.CONFIG_ = MASK_TX_DS|MASK_MAX_RT|EN_CRC|CRCO|PWR_UP|PRIM_RX;//RX
+	nrf.CONFIG_ = EN_CRC|CRCO|PWR_UP|PRIM_RX;
+	//nrf.CONFIG_ = MASK_TX_DS|MASK_MAX_RT|EN_CRC|CRCO|PWR_UP;//|PRIM_RX;//RX
 	nrf.EN_AA_ = ENAA_P0;//|ENAA_P1|ENAA_P2|ENAA_P3|ENAA_P4|ENAA_P5;
 	nrf.EN_RXADDR_ = ERX_P0;//|ERX_P1|ERX_P2|ERX_P3|ERX_P4|ERX_P5;
 	nrf.SETUP_AW_ = AW_WIDTH_4_BYTE;
@@ -252,4 +260,41 @@ void nrf_send_data( void ) {
 	__HAL_GPIO_EXTI_CLEAR_IT(NRF_IRQ_Pin);
 	HAL_NVIC_EnableIRQ(NRF_IRQ_EXTI_IRQn);	
 }
+
+
+void nrf_send_test( void ) {
+	uint8_t status, sta;
+	
+	HAL_NVIC_DisableIRQ( NRF_IRQ_EXTI_IRQn );
+	nrf_str.txBuf[0] = 0x11;
+	nrf_str.txBuf[1] = 0x22;
+	nrf_str.txBuf[2] = 0x33;
+	nrf_str.txBuf[3] = 0x44;
+	
+	CE_Low();osDelay(1);
+	CSN_Low();
+	status = SPI_RW_Reg( NRF_READ_REG + CONFIG, NOP ) & ( ~(PRIM_RX) );
+	SPI_RW_Reg( NRF_WRITE_REG + CONFIG, status );
+	CSN_High();
+	CE_High();osDelay(1);
+	
+	SPI_Write_Buf( WR_TX_PLOAD , nrf_str.txBuf , 32 );
+	vTaskDelay(10);
+	
+	sta = SPI_RW_Reg( NRF_READ_REG + STATUS, NOP );
+	printf("sta: 0x%.2X\r\n", sta);
+	if ( sta & MAX_RT ) {
+		printf("通信失败\r\n");
+		SPI_RW_Reg( NRF_WRITE_REG + STATUS, 0xF0 );
+		SPI_RW_Reg( FLUSH_TX,NOP );
+	} else {
+		printf("发送成功!\r\n");
+	}
+	
+	
+	//SPI_RW_Reg( FLUSH_RX,NOP );
+	
+	
+}
+
 

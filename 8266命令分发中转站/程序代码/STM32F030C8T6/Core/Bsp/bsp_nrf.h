@@ -276,6 +276,7 @@ void nrf_receive_data( void );//接收数据
 void nrf_pack_data( uint8_t did, uint16_t code, char* pdata );//nrf发送数据
 void nrf_send_data( void );
 
+void nrf_send_test( void );
 
 #endif /*__BSP_NRF__H*/
 

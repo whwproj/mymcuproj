@@ -99,30 +99,31 @@ void Rx_Mode( void ) {
 }
 
 
-
+//中转站地址 0x1A,0x2B,0x3C,0x4D,0x5E
 void nrf_init(void) {
 	NRF24L01_TypeDef nrf;
-	memset( &nrf, 0, sizeof(NRF24L01_TypeDef) );
-		
+	uint8_t tx_t[5] = {0x0A,0x0B,0x0C,0x0D,0x11};
+	uint8_t rx_t[5] = {0x1A,0x2B,0x3C,0x4D,0x5E};
 	//初始化结构体
-	//中转站地址 0x0A,0x0B,0x0C,0x0D
-	nrf_str.txAddr[0] = 0x0A;
-	nrf_str.txAddr[1] = 0x0B;
-	nrf_str.txAddr[2] = 0x0C;
-	nrf_str.txAddr[3] = 0x0D;
+	memset( &nrf, 0, sizeof(NRF24L01_TypeDef) );
+	
+	memcpy( nrf_str.rxAddr, rx_t, 5 );
+	memcpy( nrf_str.txAddr, tx_t, 5 );
 	nrf_str.txBuf = pvPortMalloc(33);
 	nrf_str.rxBuf = pvPortMalloc(33);
 	memset(nrf_str.txBuf, 0, 33);
 	memset(nrf_str.rxBuf, 0, 33);
 	
-	nrf.CONFIG_ = MASK_MAX_RT|MASK_TX_DS|EN_CRC|CRCO|PWR_UP|PRIM_RX;//RX
+	sprintf((char*)nrf_str.txBuf, "nrf.CONFIG_=EN_CRC|CRCO|PWR_UP;");
+	
+	nrf.CONFIG_ = EN_CRC|CRCO|PWR_UP|PRIM_RX;//RX
 	//nrf.CONFIG_ = MASK_MAX_RT|MASK_TX_DS|EN_CRC|CRCO|PWR_UP;//TX
 	nrf.EN_AA_ = ENAA_P0;//|ENAA_P1|ENAA_P2|ENAA_P3|ENAA_P4|ENAA_P5;
 	nrf.EN_RXADDR_ = ERX_P0;//|ERX_P1|ERX_P2|ERX_P3|ERX_P4|ERX_P5;
-	nrf.SETUP_AW_ = AW_WIDTH_4_BYTE;
-	nrf.SETUP_RETR_ = AUTO_RETRANSMIT_DELAY_US(500) | AUTO_RETRANSMIT_COUNT(5);
+	nrf.SETUP_AW_ = AW_WIDTH_5_BYTE;
+	nrf.SETUP_RETR_ = AUTO_RETRANSMIT_DELAY_US(250) | AUTO_RETRANSMIT_COUNT(5);
 	nrf.RF_CH_ = 2;//2402MHz
-	nrf.RF_SETUP_ = RF_DR_1Mbps|RF_PWR_0dB;
+	nrf.RF_SETUP_ = RF_DR_250kbps|RF_PWR_0dB;
 	nrf.STATUS_ = RX_DR|TX_DS|MAX_RT;//清空标志
 	memcpy( nrf.RX_ADDR_P0_, nrf_str.rxAddr, 5 );
 	memcpy( nrf.TX_ADDR_, nrf_str.txAddr, 5 );
@@ -135,6 +136,27 @@ void nrf_init(void) {
 	} else {
 		printf("nrf 初始化成功!\r\n");
 	}
+}
+
+void nrf_send_test( void ) {
+	uint8_t sta;
+	
+	CE_Low();osDelay(1);
+	CSN_Low();
+	sta = SPI_RW_Reg( NRF_READ_REG + CONFIG, NOP ) & ( ~(PRIM_RX) );
+	SPI_RW_Reg( NRF_WRITE_REG + CONFIG, sta );
+	CSN_High();
+	CE_High();osDelay(1);
+	
+	SPI_Write_Buf( WR_TX_PLOAD , nrf_str.txBuf , 32 );
+	vTaskDelay(20);
+	
+	sta = SPI_RW_Reg( NRF_READ_REG + STATUS, NOP );
+	printf("sta: 0x%.2X\r\n", sta);
+	
+	SPI_RW_Reg( FLUSH_TX,NOP );
+	SPI_RW_Reg( NRF_WRITE_REG + STATUS, 0xF0 );
+	
 }
 
 //发送数据

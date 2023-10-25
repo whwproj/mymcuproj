@@ -160,6 +160,10 @@ void StartDefaultTask(void const * argument)
 		HAL_GPIO_WritePin( ESP_RST_GPIO_Port, ESP_RST_Pin, GPIO_PIN_SET );
 		vTaskDelay( 2000 );
 #else
+		
+#ifdef NRF_DEBUG
+		nrf_init();
+#else
 		read_data_from_w25qFlash();
 		getSnByDeviceId_setClientId();
 		led_init();
@@ -173,7 +177,7 @@ void StartDefaultTask(void const * argument)
 		xTaskNotify( wifi_control_taskHandle, 1U<<WIFI_DEVICE_RESET, eSetBits );
 		vTaskDelay(1200);
 		xTaskNotify( wifi_control_taskHandle, 1U<<WIFI_STATION_MODE_INIT, eSetBits );
-		
+#endif		
 #endif
 		printf("init ok\r\n");
 		vTaskDelete( defaultTaskHandle );
@@ -284,8 +288,13 @@ void data_task_handle_fun(void const * argument) {
 void nrf_control_task_fun(void const * argument) {
 	uint32_t newBits, oldBits = 0;
   for(;;) {
-		//xTaskNotifyWait( pdFALSE, portMAX_DELAY, &newBits, portMAX_DELAY );
-		xTaskNotifyWait( pdFALSE, portMAX_DELAY, &newBits, 10000 );
+#ifdef NRF_DEBUG
+//		xTaskNotifyWait( pdFALSE, portMAX_DELAY, &newBits, 3000 );
+//		nrf_send_test();
+		xTaskNotifyWait( pdFALSE, portMAX_DELAY, &newBits, portMAX_DELAY );
+#else
+		xTaskNotifyWait( pdFALSE, portMAX_DELAY, &newBits, portMAX_DELAY );
+#endif
 		oldBits |= newBits;
 		if ( oldBits & (1U<<NRF_INIT_EVENT) ) {
 			oldBits &=~ (1U<<NRF_INIT_EVENT);
@@ -299,7 +308,7 @@ void nrf_control_task_fun(void const * argument) {
 			oldBits &=~ (1U<<NRF_TX_EVENT);
 			nrf_send_data();
 		}
-		
+#ifndef NRF_DEBUG
 		printf("\r\n------ 单个任务堆栈的历史最小内存 总大小 / 历史最小内存 start ------\r\n");
 		if ( debugTaskHandle != NULL ) printf("%d / %ld   debugTaskHandle\r\n", debugTaskSize, uxTaskGetStackHighWaterMark(debugTaskHandle) );
 		if ( wifi_control_taskHandle != NULL ) printf("%d / %ld   wifi_control_taskHandle\r\n", wifi_control_taskSize, uxTaskGetStackHighWaterMark(wifi_control_taskHandle) );
@@ -308,6 +317,7 @@ void nrf_control_task_fun(void const * argument) {
 		if ( time_task_handle != NULL ) printf("%d / %ld  time_task_handle\r\n", time_taskSize ,uxTaskGetStackHighWaterMark(time_task_handle));
 		printf("内存剩余：%d Byte 历史最小内存剩余：%d Byte\r\n", xPortGetFreeHeapSize(), xPortGetMinimumEverFreeHeapSize());
 		printf("------ 单个任务堆栈的历史最小内存 end ------\r\n");
+#endif
   }
 }
 /*--------------- NRF24 ----------------*/

@@ -280,6 +280,7 @@ int nrf_send_data( void );
 void nrf_register_device( void );
 void nrf_parse_data( void );//解析数据
 
+void nrf_send_test(void);
 #endif /*__BSP_NRF__H*/
 
 
