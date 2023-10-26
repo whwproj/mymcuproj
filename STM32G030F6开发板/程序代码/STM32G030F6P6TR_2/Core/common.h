@@ -47,7 +47,7 @@
 
 typedef struct _STR {
 	uint8_t preKey;//0:未按下 1:按下 按下常亮2s
-	uint8_t regSta;//0:不注册 1:正在注册 2:已注册 3:心跳
+	uint8_t regSta;//0:不注册 1:正在注册 2:已注册 3:心跳 4:通信成功,等待注册结果
 } STR;
 	
 extern STR str;

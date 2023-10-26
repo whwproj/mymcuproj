@@ -44,7 +44,10 @@ uint8_t Nrf24l01_Init( NRF24L01_TypeDef *nrf ) {
 	SPI_RW_Reg( FLUSH_RX, NOP );//清空FIFO
 	SPI_RW_Reg( NRF_WRITE_REG + CONFIG, nrf->CONFIG_ );//CONFIG 工作模式配置寄存器
 	i = SPI_RW_Reg( NRF_READ_REG + CONFIG, NOP );
+	printf( "CONFIG: %d\r\n", i );
 	SPI_RW_Reg( NRF_WRITE_REG + EN_AA, nrf->EN_AA_ );//EN_AA 使能自动确认功能(Enhanced ShockBurst)
+	i = SPI_RW_Reg( NRF_READ_REG + EN_AA, nrf->EN_AA_ );
+	printf( "EN_AA: %d\r\n", i );
 	SPI_RW_Reg( NRF_WRITE_REG + EN_RXADDR, nrf->EN_RXADDR_ );//EN_RXADDR 使能接收通道(0~5)
 	SPI_RW_Reg( NRF_WRITE_REG + SETUP_AW, nrf->SETUP_AW_ );//SETUP_AW 设置地址宽度[3-5]byte
 	SPI_RW_Reg( NRF_WRITE_REG + SETUP_RETR, nrf->SETUP_RETR_ );//SETUP_RETR 设置自动重传
@@ -102,8 +105,10 @@ void Rx_Mode( void ) {
 //中转站地址 0x1A,0x2B,0x3C,0x4D,0x5E
 void nrf_init(void) {
 	NRF24L01_TypeDef nrf;
-	uint8_t tx_t[5] = {0x1A,0x2B,0x3C,0x4D,0x5E};
-	uint8_t rx_t[5] = {0x0A,0x0B,0x0C,0x0D,0x11};
+	//uint8_t tx_t[5] = {0x1A,0x2B,0x3C,0x4D,0x5E};
+	//uint8_t rx_t[5] = {0x0A,0x0B,0x0C,0x0D,0x11};
+	uint8_t tx_t[5] = {0xA3,0xA3,0xA3,0xA3,0xA3};
+	uint8_t rx_t[5] = {0xA3,0xA3,0xA3,0xA3,0xA3};
 	//初始化结构体
 	memset( &nrf, 0, sizeof(NRF24L01_TypeDef) );
 	
@@ -118,10 +123,10 @@ void nrf_init(void) {
 	//nrf.CONFIG_ = MASK_MAX_RT|MASK_TX_DS|EN_CRC|CRCO|PWR_UP;//TX
 	nrf.EN_AA_ = ENAA_P0;//|ENAA_P1|ENAA_P2|ENAA_P3|ENAA_P4|ENAA_P5;
 	nrf.EN_RXADDR_ = ERX_P0;//|ERX_P1|ERX_P2|ERX_P3|ERX_P4|ERX_P5;
-	nrf.SETUP_AW_ = AW_WIDTH_5_BYTE;
-	nrf.SETUP_RETR_ = AUTO_RETRANSMIT_DELAY_US(250) | AUTO_RETRANSMIT_COUNT(5);
+	nrf.SETUP_AW_ = AW_WIDTH_4_BYTE;
+	nrf.SETUP_RETR_ = AUTO_RETRANSMIT_DELAY_US(500) | AUTO_RETRANSMIT_COUNT(5);
 	nrf.RF_CH_ = 2;//2402MHz
-	nrf.RF_SETUP_ = RF_DR_250kbps|RF_PWR_0dB;
+	nrf.RF_SETUP_ = RF_DR_1Mbps|RF_PWR_0dB;
 	nrf.STATUS_ = RX_DR|TX_DS|MAX_RT;//清空标志
 	memcpy( nrf.RX_ADDR_P0_, nrf_str.rxAddr, 5 );
 	memcpy( nrf.TX_ADDR_, nrf_str.txAddr, 5 );

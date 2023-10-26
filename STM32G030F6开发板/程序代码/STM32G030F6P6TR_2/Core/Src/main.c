@@ -197,15 +197,15 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 				if ( str.regSta != 1 ) LED0_OFF();
 				HAL_NVIC_EnableIRQ(KEY_EXTI_IRQn);
 			}
-		} else if ( str.regSta == 1 ) {
+		} else if ( str.regSta==1 || str.regSta==4 ) {//注册/等待注册反馈
 			LED0_TOGGLE();
 			
-		} else if ( str.regSta == 2 ) {//通信定时,10s发一次心�?
+		} else if ( str.regSta == 2 ) {//通信定时,10s发一次心跳
 			nrf_str.heartTime++;
 			if ( nrf_str.heartTime > 20 ) {
 				nrf_str.heartTime = 0;
 				str.regSta = 3;
-				xTaskNotifyFromISR( nrf_control_taskHandle, 1U<<NRF_REGISTER_DEVICE, eSetBits, &phpt );//发�?�心�?
+				xTaskNotifyFromISR( nrf_control_taskHandle, 1U<<NRF_REGISTER_DEVICE, eSetBits, &phpt );//发送心跳
 			}
 		}
 	}

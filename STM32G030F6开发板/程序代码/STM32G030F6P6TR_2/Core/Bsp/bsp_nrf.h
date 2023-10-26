@@ -205,15 +205,17 @@
 #define EN_DYN_ACK	1<<0 /* 使能该条数据不需要自动确认(NO_ACK) */
 
 
+//中转站地址 0x1A,0x2B,0x3C,0x4D
 typedef struct _NRF_STR {
 	uint16_t code;
 	//uint8_t deviceReg;//0:不注册 1:开启设备注册 2:已注册
 	//uint8_t cfgKey;//按键状态 0:未按下 1:按下
-	uint8_t sessionSta;//0:默认状态 1:接收命令状态 2:注册状态
-	uint8_t txBuffEmpty;//0:txBuff为空 1:txBuff非空,正在发送数据
+	//uint8_t sessionSta;//0:默认状态 1:接收命令状态 2:注册状态
+	//uint8_t txBuffEmpty;//0:txBuff为空 1:txBuff非空,正在发送数据
 	uint8_t heartTime;//注册成功后空闲计时,10s后发一次心跳包
-	uint8_t txAddr[4];
-	uint8_t rxAddr[4];
+	uint8_t rxAddr[4];//本机接收地址(接收数据时更改)
+	uint8_t txAddr[4];//和中转站发送地址保持一直
+	uint8_t TS_txAddr[4];//中转站的默认发送地址(发送数据时临时更改)
 	uint8_t *txBuf;
 	uint8_t *rxBuf;
 } NRF_STR;

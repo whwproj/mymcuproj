@@ -114,11 +114,16 @@ void HardFault_Handler(void)
 void EXTI4_15_IRQHandler(void)
 {
   /* USER CODE BEGIN EXTI4_15_IRQn 0 */
-
+	BaseType_t phpt;
   /* USER CODE END EXTI4_15_IRQn 0 */
-  HAL_GPIO_EXTI_IRQHandler(NRF_IRQ_Pin);
+  //HAL_GPIO_EXTI_IRQHandler(NRF_IRQ_Pin);
   /* USER CODE BEGIN EXTI4_15_IRQn 1 */
-
+	if(__HAL_GPIO_EXTI_GET_IT(NRF_IRQ_Pin) != RESET) {
+		__HAL_GPIO_EXTI_CLEAR_IT(NRF_IRQ_Pin);
+		HAL_NVIC_DisableIRQ(NRF_IRQ_EXTI_IRQn);
+		xTaskNotifyFromISR( nrf_control_taskHandle, 1U<<NRF_RX_EVENT, eSetBits, &phpt );
+		portYIELD_FROM_ISR(phpt);
+	}
   /* USER CODE END EXTI4_15_IRQn 1 */
 }
 
