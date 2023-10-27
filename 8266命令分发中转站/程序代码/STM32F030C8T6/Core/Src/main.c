@@ -97,7 +97,7 @@ int main(void)
   MX_ADC_Init();
   //MX_IWDG_Init();
   MX_SPI1_Init();
-  //MX_USART1_UART_Init();
+  MX_USART1_UART_Init();
   MX_USART2_UART_Init();
   MX_TIM3_Init();
   /* USER CODE BEGIN 2 */
@@ -195,6 +195,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 	if (htim->Instance == TIM3) {
 		led_tim_callback();
 		send_mqtt_heart_isr();
+		tim_clear_nrfreg_isr();
   }
   /* USER CODE END Callback 1 */
 }

@@ -16,22 +16,22 @@ int cjson_pase_method( uint8_t *pdBuff ) {
 		cJSON_Delete( trunk );
 		return -1;
 	}
-	data_str.code = code->valueint;
+	nrf_str.session.code = nrfid->valueint;
 	
 	nrfid = cJSON_GetObjectItemCaseSensitive(trunk, "nrfid");
 	if ( !cJSON_IsNumber(nrfid) || (nrfid->valueint == 0) ) {
 		cJSON_Delete( trunk );
 		return -1;
 	}
-	data_str.nrfid = nrfid->valueint;
+	nrf_str.session.deviceId = nrfid->valueint;
 	
 	data = cJSON_GetObjectItemCaseSensitive(trunk, "data");
 	if ( !cJSON_IsString(data) || (data->valuestring == NULL) ) {
 		cJSON_Delete( trunk );
 		return -1;
 	}
-	data_str.data = pvPortMalloc( strlen(data->valuestring) );
-	sprintf( data_str.data, "%s", data->valuestring );
+	if ( nrf_str.session.data == NULL ) nrf_str.session.data = pvPortMalloc( strlen(data->valuestring) );
+	sprintf( nrf_str.session.data, "%s", data->valuestring );
 	
 	cJSON_Delete( trunk );
 	return 0;
@@ -49,13 +49,13 @@ char* cjson_reply_template( uint16_t pvcode, int errCode, char* msg ) {
 	cJSON_Delete( trunk );
 	return string;*/
 	char *string = pvPortMalloc(100);
-	char *str_t = pvPortMalloc(6);
+	//char *str_t = pvPortMalloc(6);
 	sprintf( string, "%s%d%s%d%s%s%s",
 								PRINT_STR_0, pvcode, 
 								PRINT_STR_1, errCode, 
 								PRINT_STR_2, msg,
 								PRINT_STR_END);
-	vPortFree( str_t );
+	//vPortFree( str_t );
 	return string;
 }
 

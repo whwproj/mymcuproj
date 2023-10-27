@@ -136,15 +136,15 @@ void EXTI4_15_IRQHandler(void)
 	if(__HAL_GPIO_EXTI_GET_IT(KEY_Pin) != RESET) {
 		__HAL_GPIO_EXTI_CLEAR_IT(KEY_Pin);
 		HAL_NVIC_DisableIRQ(KEY_EXTI_IRQn);
-		str.preKey = 1;//按键按下
-		if ( str.regSta != 1 ) {//未在注册,�?启注�?
-			//printf("未注册,开启注册\r\n");
-			str.regSta = 1;
-			xTaskNotifyFromISR( nrf_control_taskHandle, 1U<<NRF_REGISTER_DEVICE, eSetBits, &phpt );
-		} else {//正在注册�?,停止注册
-			str.regSta = 0;
-			//printf("正在注册,停止注册\r\n");
-		}
+//		str.preKey = 1;//按键按下
+//		if ( nrf_str.regSta != 1 ) {//未在注册
+//			//printf("未注册,开启注册\r\n");
+//			nrf_str.regSta = 1;
+//			xTaskNotifyFromISR( nrf_control_taskHandle, 1U<<NRF_REGISTER_DEVICE, eSetBits, &phpt );
+//		} else {//正在注册
+//			nrf_str.regSta = 0;
+//			//printf("正在注册,停止注册\r\n");
+//		}
 		portYIELD_FROM_ISR(phpt);
 	}
   /* USER CODE END EXTI4_15_IRQn 1 */

@@ -2,7 +2,7 @@
 
 NRF_STR nrf_str;
 
-static void register_replay_device( uint8_t deviceId );
+static int register_replay_device( uint8_t deviceId );
 	
 uint8_t SPI_RW_Reg( uint8_t reg, uint8_t value ) {//读写寄存器
 	uint8_t status; 
@@ -84,8 +84,9 @@ int Tx_Mode( uint8_t deviceId ) {
 	CE_Low();
 	status = SPI_RW_Reg( NRF_READ_REG + CONFIG, NOP ) & ( ~(PRIM_RX) );
 	SPI_RW_Reg( NRF_WRITE_REG + CONFIG, status );
-	//更改发送地址为目标设备的接收地址
-	SPI_Write_Buf( NRF_WRITE_REG+TX_ADDR, nrf_str.rxAddr, 4 );
+	//更改地址为目标设备地址(增强模式收发地址必须一致)
+	SPI_Write_Buf( NRF_WRITE_REG+TX_ADDR, nrf_str.deviceAddr, 4 );
+	SPI_Write_Buf( NRF_WRITE_REG+RX_ADDR_P0, nrf_str.deviceAddr, 4 );
 	SPI_RW_Reg( NRF_WRITE_REG + STATUS, 0xF0 );
 	SPI_RW_Reg( FLUSH_RX,NOP );
 	SPI_RW_Reg( FLUSH_TX,NOP );
@@ -98,22 +99,22 @@ void Rx_Mode( void ) {
 	CE_Low();
 	status = SPI_RW_Reg( NRF_READ_REG + CONFIG, NOP ) | ( PRIM_RX );
 	SPI_RW_Reg( NRF_WRITE_REG + CONFIG, status );
-	//更改发送地址为本机默认发送地址
-	SPI_Write_Buf( NRF_WRITE_REG+TX_ADDR, nrf_str.TS_txAddr, 4 );
+	//更改地址为本机地址(增强模式收发地址必须一致)
+	SPI_Write_Buf( NRF_WRITE_REG+TX_ADDR, nrf_str.TSAddr, 4 );
+	SPI_Write_Buf( NRF_WRITE_REG+RX_ADDR_P0, nrf_str.TSAddr, 4 );
 	memset( nrf_str.txBuf, 0 , 33 );
 	memset( nrf_str.rxBuf, 0 , 33 );
 	CE_High();
 }
 
-//中转站地址 默认接收地址: 0x1A,0x2B,0x3C,0x4D
-//中转站地址 默认发送地址: 0xA1,0xB2,0xC3,0xD4
+//中转站默认地址: {0xC8,0x8F,0xE6,0x96}
 void nrf_init(void) {
 	NRF24L01_TypeDef nrf;
 	memset( &nrf, 0, sizeof(NRF24L01_TypeDef) );
 	
 	//NRF默认地址
-	memcpy( nrf.RX_ADDR_P0_, nrf_str.TS_rxAddr, 4 );
-	memcpy( nrf.TX_ADDR_, nrf_str.TS_txAddr, 4 );
+	memcpy( nrf.RX_ADDR_P0_, nrf_str.TSAddr, 4 );
+	memcpy( nrf.TX_ADDR_, nrf_str.TSAddr, 4 );
 	nrf_str.txBuf = pvPortMalloc(33);
 	nrf_str.rxBuf = pvPortMalloc(33);
 	memset(nrf_str.txBuf, 0, 33);
@@ -135,6 +136,7 @@ void nrf_init(void) {
 		printf("***spi1 nrf24l01 初始化失败!\r\n");
 	} else {
 		printf("nrf1 初始化成功!\r\n");
+		nrf_str.isInit = 1;
 	}
 }
 
@@ -143,68 +145,55 @@ void nrf_init(void) {
 //code			2byte
 //msgType		1byte 0:注册设备 1:命令(转发->设备) 2:回复(设备->转发) 3:推送(设备->转发)
 void nrf_receive_data(void) {
-	//char *str;
-	uint8_t sta;
+	uint8_t sta, deviceId, msgType;
+	uint16_t code;
 	
 	sta = SPI_RW_Reg( NRF_READ_REG + STATUS, NOP );//0xFF空指令
 	SPI_RW_Reg( NRF_WRITE_REG + STATUS, sta );
-	printf("sta: 0x%.2X\r\n", sta);
+	//printf("sta: 0x%.2X\r\n", sta);
 	if ( sta & RX_DR ) {
 		SPI_Read_Buf( RD_RX_PLOAD, nrf_str.rxBuf, RX_PLOAD_WIDTH );
-		//printf("%s\n",nrf_str.rxBuf);
-		printf("nrfdata: \r\n");
+		printf("nrfdata: ");
 		for ( int i=0; i<10; i++ )
 			printf(" 0x%.2X", nrf_str.rxBuf[i]);
-		printf("\r\n");goto end;
+		printf("\r\n");
 	} else {
 		goto end;
 	}
-
-	if ( nrf_str.rxBuf[3] == 0 ) {
+	
+	nrf_str.statusRegSetNum = 0;//重置定时查询寄存器计数器
+	deviceId = nrf_str.rxBuf[0];
+	msgType = nrf_str.rxBuf[3];//0:注册设备 1:中转站->设备 2:(回复)设备->中转站 3:(推送)设备->中转站 4:心跳
+	code = nrf_str.rxBuf[1]<<8 | nrf_str.rxBuf[2];
+	if ( msgType == 0 ) {
 		//设备绑定:根据deviceId查询nrfAddr是否一致,一致跳过,不一致或不存在则更新或添加
-		if ( nrf_str.rxBuf[0] == 0xFF ) {
-			create_deviceId( nrf_str.rxBuf[0] );
-		} else if ( !get_nrfaddr_by_deviceId(nrf_str.rxBuf[0]) ||
-				nrf_str.rxBuf[4]!=nrf_str.rxAddr[0] || nrf_str.rxBuf[5]!=nrf_str.rxAddr[1] ||
-				nrf_str.rxBuf[6]!=nrf_str.rxAddr[2] || nrf_str.rxBuf[7]!=nrf_str.rxAddr[3] ) {
-			nrf_str.rxBuf[0] = insert_nrfaddr( nrf_str.rxBuf[0] );
+		if ( deviceId == 0 ) {
+		} else if ( deviceId == 0xFF ) {
+			create_deviceId( deviceId );
+		} else if ( !get_nrfaddr_by_deviceId(deviceId) ||
+				nrf_str.rxBuf[4]!=nrf_str.deviceAddr[0] || nrf_str.rxBuf[5]!=nrf_str.deviceAddr[1] ||
+				nrf_str.rxBuf[6]!=nrf_str.deviceAddr[2] || nrf_str.rxBuf[7]!=nrf_str.deviceAddr[3] ) {
+			deviceId = insert_nrfaddr( deviceId );
 		}
 		//回复设备
-		register_replay_device( nrf_str.rxBuf[0] );
-		//推送MQTT
-		//xTaskNotify()
-		return;
-		
-	} else if ( nrf_str.rxBuf[3] == 1 ) {
-		return;
-	
-	} else if ( nrf_str.rxBuf[3] == 2 ) {//设备回复:携带pcode转发mqtt
-		//删除超时未应答链表节点
-		while( ask_str.useing ) { osDelay(1); }
-		ask_str.useing = 1;
-		for ( int i=0; i<5; i++ ) {
-			if ( ask_str.deviceIds[i] == nrf_str.rxBuf[0] ) {
-				ask_str.list &=~ (1<<i);
-				ask_str.deviceIds[i] = 0;
-				ask_str.sendTicks[i] = 0;
-				ask_str.pcode[i] = 0;
-			}
+		if ( register_replay_device( deviceId ) != -1 ) {
+			//推送MQTT,设备上线
+			wifi_msg_add_SendList( deviceId, code, "Device online!", 0 );
 		}
-		ask_str.useing = 0;
-		while ( !w_str.sendLock ) { osDelay(1); }
-		w_str.session.deviceId = nrf_str.rxBuf[0];
-		w_str.session.code = (nrf_str.rxBuf[1]<<8) | nrf_str.rxBuf[2];
-		send_forward_success();
 		
-	} else if ( nrf_str.rxBuf[3] == 3 ) {//设备推送:转发mqtt
-		push_data_fun((char*)&nrf_str.rxBuf[4]);
+	} else if ( msgType == 1 ) {//中转站->设备
+	} else if ( msgType == 2 ) {//(回复)设备->中转站 
+	} else if ( msgType == 3 ) {//(推送)设备->中转站
+		wifi_msg_add_SendList( deviceId, code, (char*)&nrf_str.rxBuf[4], 0 );
+	} else if ( msgType == 4 ) {//心跳
+		nrf_str.onlineDeviceList[deviceId] = 10;
 	}
 	
 	end:
-	printf("开启中断\r\n");
-	memset( nrf_str.rxAddr, 0 , 33 );
+	Rx_Mode();
 	__HAL_GPIO_EXTI_CLEAR_IT(NRF_IRQ_Pin);
 	HAL_NVIC_EnableIRQ(NRF_IRQ_EXTI_IRQn);
+	nrf_str.session.cacheLock = 0;//解锁缓存
 }
 
 //包装nrf要发送数据
@@ -214,9 +203,7 @@ void nrf_receive_data(void) {
 //		2:回复 设备 -> 中转站
 //		3:推送 设备 -> 中转站
 void nrf_pack_data( uint8_t did, uint16_t code, char* pdata ) {
-	while( nrf_str.notEmpty ) { vTaskDelay(10); }
 	memset( nrf_str.txBuf, 0, 33 );
-	nrf_str.notEmpty = 1;
 	nrf_str.txBuf[0] = did;
 	nrf_str.txBuf[1] = code >> 8;
 	nrf_str.txBuf[2] = code;
@@ -229,17 +216,47 @@ void nrf_pack_data( uint8_t did, uint16_t code, char* pdata ) {
 	vPortFree( data_str.data );
 }
 
-//NRF发送数据
-int nrf_send_data( uint8_t deviceId ) {
-	uint8_t sta = 0;
+// //NRF发送数据
+// int nrf_send_data( uint8_t deviceId ) {
+// 	int sta = 0;
 
-	HAL_NVIC_DisableIRQ( NRF_IRQ_EXTI_IRQn );
-	if ( Tx_Mode( deviceId ) != 0 ) {
+// 	HAL_NVIC_DisableIRQ( NRF_IRQ_EXTI_IRQn );
+// 	if ( Tx_Mode( deviceId ) != 0 ) {
+// 		//发送设备未注册事件
+// 		w_str.session.deviceId = nrf_str.txBuf[0];
+// 		w_str.session.code = (nrf_str.txBuf[1]<<8) | nrf_str.txBuf[2];
+// 		//xTaskNotify( wifi_control_taskHandle, 1U<<DEVICE_NOT_REGISTER, eSetBits );
+// 		sta = -1;
+// 		return;
+// 	}
+// 	SPI_Write_Buf( WR_TX_PLOAD , nrf_str.txBuf , 32 );
+// 	do {
+// 		vTaskDelay(2);
+// 		sta = SPI_RW_Reg( NRF_READ_REG + STATUS, NOP );
+// 	} while ( (sta & ((TX_DS)|(MAX_RT))) == 0 );
+// 	if ( sta & (TX_DS) ) {//发送成功
+// 		sta = 0;
+// 	} else if ( sta & (MAX_RT) ) {//重发次数达到最大,发送失败
+// 		//发送设备离线事件 
+// 		w_str.session.deviceId = nrf_str.txBuf[0];
+// 		w_str.session.code = (nrf_str.txBuf[1]<<8)|nrf_str.txBuf[2];
+// 		//xTaskNotify( wifi_control_taskHandle, 1U<<DEVICE_NOT_ONLINE, eSetBits );
+// 		sta = -1;
+// 	}
+// 	SPI_RW_Reg( NRF_WRITE_REG + STATUS, 0xF0 );
+// 	SPI_RW_Reg( FLUSH_TX, NOP );
+	
+// 	Rx_Mode();
+// 	return sta;
+// }
+
+int nrf_send_data( void ) {
+	int sta = 0;
+	if ( Tx_Mode( nrf_str.session.deviceId ) != 0 ) {
 		//发送设备未注册事件
-		w_str.session.deviceId = nrf_str.txBuf[0];
-		w_str.session.code = (nrf_str.txBuf[1]<<8) | nrf_str.txBuf[2];
-		xTaskNotify( wifi_control_taskHandle, 1U<<DEVICE_NOT_REGISTER, eSetBits );
-		return -1;
+		wifi_msg_add_SendList( nrf_str.session.deviceId, nrf_str.session.code, "Device not register!", -2 );
+		sta = -1;
+		goto end;
 	}
 	SPI_Write_Buf( WR_TX_PLOAD , nrf_str.txBuf , 32 );
 	do {
@@ -248,64 +265,66 @@ int nrf_send_data( uint8_t deviceId ) {
 	} while ( (sta & ((TX_DS)|(MAX_RT))) == 0 );
 	if ( sta & (TX_DS) ) {//发送成功
 		sta = 0;
+		nrf_str.statusRegSetNum = 0;
 	} else if ( sta & (MAX_RT) ) {//重发次数达到最大,发送失败
-		//发送设备离线事件 
-		w_str.session.deviceId = nrf_str.txBuf[0];
-		w_str.session.code = (nrf_str.txBuf[1]<<8)|nrf_str.txBuf[2];
-		xTaskNotify( wifi_control_taskHandle, 1U<<DEVICE_NOT_ONLINE, eSetBits );
+		//发送设备离线事件
+		wifi_msg_add_SendList( nrf_str.session.deviceId, nrf_str.session.code, "Device not online!", -1 );
 		sta = -1;
 	}
 	SPI_RW_Reg( NRF_WRITE_REG + STATUS, 0xF0 );
-	SPI_RW_Reg( FLUSH_TX,NOP );
-	
-	Rx_Mode();
-	__HAL_GPIO_EXTI_CLEAR_IT(NRF_IRQ_Pin);
-	HAL_NVIC_EnableIRQ(NRF_IRQ_EXTI_IRQn);		
+	SPI_RW_Reg( FLUSH_TX, NOP );
+	end:
 	return sta;
 }
 
 
-static void register_replay_device( uint8_t deviceId ) {
+static int register_replay_device( uint8_t deviceId ) {
 	//封装数据
 	nrf_str.txBuf[0] = deviceId;
 	nrf_str.txBuf[1] = nrf_str.rxBuf[1];
 	nrf_str.txBuf[2] = nrf_str.rxBuf[2];
 	nrf_str.txBuf[3] = 0;
+	nrf_str.session.deviceId = deviceId;
 	memcpy( &nrf_str.txBuf[4], &nrf_str.rxBuf[4], 4 );
 	//发送数据
-	nrf_send_data( deviceId );
+	return nrf_send_data();
 }
 
-void nrf_send_test( void ) {
-	uint8_t status, sta;
-	
-	HAL_NVIC_DisableIRQ( NRF_IRQ_EXTI_IRQn );
-	sprintf((char*)nrf_str.txBuf, "abcd1234567");
-	
-	CE_Low();osDelay(1);
-	CSN_Low();
-	status = SPI_RW_Reg( NRF_READ_REG + CONFIG, NOP ) & ( ~(PRIM_RX) );
-	SPI_RW_Reg( NRF_WRITE_REG + CONFIG, status );
-	CSN_High();
-	CE_High();osDelay(1);
-	
-	SPI_Write_Buf( WR_TX_PLOAD , nrf_str.txBuf , 32 );
-	vTaskDelay(10);
-	
-	sta = SPI_RW_Reg( NRF_READ_REG + STATUS, NOP );
-	printf("sta: 0x%.2X\r\n", sta);
-	if ( sta & MAX_RT ) {
-		printf("通信失败\r\n");
-		SPI_RW_Reg( NRF_WRITE_REG + STATUS, 0xF0 );
-		SPI_RW_Reg( FLUSH_TX,NOP );
-	} else {
-		printf("发送成功!\r\n");
+//定时检查寄存器状态并清除
+void tim_clear_nrfreg_isr( void ) {
+	BaseType_t phpt;
+	if ( nrf_str.isInit ) {
+		if ( nrf_str.statusRegSetNum++ > 12 ) {
+			nrf_str.statusRegSetNum = 0;
+			xTaskNotifyFromISR( nrf_control_taskHandle, 1U<<TIM_CLEAR_NRFREG, eSetBits, &phpt );
+			portYIELD_FROM_ISR( phpt );
+		}
 	}
-	
-	
-	//SPI_RW_Reg( FLUSH_RX,NOP );
-	
-	
 }
+
+//定时检查寄存器状态并清除
+void tim_clear_nrfreg( void ) {
+	//BaseType_t phpt;
+	uint8_t sta;
+	sta = SPI_RW_Reg( NRF_READ_REG + STATUS, NOP );//0xFF空指令
+	if ( sta & ( (RX_DR)|(TX_DS)|(MAX_RT)|(TX_FULL) ) ) {
+		//ul = taskENTER_CRITICAL_FROM_ISR();
+		printf( "寄存器状态异常 sta: 0x%.2X\r\n", sta );
+		SPI_RW_Reg( NRF_WRITE_REG + STATUS, 0xF0 );
+		SPI_RW_Reg( FLUSH_RX, NOP );
+		SPI_RW_Reg( FLUSH_TX, NOP );
+		Rx_Mode();
+		__HAL_GPIO_EXTI_CLEAR_IT(NRF_IRQ_Pin);
+		HAL_NVIC_EnableIRQ(NRF_IRQ_EXTI_IRQn);
+		sta = SPI_RW_Reg( NRF_READ_REG + STATUS, NOP );//0xFF空指令
+		printf( "清除异常状态寄存器 sta: 0x%.2X\r\n", sta );
+		//taskEXIT_CRITICAL_FROM_ISR(ul);
+	}
+}
+
+
+
+
+
 
 

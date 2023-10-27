@@ -74,6 +74,7 @@
 #define NRF_PARSE_DATA	2
 #define NRF_REGISTER_DEVICE		3
 #define NRF_STOP_REGISTER_DEVICE		4
+#define NRF_HEARTBEAT		5
 /*-------------------- Task end --------------------*/
 
 
@@ -213,11 +214,14 @@ typedef struct _NRF_STR {
 	//uint8_t sessionSta;//0:默认状态 1:接收命令状态 2:注册状态
 	//uint8_t txBuffEmpty;//0:txBuff为空 1:txBuff非空,正在发送数据
 	uint8_t heartTime;//注册成功后空闲计时,10s后发一次心跳包
-	uint8_t rxAddr[4];//本机接收地址(接收数据时更改)
-	uint8_t txAddr[4];//和中转站发送地址保持一直
-	uint8_t TS_txAddr[4];//中转站的默认发送地址(发送数据时临时更改)
+	uint8_t localAddr[4];//本机收发地址(NRF增强模式中收发地址要一致)
+	uint8_t TSAddr[4];//中转站地址(NRF增强模式中收发地址要一致)
 	uint8_t *txBuf;
 	uint8_t *rxBuf;
+	uint8_t regSta;//0:不注册 1:正在注册 2:已注册 3:心跳 4:通信成功,等待注册结果
+	uint8_t reg4Num;//等待注册反馈计时
+	//uint8_t deviceList[100];//在线设备生命周期,心跳重置10,递减到0则离线
+	
 } NRF_STR;
 
 

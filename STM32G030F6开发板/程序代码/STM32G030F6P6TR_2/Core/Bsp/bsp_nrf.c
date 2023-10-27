@@ -83,8 +83,9 @@ void Tx_Mode( void ) {
 	CE_Low();
 	status = SPI_RW_Reg( NRF_READ_REG + CONFIG, NOP ) & ( ~(PRIM_RX) );
 	SPI_RW_Reg( NRF_WRITE_REG + CONFIG, status );
-	//更改接收地址为中转站的默认发送地址
-	SPI_Write_Buf( NRF_WRITE_REG+RX_ADDR_P0, nrf_str.TS_txAddr, 4 );
+	//更改为中转站的地址
+	SPI_Write_Buf( NRF_WRITE_REG+RX_ADDR_P0, nrf_str.TSAddr, 4 );
+	SPI_Write_Buf( NRF_WRITE_REG+TX_ADDR, nrf_str.TSAddr, 4 );
 	SPI_RW_Reg( NRF_WRITE_REG + STATUS, 0xF0 );
 	SPI_RW_Reg( FLUSH_RX,NOP );
 	SPI_RW_Reg( FLUSH_TX,NOP );
@@ -96,20 +97,20 @@ void Rx_Mode( void ) {
 	CE_Low();
 	status = SPI_RW_Reg( NRF_READ_REG + CONFIG, NOP ) | ( PRIM_RX );
 	SPI_RW_Reg( NRF_WRITE_REG + CONFIG, status );
-	//更改接收地址为本机设备地址
-	SPI_Write_Buf( NRF_WRITE_REG+RX_ADDR_P0, nrf_str.rxAddr, 4 );
+	//更改为本机设备地址
+	SPI_Write_Buf( NRF_WRITE_REG+RX_ADDR_P0, nrf_str.localAddr, 4 );
+	SPI_Write_Buf( NRF_WRITE_REG+TX_ADDR, nrf_str.localAddr, 4 );
 	memset( nrf_str.txBuf, 0 , 33 );
 	memset( nrf_str.rxBuf, 0 , 33 );
 	CE_High();
 }
 
-//中转站地址 默认接收地址: 0x1A,0x2B,0x3C,0x4D
-//中转站地址 默认发送地址: 0xA1,0xB2,0xC3,0xD4
+//中转站默认收发地址: {0xC8,0x8F,0xE6,0x96}
 void nrf_init(void) {
 	NRF24L01_TypeDef nrf;
 	memset( &nrf, 0, sizeof(NRF24L01_TypeDef) );
-	memcpy(nrf.RX_ADDR_P0_, nrf_str.rxAddr, 4);
-	memcpy(nrf.TX_ADDR_, nrf_str.txAddr, 4);
+	memcpy(nrf.RX_ADDR_P0_, nrf_str.localAddr, 4);
+	memcpy(nrf.TX_ADDR_, nrf_str.localAddr, 4);
 	nrf_str.txBuf = pvPortMalloc(33);
 	nrf_str.rxBuf = pvPortMalloc(33);
 	memset(nrf_str.txBuf, 0, 33);
@@ -146,7 +147,7 @@ int nrf_send_data( void ) {
 	Tx_Mode();
 	SPI_Write_Buf( WR_TX_PLOAD , nrf_str.txBuf , 32 );
 	do {
-		vTaskDelay(20);
+		vTaskDelay(2);
 		sta = SPI_RW_Reg( NRF_READ_REG + STATUS, NOP );
 	} while ( (sta & ((TX_DS)|(MAX_RT))) == 0 );
 	printf("sta: 0x%.2X\r\n", sta);
@@ -174,30 +175,31 @@ void nrf_parse_data( void ) {
 	SPI_RW_Reg( NRF_WRITE_REG + STATUS, sta );
 	if ( sta & RX_DR ) {
 		SPI_Read_Buf( RD_RX_PLOAD, nrf_str.rxBuf, RX_PLOAD_WIDTH );
-		printf("%s\n",nrf_str.rxBuf);
+		//printf("%s\n",nrf_str.rxBuf);
 	} else {
 		goto end;
 	}
 	
-	if ( str.regSta == 4 ) {//等待注册反馈
-		if (  nrf_str.rxAddr[3]==0 || ((nrf_str.txBuf[1]<<8)|nrf_str.txBuf[2])==nrf_str.code ) {
-			if ( nrf_str.txBuf[4] == nrf_str.rxAddr[0] && 
-					 nrf_str.txBuf[4] == nrf_str.rxAddr[0] &&
-					 nrf_str.txBuf[4] == nrf_str.rxAddr[0] &&
-					 nrf_str.txBuf[4] == nrf_str.rxAddr[0] ) {
-				if ( nrf_str.rxAddr[0] != udata.deviceId ) {
-					udata.deviceId = nrf_str.rxAddr[0];
+	if ( nrf_str.regSta == 4 ) {//等待注册反馈
+		if (  nrf_str.rxBuf[3]==0 || ((nrf_str.rxBuf[1]<<8)|nrf_str.rxBuf[2])==nrf_str.code ) {
+			if ( nrf_str.rxBuf[4] == nrf_str.localAddr[0] && 
+					 nrf_str.rxBuf[5] == nrf_str.localAddr[1] &&
+					 nrf_str.rxBuf[6] == nrf_str.localAddr[2] &&
+					 nrf_str.rxBuf[7] == nrf_str.localAddr[3] ) {
+				if ( nrf_str.rxBuf[0] != udata.deviceId ) {
+					udata.deviceId = nrf_str.rxBuf[0];
 					write_data_into_flash();//数据写入FLASH
 				}
-				str.regSta = 2;//注册成功
+				nrf_str.regSta = 2;//注册成功
+				LED0_OFF();
 				printf("设备注册成功\r\n");
 			}
 		}
 	}
 	
-	if ( nrf_str.rxAddr[3] == 1 ) {//msgType: 1:命令 中转站->设备 (回复时msgType需要设置为:2)
-		nrf_str.code = (nrf_str.txBuf[1]<<8) | nrf_str.txBuf[2];
-		dstr = (char*)&nrf_str.rxAddr[4];
+	if ( nrf_str.rxBuf[3] == 1 ) {//msgType: 1:命令 中转站->设备 (回复时msgType需要设置为:2)
+		nrf_str.code = (nrf_str.rxBuf[1]<<8) | nrf_str.rxBuf[2];
+		dstr = (char*)&nrf_str.rxBuf[4];
 		if ( strstr( dstr, "LED_MODE_0" ) != NULL ) {
 			nrf_replay_cmd("success!");
 			xTaskNotify( executive_taskHandle, 1U<<LED_MODE_0, eSetBits );
@@ -205,16 +207,66 @@ void nrf_parse_data( void ) {
 		} else if ( strstr( dstr, "LED_MODE_OFF" ) != NULL ) {
 			nrf_replay_cmd("success!");
 			xTaskNotify( executive_taskHandle, 1U<<LED_MODE_OFF, eSetBits );
-			
-		}
-		return;
 		
-	} else if ( nrf_str.rxAddr[3] == 2 ) {//msgType: 3:推送 设备 -> 中转站
-	
+		} else if ( strstr( dstr, "LED_ALL_OFF" ) != NULL ) {
+			nrf_replay_cmd("success!");
+			LED_ALL_OFF();
+		} else if ( strstr( dstr, "LED_ALL_OFF" ) != NULL ) {
+			nrf_replay_cmd("success!");
+			LED_ALL_OFF();
+		} else if ( strstr( dstr, "LED0_OFF" ) != NULL ) {
+			nrf_replay_cmd("success!");
+			LED0_OFF();
+		} else if ( strstr( dstr, "LED0_ON" ) != NULL ) {
+			nrf_replay_cmd("success!");
+			LED0_ON();
+		} else if ( strstr( dstr, "LED1_OFF" ) != NULL ) {
+			nrf_replay_cmd("success!");
+			LED1_OFF();
+		} else if ( strstr( dstr, "LED1_ON" ) != NULL ) {
+			nrf_replay_cmd("success!");
+			LED1_ON();
+		} else if ( strstr( dstr, "LED2_OFF" ) != NULL ) {
+			nrf_replay_cmd("success!");
+			LED2_OFF();
+		} else if ( strstr( dstr, "LED2_ON" ) != NULL ) {
+			nrf_replay_cmd("success!");
+			LED2_ON();
+		} else if ( strstr( dstr, "LED3_OFF" ) != NULL ) {
+			nrf_replay_cmd("success!");
+			LED3_OFF();
+		} else if ( strstr( dstr, "LED3_ON" ) != NULL ) {
+			nrf_replay_cmd("success!");
+			LED3_ON();
+		} else if ( strstr( dstr, "LED4_OFF" ) != NULL ) {
+			nrf_replay_cmd("success!");
+			LED4_OFF();
+		} else if ( strstr( dstr, "LED4_ON" ) != NULL ) {
+			nrf_replay_cmd("success!");
+			LED4_ON();
+		} else if ( strstr( dstr, "LED5_OFF" ) != NULL ) {
+			nrf_replay_cmd("success!");
+			LED5_OFF();
+		} else if ( strstr( dstr, "LED5_ON" ) != NULL ) {
+			nrf_replay_cmd("success!");
+			LED5_ON();
+		} else if ( strstr( dstr, "LED6_OFF" ) != NULL ) {
+			nrf_replay_cmd("success!");
+			LED6_OFF();
+		} else if ( strstr( dstr, "LED6_ON" ) != NULL ) {
+			nrf_replay_cmd("success!");
+			LED6_ON();
+		} else if ( strstr( dstr, "LED7_OFF" ) != NULL ) {
+			nrf_replay_cmd("success!");
+			LED7_OFF();
+		} else if ( strstr( dstr, "LED7_ON" ) != NULL ) {
+			nrf_replay_cmd("success!");
+			LED7_ON();
+		}
 	}
 	
 	end:
-	memset( nrf_str.rxAddr, 0 , 33 );
+	memset( nrf_str.rxBuf, 0 , 33 );
 	__HAL_GPIO_EXTI_CLEAR_IT(NRF_IRQ_Pin);
 	HAL_NVIC_EnableIRQ(NRF_IRQ_EXTI_IRQn);
 }
@@ -223,30 +275,47 @@ void nrf_parse_data( void ) {
 //---------------------- 装载数据 ----------------------
 //注册设备
 void nrf_register_device( void ) {
-//	if ( nrf_str.sessionSta == 2 ) {
-//		//注册状态,跳过等待
-//	} else {
-//		wait_tx_buff_empty();//等待TX非空
-//	}
 	//填充数据
-	str.regSta = 1;
+	nrf_str.regSta = 1;
 	nrf_str.txBuf[0] = udata.deviceId;
 	nrf_str.code = craeteGrowthCode();
 	nrf_str.txBuf[1] = nrf_str.code >> 8;
 	nrf_str.txBuf[2] = nrf_str.code;
 	nrf_str.txBuf[3] = 0;//注册设备
-	memcpy( &nrf_str.txBuf[4], nrf_str.rxAddr, 4 );
-	printf("rxaddr: 0x%.2X 0x%.2X 0x%.2X 0x%.2X\r\n",
-	nrf_str.txBuf[4], nrf_str.txBuf[5], nrf_str.txBuf[6], nrf_str.txBuf[7]);
-	printf("首次注册\r\n");
+	memcpy( &nrf_str.txBuf[4], nrf_str.localAddr, 4 );
+//	printf("rxaddr: 0x%.2X 0x%.2X 0x%.2X 0x%.2X\r\n",
+//	nrf_str.txBuf[4], nrf_str.txBuf[5], nrf_str.txBuf[6], nrf_str.txBuf[7]);
 	for ( ;; ) {
-		if ( nrf_send_data() != -1 ) {//注册成功
-			printf("发送成功,等待注册结果反馈\r\n");
-			str.regSta = 4;
+		if ( nrf_send_data() != -1 ) {//发送成功
+			nrf_str.regSta = 4;
 			break;
 		}
 		CE_Low();
 		vTaskDelay(500);
+	}
+}
+
+//发送心跳
+void nrf_send_heartbeat( void ) {
+	//填充数据
+	nrf_str.regSta = 3;
+	nrf_str.txBuf[0] = udata.deviceId;
+	nrf_str.code = craeteGrowthCode();
+	nrf_str.txBuf[1] = nrf_str.code >> 8;
+	nrf_str.txBuf[2] = nrf_str.code;
+	nrf_str.txBuf[3] = 4;//发送心跳
+	memcpy( &nrf_str.txBuf[4], nrf_str.localAddr, 4 );
+	for ( int i=10; ; i-- ) {
+		if ( nrf_send_data() != -1 ) {//发送成功
+			nrf_str.regSta = 2;
+			break;
+		}
+		CE_Low();
+		vTaskDelay(500);
+		if ( i == 0 ) {
+			xTaskNotify( nrf_control_taskHandle, 1U<<NRF_REGISTER_DEVICE, eSetBits );//重新注册
+			return;
+		}
 	}
 }
 

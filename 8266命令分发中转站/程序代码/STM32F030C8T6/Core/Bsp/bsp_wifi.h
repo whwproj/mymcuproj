@@ -78,11 +78,12 @@
 #define WIFI_UART_IDLE_CALLBACK		1
 #define WIFI_STA_AP_MODE_INIT			2
 #define WIFI_STATION_MODE_INIT		3
-#define WIFI_SEND_HEART						4
-#define DEVICE_NOT_REGISTER				5
-#define DEVICE_NOT_ONLINE					6
-#define	FORWARD_SUCCESS						7
-#define PARSE_WIFI_DATA						8
+#define PARSE_JSON_DATA						8
+
+#define WIFI_SEND_HEART						0
+#define WIFI_SEND_MQTT						1
+
+
 //*****	wifi_control_task_fun 
 
 #define WIFI_CONNECT_TCP0_DELAY	0
@@ -108,9 +109,12 @@
 /*---- check task bits end ----------------*/
 
 typedef struct ___SESSION {
-	uint8_t deviceId;
-	uint16_t code;
+	//uint8_t deviceId;
+	uint8_t len;
+	//uint16_t code;
+	char data[128];
 } _SESSION;
+
 typedef struct _WIFI_STR {
 	uint8_t *txBuff;
 	uint8_t *rxBuff;
@@ -126,26 +130,17 @@ typedef struct _WIFI_STR {
 	uint8_t mqttSta;//0:未连接 1:建立连接订阅主题完毕
 	uint8_t heartBeatTime;//mqtt心跳包
 	
-	_SESSION session;
+	_SESSION sendSession[3];
+	_SESSION receiveSession[3];
 } WIFI_STR;
-
 extern WIFI_STR w_str;
 
-//uint32_t wifi_check_online( void );
-//void wifi_to_reconfigure( void );
-//void wifi_parse_data( void );
-//int check_turn_on_time( void );
-//uint8_t cmd_main_fun( void );
-//uint8_t cmd_sub_1_fun( void );
-//uint8_t cmd_sub_2_fun( void );
-//uint8_t cmd_sub_3_fun( void );
-
-//void wifi_tcp_send_data( uint8_t pid );//多链路tcp发送数据
-//void wifi_tcp1_send_data( void );
-//void wifi_mqtt_heart( void );
-//void mqtt_connect( void );//寤虹珛mqtt杩炴帴
-//void wifi_init( void );//WIFI初始化
-//UBaseType_t wifi_mqtt_data_parse( void );//解析mqtt数据
+typedef struct __DATA_STR {
+	uint16_t code;
+	uint8_t nrfid;
+	char* data;
+} DATA_STR;
+extern DATA_STR data_str;
 
 
 void wifi_reset( void );//wifi复位
@@ -154,10 +149,19 @@ void station_and_ap_init( void );//station+AP模式初始化,供用户设置wifi
 void wifi_uart_idle_callback( void );//wifi空闲中断回调执行函数
 void send_mqtt_heart_isr( void );//发送心跳ISR
 void send_mqtt_heart( void );//发送心跳
-void send_device_not_register( void );//回复设备未注册
-int send_device_not_online( void );//回复设备不在线
-void send_forward_success( void );//转发成功
-void push_data_fun( char *data );//推送数据
+//void send_device_not_register( void );//回复设备未注册
+//int send_device_not_online( void );//回复设备不在线
+//void send_forward_success( void );//转发成功
+//void push_data_fun( char *data );//推送数据
+
+void parse_wifi_data_fun( void );//解析wifi数据
+
+//void device_not_register_addSendList( uint8_t deviceId, uint16_t code );//回复设备未注册
+//int device_not_online_addSendList( uint8_t deviceId, uint16_t code );//回复设备不在线
+//void send_forward_success( uint8_t deviceId, uint16_t code );//转发成功
+
+void wifi_msg_add_SendList( uint8_t deviceId, uint16_t code, char* p_dat, int errCode );//添加待发送的wifi消息
+void wifi_send_mqtt( void );
 #endif /*__BSP_WIFI__H*/
 
 

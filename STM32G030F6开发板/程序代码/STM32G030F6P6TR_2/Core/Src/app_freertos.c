@@ -183,6 +183,11 @@ void nrf_control_task_fun(void const * argument) {
 			oldBits &=~ (1U<<NRF_REGISTER_DEVICE);
 			nrf_register_device();
 		}
+		if ( oldBits & (1U<<NRF_HEARTBEAT) ) {
+			oldBits &=~ (1U<<NRF_HEARTBEAT);
+			nrf_send_heartbeat();
+		}
+		
   }
 }
 /*--------------- NRF24 ----------------*/

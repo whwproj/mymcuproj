@@ -6,6 +6,7 @@ ASK_STR ask_str;
 //解析wifi数据
 UBaseType_t parse_wifi_data_fun( void ) {
 	char* jsonStr = pvPortMalloc(100);
+	
 	if ( xQueueReceive( wifi_data_handle, jsonStr, pdFALSE ) ) {
 
 		//解析json

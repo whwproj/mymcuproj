@@ -73,6 +73,7 @@
 #define NRF_INIT_EVENT	0
 #define NRF_TX_EVENT		1
 #define NRF_RX_EVENT		2
+#define TIM_CLEAR_NRFREG 3
 /*-------------------- Task end --------------------*/
 
 
@@ -252,17 +253,19 @@ typedef struct {
 typedef struct __SESSION {
 	uint8_t deviceId;
 	uint16_t code;
+	char *data;
+	uint8_t cacheLock;//数据缓存锁 0:可使用 1:等待发送/接收完成
 } SESSION;
 
 typedef struct _NRF_STR {
-	uint8_t notEmpty;//0:结构体空,可封装数据包 1:已封装数据包,等待发送
-	//uint16_t code;
-	uint8_t TS_txAddr[4];
-	uint8_t TS_rxAddr[4];
-	uint8_t rxAddr[4];//数据接收方设备的接收地址
+	uint8_t TSAddr[4];//本机收发地址(增强模式中,收发地址必须要一致)
+	uint8_t deviceAddr[4];//数据接收方设备的收发地址(增强模式中,收发地址必须要一致)
 	uint8_t *txBuf;
 	uint8_t *rxBuf;
 	SESSION session;
+	uint8_t isInit;//0:未初始化 1:已初始化
+	uint8_t statusRegSetNum;//0.5s自增,完成一次收发清空,计数达到一定次数检查寄存器状态,状态异常则清空寄存器及冲刷寄存器
+	uint8_t onlineDeviceList[100];//设备在线生命周期列表
 } NRF_STR;
 extern NRF_STR nrf_str;
 
@@ -276,9 +279,10 @@ void Rx_Mode( void );
 void nrf_init( void );
 void nrf_receive_data( void );//接收数据
 void nrf_pack_data( uint8_t did, uint16_t code, char* pdata );//nrf发送数据
-int nrf_send_data( uint8_t deviceId );
+int nrf_send_data( void );
 
-void nrf_send_test( void );
+void tim_clear_nrfreg_isr( void );
+void tim_clear_nrfreg( void );//定时检查清空异常状态寄存器
 
 #endif /*__BSP_NRF__H*/
 

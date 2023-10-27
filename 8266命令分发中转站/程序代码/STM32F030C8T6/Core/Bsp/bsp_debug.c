@@ -91,39 +91,6 @@ void debug_parse_data_fun( void ) {
 		} else {
 			printf("cled_speed设置失败\r\n");
 		}
-		
-	} else if ( strstr( (char *)ds.rxBuff, "nrfaddr" ) != NULL ) {
-		nrf_str.rxBuf[0] = 0;
-		nrf_str.rxBuf[4] = 0xF0;
-		nrf_str.rxBuf[5] = 0xF1;
-		nrf_str.rxBuf[6] = 0xF2;
-		nrf_str.rxBuf[7] = 0xF0;
-		if ( !get_nrfaddr_by_deviceId(nrf_str.rxBuf[0]) ||
-						nrf_str.rxBuf[4]!=nrf_str.TS_txAddr[0] || nrf_str.rxBuf[5]!=nrf_str.TS_txAddr[1] ||
-						nrf_str.rxBuf[6]!=nrf_str.TS_txAddr[2] || nrf_str.rxBuf[7]!=nrf_str.TS_txAddr[3] ) {
-			insert_nrfaddr( nrf_str.rxBuf[0] );
-			printf("insert ok\r\n");
-		} else {
-			printf("addr is : 0x%.2X 0x%.2X 0x%.2X 0x%.2X\r\n",
-				nrf_str.TS_txAddr[0], nrf_str.TS_txAddr[1], nrf_str.TS_txAddr[2], nrf_str.TS_txAddr[3] );
-		}	
-		
-		
-	} else if ( strstr( (char *)ds.rxBuff, "查询内存" ) != NULL ) {
-	
-#if (INCLUDE_uxTaskGetStackHighWaterMark == 1)
-		printf("\r\n------ 单个任务堆栈的历史最小内存 总大小 / 历史最小内存 start ------\r\n");
-		if ( debugTaskHandle != NULL ) printf("%d / %ld   debugTaskHandle\r\n", debugTaskSize, uxTaskGetStackHighWaterMark(debugTaskHandle) );
-		if ( wifi_control_taskHandle != NULL ) printf("%d / %ld   wifi_control_taskHandle\r\n", wifi_control_taskSize, uxTaskGetStackHighWaterMark(wifi_control_taskHandle) );
-		//if ( data_task_handle != NULL ) printf("%d / %ld   data_task_handle\r\n", data_taskSize, uxTaskGetStackHighWaterMark(data_task_handle) );
-		if ( debugTaskHandle != NULL ) printf("%d / %ld   debugTaskHandle\r\n", debugTaskSize, uxTaskGetStackHighWaterMark(debugTaskHandle) );
-		if ( nrf_control_taskHandle != NULL ) printf("%d / %ld   nrf_control_taskHandle\r\n", nrf_control_taskSize, uxTaskGetStackHighWaterMark(nrf_control_taskHandle) );
-		if ( time_task_handle != NULL ) printf("%d / %ld  time_task_handle\r\n", time_taskSize ,uxTaskGetStackHighWaterMark(time_task_handle));
-		printf("内存剩余：%d Byte 历史最小内存剩余：%d Byte\r\n", xPortGetFreeHeapSize(), xPortGetMinimumEverFreeHeapSize());
-		printf("------ 单个任务堆栈的历史最小内存 end ------\r\n");
-#else
-		printf("\r\n------ 内存剩余：%d Byte 历史最小内存剩余：%d Byte\r\n\r\n", xPortGetFreeHeapSize(), xPortGetMinimumEverFreeHeapSize());
-#endif
 	}
 //	else if ( strstr( (char *)ds.rxBuff, "clear reg" ) != NULL ) {
 //		SPI_RW_Reg(NRF_WRITE_REG + STATUS, 0xf0 );//0xFF空指令

@@ -11,12 +11,7 @@
 #define NRF_SEND_TIME		0
 /*-------------------- TIME end --------------------*/
 
-typedef struct __DATA_STR {
-	uint16_t code;
-	uint8_t nrfid;
-	char* data;
-} DATA_STR;
-extern DATA_STR data_str;
+
 
 typedef struct __ASK_STR {
 	uint8_t list;//每一位代表一个计时消息,低5位有效 xxx1 1111

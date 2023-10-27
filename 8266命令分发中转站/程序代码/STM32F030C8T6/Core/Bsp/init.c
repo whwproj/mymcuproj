@@ -12,8 +12,6 @@ static void cyclicShift( uint32_t *cpuID ) {
 void getSnByDeviceId_setClientId( void ) {
 	uint32_t cpuID[3];
 	uint8_t sn[4];
-	uint8_t TS_RXADDR[4] = {0x1A,0x2B,0x3C,0x4D}; 
-	uint8_t TS_TXADDR[4] = {0xA1,0xB2,0xC3,0xD4};
 	
 	cpuID[0] = *(uint32_t *)UID_BASE;
 	cpuID[1] = *(uint32_t *)UID_BASE+4;
@@ -26,12 +24,9 @@ void getSnByDeviceId_setClientId( void ) {
 	sn[2] = crc8((uint8_t *)cpuID, 12); 
 	sn[3] = crc8((uint8_t *)cpuID, 4);
 	
+	memset( &nrf_str, 0, sizeof(NRF_STR) );
 	sprintf( (char*)udata.duid, "%.02X%.02X%.02X%.02X", sn[0], sn[1], sn[2], sn[3] );
-	//printf("设备snid:%.02X%.02X%.02X%.02X\r\n", sn[0], sn[1], sn[2], sn[3]);
-	 
-	memcpy( nrf_str.TS_txAddr, TS_TXADDR, 4 );
-	memcpy( nrf_str.TS_rxAddr, TS_RXADDR, 4 );
-	
-	
+	memcpy( nrf_str.TSAddr, sn, 4 );
+	printf("设备snid:%.02X%.02X%.02X%.02X\r\n", sn[0], sn[1], sn[2], sn[3]);
 }
 

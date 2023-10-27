@@ -111,10 +111,10 @@ uint32_t get_nrfaddr_by_deviceId( uint8_t id ) {
 	if ( nrf_addr==0 || nrf_addr==0xFFFFFFFF ) {
 		return 0;//不存在id
 	}
-	nrf_str.rxAddr[0] = (uint8_t)(nrf_addr);
-	nrf_str.rxAddr[1] = (uint8_t)(nrf_addr>>8);
-	nrf_str.rxAddr[2] = (uint8_t)(nrf_addr>>16);
-	nrf_str.rxAddr[3] = (uint8_t)(nrf_addr>>24);
+	nrf_str.deviceAddr[0] = (uint8_t)(nrf_addr);
+	nrf_str.deviceAddr[1] = (uint8_t)(nrf_addr>>8);
+	nrf_str.deviceAddr[2] = (uint8_t)(nrf_addr>>16);
+	nrf_str.deviceAddr[3] = (uint8_t)(nrf_addr>>24);
 	return nrf_addr;
 }
 
@@ -124,7 +124,7 @@ uint32_t create_deviceId( uint8_t id ) {
 	uint16_t offset;
 	uint8_t i;
 	//新设备首次注册,分配ID
-	for ( i=0; i<255; i++ ) {
+	for ( i=1; i<255; i++ ) {
 		offset = i * 4;
 		flash_add = (uint32_t *)(FLASH_NRFADDR + offset);
 		nrf_addr = (uint32_t)(* flash_add);
