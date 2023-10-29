@@ -131,8 +131,8 @@ enum {
 };
 
 
-#define APDS9930_INIT			0
-#define APDS9930_INTERRUPT		1
+#define APDS9930_INIT							0
+#define APDS9930_INTERRUPT				1
 #define CHECK_ENTER_STANDBYMODE		2
 
 

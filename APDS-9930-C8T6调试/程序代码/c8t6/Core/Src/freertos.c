@@ -133,14 +133,14 @@ void StartDefaultTask(void const * argument)
 	
   /* Infinite loop */
   for(;;) {
-		judge_if_Rest();
-		printf("开机成功\r\n");
-		osDelay(500);
-		LED_ON();
+		//judge_if_Rest();
+		//printf("开机成功\r\n");
+		//osDelay(500);
+		//LED_ON();
 		
 		//OLED_Init();
 		//OLED_ShowString(3, 3, "aa");
-		/*
+		
 		if ( !APDS9930_init() ) {
 			printf( "APDS9930 init fail!\r\n" );
 		} else {
@@ -149,7 +149,7 @@ void StartDefaultTask(void const * argument)
 		
 		osDelay(500);
 	
-		*/
+		
     vTaskDelete( defaultTaskHandle );
   }
   /* USER CODE END StartDefaultTask */
@@ -190,7 +190,7 @@ void APDS9930Task_fun(void const * argument) {
 		
 		if ( oldBits & (1U<<CHECK_ENTER_STANDBYMODE) ) {
 			oldBits &=~ (1U<<CHECK_ENTER_STANDBYMODE);
-			Wkup0_Check_Up_OS();
+			//Wkup0_Check_Up_OS();
 		}
 	}
 }

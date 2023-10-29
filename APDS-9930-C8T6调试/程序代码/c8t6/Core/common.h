@@ -4,8 +4,8 @@
 #define DEBUG_ENABLE
 
 // Constants
-#define LIGHT_INT_HIGH  1000 // High light level for interrupt
-#define LIGHT_INT_LOW   35   // Low light level for interrupt
+#define LIGHT_INT_HIGH  100 // High light level for interrupt
+#define LIGHT_INT_LOW   5   // Low light level for interrupt
 
 
 /* LIB ------------------------------------------------------------*/
