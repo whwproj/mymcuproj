@@ -107,6 +107,12 @@ void Rx_Mode( void ) {
 	CE_High();
 }
 
+void nrf_deInit(void) {
+	CE_Low();
+	vPortFree( nrf_str.txBuf );
+	vPortFree( nrf_str.rxBuf );
+}
+
 //中转站默认地址: {0xC8,0x8F,0xE6,0x96}
 void nrf_init(void) {
 	NRF24L01_TypeDef nrf;
@@ -115,8 +121,8 @@ void nrf_init(void) {
 	//NRF默认地址
 	memcpy( nrf.RX_ADDR_P0_, nrf_str.TSAddr, 4 );
 	memcpy( nrf.TX_ADDR_, nrf_str.TSAddr, 4 );
-	nrf_str.txBuf = pvPortMalloc(33);
-	nrf_str.rxBuf = pvPortMalloc(33);
+	if ( nrf_str.txBuf == NULL ) nrf_str.txBuf = pvPortMalloc(33);
+	if ( nrf_str.rxBuf == NULL ) nrf_str.rxBuf = pvPortMalloc(33);
 	memset(nrf_str.txBuf, 0, 33);
 	memset(nrf_str.rxBuf, 0, 33);
 	
@@ -168,6 +174,7 @@ void nrf_receive_data(void) {
 	if ( msgType == 0 ) {
 		//设备绑定:根据deviceId查询nrfAddr是否一致,一致跳过,不一致或不存在则更新或添加
 		if ( deviceId == 0 ) {
+			goto end;
 		} else if ( deviceId == 0xFF ) {
 			create_deviceId( deviceId );
 		} else if ( !get_nrfaddr_by_deviceId(deviceId) ||
@@ -264,9 +271,11 @@ int nrf_send_data( void ) {
 		sta = SPI_RW_Reg( NRF_READ_REG + STATUS, NOP );
 	} while ( (sta & ((TX_DS)|(MAX_RT))) == 0 );
 	if ( sta & (TX_DS) ) {//发送成功
+		printf("转发成功\r\n");
 		sta = 0;
 		nrf_str.statusRegSetNum = 0;
 	} else if ( sta & (MAX_RT) ) {//重发次数达到最大,发送失败
+		printf("转发失败\r\n");
 		//发送设备离线事件
 		wifi_msg_add_SendList( nrf_str.session.deviceId, nrf_str.session.code, "Device not online!", -1 );
 		sta = -1;

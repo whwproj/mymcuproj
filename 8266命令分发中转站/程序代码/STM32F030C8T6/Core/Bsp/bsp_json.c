@@ -60,7 +60,7 @@ char* cjson_reply_template( uint16_t pvcode, int errCode, char* msg ) {
 }
 
 
-char* cjson_send_data_template( uint16_t pvcode, char* data ) {
+char* cjson_send_data_template( uint16_t pvcode, char* data, uint8_t deviceId ) {
 	/*cJSON *trunk = NULL;
 	char *string;
 	trunk = cJSON_CreateObject();
@@ -72,9 +72,10 @@ char* cjson_send_data_template( uint16_t pvcode, char* data ) {
 	return string;*/
 	char *string = pvPortMalloc(100);
 	char *str_t = pvPortMalloc(6);
-	sprintf( string, "%s%d%s%s%s",
+	sprintf( string, "%s%d%s%d%s%s%s",
 								PRINT_STR_0, pvcode, 
-								PRINT_STR_3, data, 
+								PRINT_STR_3, deviceId,
+								PRINT_STR_4, data,  
 								PRINT_STR_END);
 	vPortFree( str_t );
 	return string;

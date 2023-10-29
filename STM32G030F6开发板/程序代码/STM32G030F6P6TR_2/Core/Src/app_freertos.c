@@ -187,7 +187,10 @@ void nrf_control_task_fun(void const * argument) {
 			oldBits &=~ (1U<<NRF_HEARTBEAT);
 			nrf_send_heartbeat();
 		}
-		
+		if ( oldBits & (1U<<SEND_KEY_DOWN) ) {
+			oldBits &=~ (1U<<SEND_KEY_DOWN);
+			nrf_push_data("按键按下");
+		}
   }
 }
 /*--------------- NRF24 ----------------*/

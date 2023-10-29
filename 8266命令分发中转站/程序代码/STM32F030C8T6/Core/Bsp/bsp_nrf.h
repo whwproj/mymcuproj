@@ -74,6 +74,7 @@
 #define NRF_TX_EVENT		1
 #define NRF_RX_EVENT		2
 #define TIM_CLEAR_NRFREG 3
+#define NRF_TASK_DELETE 4
 /*-------------------- Task end --------------------*/
 
 
@@ -283,6 +284,7 @@ int nrf_send_data( void );
 
 void tim_clear_nrfreg_isr( void );
 void tim_clear_nrfreg( void );//定时检查清空异常状态寄存器
+void nrf_deInit(void);
 
 #endif /*__BSP_NRF__H*/
 

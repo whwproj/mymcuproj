@@ -38,8 +38,8 @@
 #include "../Tools/mqtt.h"
 #include "../Tools/crc.h"
 
-#define 	wifi_control_taskSize				128
-#define 	nrf_control_taskSize				128
+#define 	wifi_control_taskSize				192
+#define 	nrf_control_taskSize				100
 #define 	wifi_send_taskSize				  100
 
 extern TaskHandle_t wifi_control_taskHandle;

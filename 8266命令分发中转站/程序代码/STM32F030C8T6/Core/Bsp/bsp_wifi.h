@@ -78,10 +78,12 @@
 #define WIFI_UART_IDLE_CALLBACK		1
 #define WIFI_STA_AP_MODE_INIT			2
 #define WIFI_STATION_MODE_INIT		3
-#define PARSE_JSON_DATA						8
+#define PARSE_JSON_DATA						4
+#define CREATE_TASK								5
 
 #define WIFI_SEND_HEART						0
 #define WIFI_SEND_MQTT						1
+#define SEND_TASK_DELETE					2
 
 
 //*****	wifi_control_task_fun 
@@ -130,8 +132,8 @@ typedef struct _WIFI_STR {
 	uint8_t mqttSta;//0:未连接 1:建立连接订阅主题完毕
 	uint8_t heartBeatTime;//mqtt心跳包
 	
-	_SESSION sendSession[3];
-	_SESSION receiveSession[3];
+	_SESSION sendSession[2];
+	_SESSION receiveSession[2];
 } WIFI_STR;
 extern WIFI_STR w_str;
 

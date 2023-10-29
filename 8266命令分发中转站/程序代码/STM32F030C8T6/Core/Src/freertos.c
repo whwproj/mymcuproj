@@ -107,8 +107,8 @@ void MX_FREERTOS_Init(void) {
 
   /* USER CODE BEGIN RTOS_QUEUES */
   /* add queues, ... */
-	wifi_send_cache_handle = xSemaphoreCreateCounting( 3, 3 );
-	wifi_receive_cache_handle = xSemaphoreCreateCounting( 3, 3 );
+	wifi_send_cache_handle = xSemaphoreCreateCounting( 2, 2 );
+	wifi_receive_cache_handle = xSemaphoreCreateCounting( 2, 2 );
 	wifi_using_lock_handle = xSemaphoreCreateMutex();
 	xSemaphoreGive(wifi_using_lock_handle);
   /* USER CODE END RTOS_QUEUES */
@@ -205,6 +205,19 @@ void wifi_control_task_fun(void const * argument) {
 			oldBits &=~ (1U<<PARSE_JSON_DATA);
 			parse_wifi_data_fun();
 		}
+		if ( oldBits & (1U<<CREATE_TASK) ) {
+			oldBits &=~ (1U<<CREATE_TASK);
+			if ( nrf_control_taskHandle == NULL ) {
+				osThreadDef(nrf_control_task, nrf_control_task_fun, osPriorityNormal, 0, nrf_control_taskSize);
+				nrf_control_taskHandle = osThreadCreate(osThread(nrf_control_task), NULL);
+			}
+			if ( wifi_send_taskHandle == NULL ) {
+				osThreadDef(wifi_send_task, wifi_send_task_fun, osPriorityNormal, 0, wifi_send_taskSize);
+				wifi_send_taskHandle = osThreadCreate(osThread(wifi_send_task), NULL);
+			}
+			//初始化NRF
+			xTaskNotify( nrf_control_taskHandle, 1U<<NRF_INIT_EVENT, eSetBits );
+		}
   }
 }
 
@@ -212,7 +225,6 @@ void wifi_send_task_fun(void const * argument) {
 	uint32_t newBits, oldBits = 0;
   for(;;) {
 		xTaskNotifyWait( pdFALSE, portMAX_DELAY, &newBits, portMAX_DELAY );
-		//xTaskNotifyWait( pdFALSE, portMAX_DELAY, &newBits, 3000 );
 		oldBits |= newBits;
 		if ( oldBits & (1U<<WIFI_SEND_HEART) ) {
 			oldBits &=~ (1U<<WIFI_SEND_HEART);
@@ -222,7 +234,12 @@ void wifi_send_task_fun(void const * argument) {
 			oldBits &=~ (1U<<WIFI_SEND_MQTT);
 			wifi_send_mqtt();
 		}
-		
+		/*if ( oldBits & (1U<<SEND_TASK_DELETE) ) {
+			oldBits &=~ (1U<<SEND_TASK_DELETE);
+			wifi_send_mqtt();
+			vTaskDelete( wifi_send_taskHandle );
+			wifi_send_taskHandle = NULL;
+		}*/
 		//printf("\r\n------ 总大�? / 历史�?小内�? start ------\r\n");
 		//portENTER_CRITICAL();
 //		printf("\r\n------ start ------\r\n");
@@ -235,25 +252,6 @@ void wifi_send_task_fun(void const * argument) {
 		//printf("------ 单个任务堆栈的历史最小内�? end ------\r\n");
   }
 }
-
-//void data_task_handle_fun(void const * argument) {
-//	uint32_t newBits, oldBits = 0;
-//  for(;;) {
-//		xTaskNotifyWait( pdFALSE, portMAX_DELAY, &newBits, portMAX_DELAY );
-//		oldBits |= newBits;
-//		if ( oldBits & (1U<<PARSE_WIFI_DATA) ) {
-//			oldBits &=~ (1U<<PARSE_WIFI_DATA);
-//			if ( parse_wifi_data_fun() != 0 ) {
-//				xTaskNotify( data_task_handle, 1U<<PARSE_WIFI_DATA, eSetBits );
-//			}
-//		}
-//		/*printf("\r\n--- all / min \r\n");
-//		if ( wifi_control_taskHandle != NULL ) printf("%d / %ld   wifi_control\r\n", wifi_control_taskSize, uxTaskGetStackHighWaterMark(wifi_control_taskHandle) );
-//		printf("内存剩余%d Byte 历史小剩%d Byte\r\n", xPortGetFreeHeapSize(), xPortGetMinimumEverFreeHeapSize());
-//		printf("------ end ------\r\n");*/
-//		
-//  }
-//}
 /*--------------- WIFI ----------------*/
 
 /*--------------- NRF24 ----------------*/
@@ -265,7 +263,6 @@ void nrf_control_task_fun(void const * argument) {
 		if ( oldBits & (1U<<NRF_INIT_EVENT) ) {
 			oldBits &=~ (1U<<NRF_INIT_EVENT);
 			nrf_init();
-			//wifi_msg_add_SendList( 15, 10, "test data测试数据", 0 );
 		}
 		if ( oldBits & (1U<<NRF_RX_EVENT) ) {
 			oldBits &=~ (1U<<NRF_RX_EVENT);
@@ -276,6 +273,11 @@ void nrf_control_task_fun(void const * argument) {
 			oldBits &=~ (1U<<TIM_CLEAR_NRFREG);
 			tim_clear_nrfreg();
 		}
+		/*if ( oldBits & (1U<<NRF_TASK_DELETE) ) {
+			oldBits &=~ (1U<<NRF_TASK_DELETE);
+			vTaskDelete( nrf_control_taskHandle );
+			nrf_control_taskHandle = NULL;
+		}*/
 		
 		// if ( oldBits & (1U<<NRF_TX_EVENT) ) {
 		// 	oldBits &=~ (1U<<NRF_TX_EVENT);

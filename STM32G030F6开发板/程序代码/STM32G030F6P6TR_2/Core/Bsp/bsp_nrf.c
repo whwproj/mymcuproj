@@ -201,66 +201,86 @@ void nrf_parse_data( void ) {
 		nrf_str.code = (nrf_str.rxBuf[1]<<8) | nrf_str.rxBuf[2];
 		dstr = (char*)&nrf_str.rxBuf[4];
 		if ( strstr( dstr, "LED_MODE_0" ) != NULL ) {
-			nrf_replay_cmd("success!");
+			//vTaskDelay(2);
+			//nrf_replay_cmd("success!");
 			xTaskNotify( executive_taskHandle, 1U<<LED_MODE_0, eSetBits );
 			
 		} else if ( strstr( dstr, "LED_MODE_OFF" ) != NULL ) {
-			nrf_replay_cmd("success!");
+			//vTaskDelay(2);
+			//nrf_replay_cmd("success!");
 			xTaskNotify( executive_taskHandle, 1U<<LED_MODE_OFF, eSetBits );
 		
+		} else if ( strstr( dstr, "LED_ALL_ON" ) != NULL ) {
+			//vTaskDelay(2);
+			//nrf_replay_cmd("success!");
+			LED_ALL_ON();
 		} else if ( strstr( dstr, "LED_ALL_OFF" ) != NULL ) {
-			nrf_replay_cmd("success!");
-			LED_ALL_OFF();
-		} else if ( strstr( dstr, "LED_ALL_OFF" ) != NULL ) {
-			nrf_replay_cmd("success!");
+			//vTaskDelay(2);
+			//nrf_replay_cmd("success!");
 			LED_ALL_OFF();
 		} else if ( strstr( dstr, "LED0_OFF" ) != NULL ) {
-			nrf_replay_cmd("success!");
+			//vTaskDelay(2);
+			//nrf_replay_cmd("success!");
 			LED0_OFF();
 		} else if ( strstr( dstr, "LED0_ON" ) != NULL ) {
-			nrf_replay_cmd("success!");
+			//vTaskDelay(2);
+			//nrf_replay_cmd("success!");
 			LED0_ON();
 		} else if ( strstr( dstr, "LED1_OFF" ) != NULL ) {
-			nrf_replay_cmd("success!");
+			//vTaskDelay(2);
+			//nrf_replay_cmd("success!");
 			LED1_OFF();
 		} else if ( strstr( dstr, "LED1_ON" ) != NULL ) {
-			nrf_replay_cmd("success!");
+			//vTaskDelay(2);
+			//nrf_replay_cmd("success!");
 			LED1_ON();
 		} else if ( strstr( dstr, "LED2_OFF" ) != NULL ) {
-			nrf_replay_cmd("success!");
+			//vTaskDelay(2);
+			//nrf_replay_cmd("success!");
 			LED2_OFF();
 		} else if ( strstr( dstr, "LED2_ON" ) != NULL ) {
-			nrf_replay_cmd("success!");
+			//vTaskDelay(2);
+			//nrf_replay_cmd("success!");
 			LED2_ON();
 		} else if ( strstr( dstr, "LED3_OFF" ) != NULL ) {
-			nrf_replay_cmd("success!");
+			//vTaskDelay(2);
+			//nrf_replay_cmd("success!");
 			LED3_OFF();
 		} else if ( strstr( dstr, "LED3_ON" ) != NULL ) {
-			nrf_replay_cmd("success!");
+			//vTaskDelay(2);
+			//nrf_replay_cmd("success!");
 			LED3_ON();
 		} else if ( strstr( dstr, "LED4_OFF" ) != NULL ) {
-			nrf_replay_cmd("success!");
+			//vTaskDelay(2);
+			//nrf_replay_cmd("success!");
 			LED4_OFF();
 		} else if ( strstr( dstr, "LED4_ON" ) != NULL ) {
-			nrf_replay_cmd("success!");
+			//vTaskDelay(2);
+			//nrf_replay_cmd("success!");
 			LED4_ON();
 		} else if ( strstr( dstr, "LED5_OFF" ) != NULL ) {
-			nrf_replay_cmd("success!");
+			//vTaskDelay(2);
+			//nrf_replay_cmd("success!");
 			LED5_OFF();
 		} else if ( strstr( dstr, "LED5_ON" ) != NULL ) {
-			nrf_replay_cmd("success!");
+			//vTaskDelay(2);
+			//nrf_replay_cmd("success!");
 			LED5_ON();
 		} else if ( strstr( dstr, "LED6_OFF" ) != NULL ) {
-			nrf_replay_cmd("success!");
+			//vTaskDelay(2);
+			//nrf_replay_cmd("success!");
 			LED6_OFF();
 		} else if ( strstr( dstr, "LED6_ON" ) != NULL ) {
-			nrf_replay_cmd("success!");
+			//vTaskDelay(2);
+			//nrf_replay_cmd("success!");
 			LED6_ON();
 		} else if ( strstr( dstr, "LED7_OFF" ) != NULL ) {
-			nrf_replay_cmd("success!");
+			//vTaskDelay(2);
+			//nrf_replay_cmd("success!");
 			LED7_OFF();
 		} else if ( strstr( dstr, "LED7_ON" ) != NULL ) {
-			nrf_replay_cmd("success!");
+			//vTaskDelay(2);
+			//nrf_replay_cmd("success!");
 			LED7_ON();
 		}
 	}

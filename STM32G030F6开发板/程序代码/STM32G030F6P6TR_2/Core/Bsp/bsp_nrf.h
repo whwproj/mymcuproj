@@ -75,6 +75,7 @@
 #define NRF_REGISTER_DEVICE		3
 #define NRF_STOP_REGISTER_DEVICE		4
 #define NRF_HEARTBEAT		5
+#define SEND_KEY_DOWN		6
 /*-------------------- Task end --------------------*/
 
 
@@ -285,8 +286,7 @@ void nrf_init( void );
 int nrf_send_data( void );
 void nrf_register_device( void );
 void nrf_parse_data( void );//解析数据
-
-void nrf_send_test(void);
+void nrf_send_heartbeat( void );
 #endif /*__BSP_NRF__H*/
 
 

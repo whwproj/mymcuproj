@@ -64,8 +64,9 @@ void station_mode_init( void ) {
 		//开中断
 		__HAL_UART_ENABLE_IT( &WIFIHUART, UART_IT_IDLE );
 		__HAL_UART_ENABLE_IT( &WIFIHUART, UART_IT_TC );
-		//初始化NRF
-		xTaskNotify( nrf_control_taskHandle, 1U<<NRF_INIT_EVENT, eSetBits );
+		
+		//创建任务
+		xTaskNotify( wifi_control_taskHandle, 1U<<CREATE_TASK, eSetBits );
 		
 	} else {
 		//WIFI连接失败,转入station+AP模式
@@ -80,8 +81,16 @@ void station_mode_init( void ) {
 //station+AP模式初始化,供用户设置wifi账号密码并存入flash
 void station_and_ap_init( void ) {
 	wifi_reset();
-	//send_at_commond( "AT+RST\r\n", "OK", 50 );
-	//vTaskDelay(500);
+	//删除任务
+	printf("删除前: 内存剩余＿%d Byte 历史最小内存剩余：%d Byte\r\n", xPortGetFreeHeapSize(), xPortGetMinimumEverFreeHeapSize());
+	vTaskDelete( wifi_send_taskHandle );
+	vTaskDelete( nrf_control_taskHandle );
+	wifi_send_taskHandle = NULL;
+	nrf_control_taskHandle = NULL;
+	//xTaskNotify( wifi_send_taskHandle, 1U<<SEND_TASK_DELETE, eSetBits );
+	//xTaskNotify( nrf_control_taskHandle, 1U<<NRF_TASK_DELETE, eSetBits );
+	while( wifi_send_taskHandle!=NULL || nrf_control_taskHandle!=NULL ) { vTaskDelay(10); }
+	printf("删除后: 内存剩余＿%d Byte 历史最小内存剩余：%d Byte\r\n", xPortGetFreeHeapSize(), xPortGetMinimumEverFreeHeapSize());
 	printf("station+AP模式初始化...\r\n");
 	wifi_dma_init( STATION_AP_MODE );
 	send_at_commond( "AT+CWMODE=3\r\n", "OK", 50 );
@@ -280,6 +289,7 @@ void send_mqtt_heart( void ) {
 		led_con_flicker_on();
 		wifi_dma_reinit();//重置DMA结构体
 		wifi_reset();//WIFI复位
+		nrf_deInit();//NRF反初始化
 		//重连wifi,mqtt
 		xTaskNotify( wifi_control_taskHandle, 1U<<WIFI_STATION_MODE_INIT, eSetBits );
 		goto end;
@@ -692,8 +702,10 @@ void wifi_msg_add_SendList( uint8_t deviceId, uint16_t code, char* p_dat, int er
 	char *jsonStr;
 	uint8_t idx;
 	xSemaphoreTake( wifi_send_cache_handle, 10000 );
+	printf("添加待发送的wifi消息\r\n");
 	idx = find_idle_send_cache();
-	jsonStr = cjson_reply_template( code, errCode, p_dat );
+	jsonStr = cjson_send_data_template( code, p_dat, deviceId );
+	//jsonStr = cjson_reply_template( code, errCode, p_dat );
 	w_str.sendSession[idx].len = GetDataPUBLISH( (unsigned char*)w_str.sendSession[idx].data, 0, 1, 0, MQTT_PUBTopic, jsonStr );
 	vPortFree(jsonStr);
 	xTaskNotify( wifi_send_taskHandle, 1U<<WIFI_SEND_MQTT, eSetBits );
@@ -728,14 +740,18 @@ void parse_wifi_data_fun( void ) {
 
 			//封装nrfData
 			nrf_pack_data( nrf_str.session.deviceId, nrf_str.session.code, nrf_str.session.data );
-			vPortFree(nrf_str.session.data);
 
 			//发送nrfData
-			nrf_send_data();
+			if ( nrf_send_data() != -1 ) {
+				//发送转发成功
+				wifi_msg_add_SendList( nrf_str.session.deviceId, nrf_str.session.code, "success", 0 );
+			}
 			nrf_str.session.cacheLock = 0;//解锁
 			Rx_Mode();
 			__HAL_GPIO_EXTI_CLEAR_IT(NRF_IRQ_Pin);
 			HAL_NVIC_EnableIRQ(NRF_IRQ_EXTI_IRQn);
+		} else {
+			break;
 		}
 	}
 }

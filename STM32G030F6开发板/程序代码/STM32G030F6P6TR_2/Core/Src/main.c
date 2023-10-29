@@ -195,6 +195,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 				keyTime = 0;
 				str.preKey = 0;
 				if ( nrf_str.regSta != 1 ) LED0_OFF();
+				__HAL_GPIO_EXTI_CLEAR_IT(KEY_Pin);
 				HAL_NVIC_EnableIRQ(KEY_EXTI_IRQn);
 			}
 		} else if ( nrf_str.regSta==1 || nrf_str.regSta==4 ) {//注册/等待注册反馈
