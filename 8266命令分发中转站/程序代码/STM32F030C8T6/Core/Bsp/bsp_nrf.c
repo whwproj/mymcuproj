@@ -109,8 +109,14 @@ void Rx_Mode( void ) {
 
 void nrf_deInit(void) {
 	CE_Low();
-	vPortFree( nrf_str.txBuf );
-	vPortFree( nrf_str.rxBuf );
+	if ( nrf_str.txBuf != NULL ) {
+		vPortFree( nrf_str.txBuf );
+		nrf_str.txBuf = NULL;
+	}
+	if ( nrf_str.rxBuf != NULL ) {
+		vPortFree( nrf_str.rxBuf );
+		nrf_str.rxBuf = NULL;
+	}
 }
 
 //中转站默认地址: {0xC8,0x8F,0xE6,0x96}
@@ -156,13 +162,14 @@ void nrf_receive_data(void) {
 	
 	sta = SPI_RW_Reg( NRF_READ_REG + STATUS, NOP );//0xFF空指令
 	SPI_RW_Reg( NRF_WRITE_REG + STATUS, sta );
-	//printf("sta: 0x%.2X\r\n", sta);
+	printf("sta: 0x%.2X\r\n", sta);
 	if ( sta & RX_DR ) {
 		SPI_Read_Buf( RD_RX_PLOAD, nrf_str.rxBuf, RX_PLOAD_WIDTH );
 		printf("nrfdata: ");
 		for ( int i=0; i<10; i++ )
 			printf(" 0x%.2X", nrf_str.rxBuf[i]);
 		printf("\r\n");
+		//LED_NRF_ON();
 	} else {
 		goto end;
 	}
@@ -197,6 +204,7 @@ void nrf_receive_data(void) {
 	}
 	
 	end:
+	//LED_NRF_OFF();
 	Rx_Mode();
 	__HAL_GPIO_EXTI_CLEAR_IT(NRF_IRQ_Pin);
 	HAL_NVIC_EnableIRQ(NRF_IRQ_EXTI_IRQn);
@@ -221,6 +229,7 @@ void nrf_pack_data( uint8_t did, uint16_t code, char* pdata ) {
 		sprintf( (char*)&nrf_str.txBuf[4], "data too long..." );
 	}
 	vPortFree( data_str.data );
+	data_str.data = NULL;
 }
 
 // //NRF发送数据

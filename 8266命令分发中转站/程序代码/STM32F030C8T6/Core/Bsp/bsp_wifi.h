@@ -35,21 +35,36 @@
 		"<meta name=\"viewport\"content=\"width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=0\">"\
 	"</head><body><div style=\"display:block;margin:50px auto; width:180px;\">"
 #define HTML_CONTENT_1 "<h5>可为空,为空项则不更改该项原有配置</h5>"\
-			"<form action=\"/\" method=\"POST\">"\
-			"<input type=\"text\" name=\"wssid\" placeholder=\"wifi ssid\"><br />"\
-			"<input type=\"text\" name=\"wpswd\" placeholder=\"wifi password\"><br />"\
-			"<input type=\"text\" name=\"tcpurl\" placeholder=\"mqtt host\"><br />"\
-			"<input type=\"number\" min=\"1\" max=\"65535\" name=\"tcpport\" placeholder=\"mqtt port\"><br />"\
-			"<input type=\"text\" name=\"mqusername\" placeholder=\"mqtt username\"><br />"\
-			"<input type=\"text\" name=\"mqpasswd\" placeholder=\"mqtt password\"><br />"\
-			"<input type=\"submit\" value=\"保存\"></form>"
+			"<form action=\"/\" method=\"POST\">"
+			#define HTML_SSID_START "WIFI名称<input type=\"text\" name=\"wssid\" value=\""
+#define HTML_SSID_END "\" placeholder=\"wifi ssid\"><br /><br />"
+
+#define HTML_WPSWD_START "WIFI密码<input type=\"text\" name=\"wpswd\" value=\""
+#define HTML_WPSWD_NED "\" placeholder=\"wifi password\"><br /><br />"
+
+#define HTML_TCPURL_START "mqtt URL<input type=\"text\" name=\"tcpurl\" value=\""
+#define HTML_TCPURL_END "\" placeholder=\"mqtt host\"><br /><br />"
+			
+#define HTML_TCPPORT_START "mqtt port<input type=\"number\" min=\"1\" max=\"65535\" name=\"tcpport\" value=\""
+#define HTML_TCPPORT_END "\" placeholder=\"mqtt port\"><br /><br />"
+			
+#define HTML_MQUSERNAME_START "mqtt username<input type=\"text\" name=\"mqusername\" value=\""
+#define HTML_MQUSERNAME_END "\" placeholder=\"mqtt username\"><br /><br />"
+
+
+
+#define HTML_MQPASSWD_START "mqtt password<input type=\"text\" name=\"mqpasswd\" value=\""
+#define HTML_MQPASSWD_END "\" placeholder=\"mqtt password\"><br /><br />"\
+													"<input type=\"hidden\" name=\"hidden\" value=\"xxx\">"\
+													"<input type=\"submit\" value=\"保存\"></form>"
+		
 #define HTML_CONTENT_2 "<form action=\"/\" method=\"GET\">"\
 			"<h3>正在验证请等待...</h3>"\
 			"<h4 style=\"color: red;\">1.红色指示灯常亮表示wifi连接失败</h4>"\
 			"<h4 style=\"color: red;\">2.蓝色指示灯常亮表示mqtt服务器连接失败</h4>"\
-			"<h4 style=\"color: green;\">3.成功连接服务器两个指示灯会灭5s,然后闪烁显示工作状态</h4>"\
+			"<h4 style=\"color: green;\">3.成功连接服务器两个指示灯都熄灭</h4>"\
 			"<input type=\"submit\" value=\"点击重配置\"></form>"
-#define HTML_BODY_END "</div></html>"
+#define HTML_BODY_END "</div></body></html>"
 
 //连上wifi			
 //连接wifi失败	闪烁  1颗灯常亮
@@ -59,7 +74,7 @@
 #define STATION_MODE				0
 #define STATION_AP_MODE			1
 
-#define WIFI_APTXBUFF_SIZE	1024
+#define WIFI_APTXBUFF_SIZE	512
 #define WIFI_APRXBUFF_SIZE	1024
 #define WIFI_TXBUFF_SIZE		128
 #define WIFI_RXBUFF_SIZE		128

@@ -28,3 +28,35 @@ void led_mode_off_fun( void ) {
 	LED_ALL_OFF();
 }
 
+
+void key_or_led( uint8_t mode ) {
+	GPIO_InitTypeDef GPIO_InitStruct = {0};
+	if ( mode == LED_MOD ) {//led
+		__HAL_GPIO_EXTI_CLEAR_IT(KEY_Pin);
+		HAL_NVIC_DisableIRQ(KEY_EXTI_IRQn);
+		GPIO_InitStruct.Pin = KEY_Pin;
+		GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+		GPIO_InitStruct.Pull = GPIO_PULLUP;
+		HAL_GPIO_Init(KEY_GPIO_Port, &GPIO_InitStruct);
+		LED4_OFF();
+		
+	} else if ( mode == KEY_MOD ) {
+		GPIO_InitStruct.Pin = KEY_Pin;
+		GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;
+		GPIO_InitStruct.Pull = GPIO_PULLUP;
+		HAL_GPIO_Init(KEY_GPIO_Port, &GPIO_InitStruct);
+		__HAL_GPIO_EXTI_CLEAR_IT(KEY_Pin);
+		HAL_NVIC_EnableIRQ(EXTI4_15_IRQn);
+	}
+}
+
+
+
+
+
+
+
+
+
+
+
