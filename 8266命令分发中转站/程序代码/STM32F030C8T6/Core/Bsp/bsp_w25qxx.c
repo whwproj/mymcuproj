@@ -268,6 +268,7 @@ void write_data_to_w25qFlash( void ) {
 	Erase_Write_data_Sector(STR_ADDR1,sizeof(USER_DATA));
 	W25Qx_Write_Page((uint8_t*)&udata ,STR_ADDR1 ,sizeof(USER_DATA) );
 	W25Qx_PowerDown();
+	printf("参数写入flash完成\r\n");
 }
 
 

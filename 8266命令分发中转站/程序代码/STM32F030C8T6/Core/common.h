@@ -3,7 +3,7 @@
 
 
 //#define WIFIDEBUG
-#define NRF_DEBUG
+//#define NRF_DEBUG
 //INCLUDE_uxTaskGetStackHighWaterMark 0
 
 /* LIB ------------------------------------------------------------*/

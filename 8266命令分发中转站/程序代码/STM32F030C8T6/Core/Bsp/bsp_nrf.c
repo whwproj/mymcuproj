@@ -109,8 +109,14 @@ void Rx_Mode( void ) {
 
 void nrf_deInit(void) {
 	CE_Low();
-	vPortFree( nrf_str.txBuf );
-	vPortFree( nrf_str.rxBuf );
+	if ( nrf_str.txBuf != NULL ) {
+		vPortFree( nrf_str.txBuf );
+		nrf_str.txBuf = NULL;
+	}
+	if ( nrf_str.rxBuf != NULL ) {
+		vPortFree( nrf_str.rxBuf );
+		nrf_str.rxBuf = NULL;
+	}
 }
 
 //中转站默认地址: {0xC8,0x8F,0xE6,0x96}
@@ -221,6 +227,7 @@ void nrf_pack_data( uint8_t did, uint16_t code, char* pdata ) {
 		sprintf( (char*)&nrf_str.txBuf[4], "data too long..." );
 	}
 	vPortFree( data_str.data );
+	data_str.data = NULL;
 }
 
 // //NRF发送数据
