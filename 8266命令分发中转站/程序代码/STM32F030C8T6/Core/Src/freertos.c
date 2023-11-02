@@ -240,16 +240,16 @@ void wifi_send_task_fun(void const * argument) {
 			vTaskDelete( wifi_send_taskHandle );
 			wifi_send_taskHandle = NULL;
 		}*/
-		//printf("\r\n------ 总大�? / 历史�?小内�? start ------\r\n");
+		//printf("\r\n------ 总大�? / 历史�?小内�? start ------\r\n");
 		//portENTER_CRITICAL();
 //		printf("\r\n------ start ------\r\n");
 //		if ( wifi_control_taskHandle != NULL ) printf("%d / %ld   wifi_control_taskHandle\r\n", wifi_control_taskSize, uxTaskGetStackHighWaterMark(wifi_control_taskHandle) );
 //		if ( nrf_control_taskHandle != NULL ) printf("%d / %ld   nrf_control_taskHandle\r\n", nrf_control_taskSize, uxTaskGetStackHighWaterMark(nrf_control_taskHandle) );
 //		if ( wifi_send_taskHandle != NULL ) printf("%d / %ld   wifi_send_taskHandle\r\n", wifi_send_taskSize, uxTaskGetStackHighWaterMark(wifi_send_taskHandle) );
-//		printf("内存剩余�?%d Byte 历史�?小内存剩余：%d Byte\r\n", xPortGetFreeHeapSize(), xPortGetMinimumEverFreeHeapSize());
+//		printf("内存剩余�?%d Byte 历史�?小内存剩余：%d Byte\r\n", xPortGetFreeHeapSize(), xPortGetMinimumEverFreeHeapSize());
 //		printf("\r\n------ end ------\r\n");
 		//portEXIT_CRITICAL();
-		//printf("------ 单个任务堆栈的历史最小内�? end ------\r\n");
+		//printf("------ 单个任务堆栈的历史最小内�? end ------\r\n");
   }
 }
 /*--------------- WIFI ----------------*/
@@ -266,7 +266,7 @@ void nrf_control_task_fun(void const * argument) {
 		}
 		if ( oldBits & (1U<<NRF_RX_EVENT) ) {
 			oldBits &=~ (1U<<NRF_RX_EVENT);
-			LED_NRF_Toggle();
+			//LED_NRF_Toggle();
 		  nrf_receive_data();
 		}
 		if ( oldBits & (1U<<TIM_CLEAR_NRFREG) ) {
@@ -284,12 +284,12 @@ void nrf_control_task_fun(void const * argument) {
 		// 	nrf_send_data();
 		// }
 
-//		printf("\r\n------ 总大�? / 历史�?小内�? start ------\r\n");
+//		printf("\r\n------ 总大�? / 历史�?小内�? start ------\r\n");
 //		if ( wifi_control_taskHandle != NULL ) printf("%d / %ld   wifi_control_taskHandle\r\n", wifi_control_taskSize, uxTaskGetStackHighWaterMark(wifi_control_taskHandle) );
 //		if ( nrf_control_taskHandle != NULL ) printf("%d / %ld   nrf_control_taskHandle\r\n", nrf_control_taskSize, uxTaskGetStackHighWaterMark(nrf_control_taskHandle) );
 //		if ( wifi_send_taskHandle != NULL ) printf("%d / %ld   wifi_send_taskHandle\r\n", wifi_send_taskSize, uxTaskGetStackHighWaterMark(wifi_send_taskHandle) );
-//		printf("内存剩余�?%d Byte 历史�?小内存剩余：%d Byte\r\n", xPortGetFreeHeapSize(), xPortGetMinimumEverFreeHeapSize());
-//		printf("------ 单个任务堆栈的历史最小内�? end ------\r\n");
+//		printf("内存剩余�?%d Byte 历史�?小内存剩余：%d Byte\r\n", xPortGetFreeHeapSize(), xPortGetMinimumEverFreeHeapSize());
+//		printf("------ 单个任务堆栈的历史最小内�? end ------\r\n");
 
   }
 }

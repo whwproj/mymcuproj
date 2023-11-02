@@ -287,6 +287,9 @@ int nrf_send_data( void );
 void nrf_register_device( void );
 void nrf_parse_data( void );//解析数据
 void nrf_send_heartbeat( void );
+void nrf_replay_cmd( char* replay );
+
+
 #endif /*__BSP_NRF__H*/
 
 

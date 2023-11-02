@@ -19,9 +19,9 @@
 #define LED3_OFF()		HAL_GPIO_WritePin( LED3_GPIO_Port, LED3_Pin, GPIO_PIN_SET )
 #define LED3_TOGGLE()	HAL_GPIO_TogglePin( LED3_GPIO_Port, LED3_Pin )
 
-#define LED4_ON()			//HAL_GPIO_WritePin( LED4_GPIO_Port, LED4_Pin, GPIO_PIN_RESET )
-#define LED4_OFF()		//HAL_GPIO_WritePin( LED4_GPIO_Port, LED4_Pin, GPIO_PIN_SET )
-#define LED4_TOGGLE()	//HAL_GPIO_TogglePin( LED4_GPIO_Port, LED4_Pin )
+#define LED4_ON()			HAL_GPIO_WritePin( KEY_GPIO_Port, KEY_Pin, GPIO_PIN_RESET )
+#define LED4_OFF()		HAL_GPIO_WritePin( KEY_GPIO_Port, KEY_Pin, GPIO_PIN_SET )
+#define LED4_TOGGLE()	HAL_GPIO_TogglePin( KEY_GPIO_Port, KEY_Pin )
 
 #define LED5_ON()			HAL_GPIO_WritePin( LED5_GPIO_Port, LED5_Pin, GPIO_PIN_RESET )
 #define LED5_OFF()		HAL_GPIO_WritePin( LED5_GPIO_Port, LED5_Pin, GPIO_PIN_SET )
@@ -52,9 +52,12 @@
 #define LED_MODE_2			3
 #define LED_MODE_3			4
 
+#define LED_MOD		1
+#define KEY_MOD		0
+
 void led_mode_0_fun( void );
 void led_mode_off_fun( void );
-
+void key_or_led( uint8_t mode );
 #endif /*__BSP_LED__H*/
 
 

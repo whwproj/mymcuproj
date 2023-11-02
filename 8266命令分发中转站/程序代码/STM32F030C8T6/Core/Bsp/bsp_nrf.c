@@ -162,13 +162,14 @@ void nrf_receive_data(void) {
 	
 	sta = SPI_RW_Reg( NRF_READ_REG + STATUS, NOP );//0xFF空指令
 	SPI_RW_Reg( NRF_WRITE_REG + STATUS, sta );
-	//printf("sta: 0x%.2X\r\n", sta);
+	printf("sta: 0x%.2X\r\n", sta);
 	if ( sta & RX_DR ) {
 		SPI_Read_Buf( RD_RX_PLOAD, nrf_str.rxBuf, RX_PLOAD_WIDTH );
 		printf("nrfdata: ");
 		for ( int i=0; i<10; i++ )
 			printf(" 0x%.2X", nrf_str.rxBuf[i]);
 		printf("\r\n");
+		//LED_NRF_ON();
 	} else {
 		goto end;
 	}
@@ -203,6 +204,7 @@ void nrf_receive_data(void) {
 	}
 	
 	end:
+	//LED_NRF_OFF();
 	Rx_Mode();
 	__HAL_GPIO_EXTI_CLEAR_IT(NRF_IRQ_Pin);
 	HAL_NVIC_EnableIRQ(NRF_IRQ_EXTI_IRQn);

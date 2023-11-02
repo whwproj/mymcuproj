@@ -3,7 +3,7 @@
 NRF_STR nrf_str;
 
 static uint16_t craeteGrowthCode( void );
-static void nrf_replay_cmd( char* replay );
+//static void nrf_replay_cmd( char* replay );
 //static void wait_tx_buff_empty( void );
 	
 uint8_t SPI_RW_Reg( uint8_t reg, uint8_t value ) {//读写寄存器
@@ -203,6 +203,7 @@ void nrf_parse_data( void ) {
 		if ( strstr( dstr, "LED_MODE_0" ) != NULL ) {
 			//vTaskDelay(2);
 			//nrf_replay_cmd("success!");
+			key_or_led( LED_MOD );
 			xTaskNotify( executive_taskHandle, 1U<<LED_MODE_0, eSetBits );
 			
 		} else if ( strstr( dstr, "LED_MODE_OFF" ) != NULL ) {
@@ -213,11 +214,13 @@ void nrf_parse_data( void ) {
 		} else if ( strstr( dstr, "LED_ALL_ON" ) != NULL ) {
 			//vTaskDelay(2);
 			//nrf_replay_cmd("success!");
+			key_or_led( LED_MOD );
 			LED_ALL_ON();
 		} else if ( strstr( dstr, "LED_ALL_OFF" ) != NULL ) {
 			//vTaskDelay(2);
 			//nrf_replay_cmd("success!");
 			LED_ALL_OFF();
+			key_or_led( KEY_MOD );
 		} else if ( strstr( dstr, "LED0_OFF" ) != NULL ) {
 			//vTaskDelay(2);
 			//nrf_replay_cmd("success!");
@@ -254,9 +257,11 @@ void nrf_parse_data( void ) {
 			//vTaskDelay(2);
 			//nrf_replay_cmd("success!");
 			LED4_OFF();
+			key_or_led( KEY_MOD );
 		} else if ( strstr( dstr, "LED4_ON" ) != NULL ) {
 			//vTaskDelay(2);
 			//nrf_replay_cmd("success!");
+			key_or_led( LED_MOD );
 			LED4_ON();
 		} else if ( strstr( dstr, "LED5_OFF" ) != NULL ) {
 			//vTaskDelay(2);
@@ -357,7 +362,7 @@ void nrf_push_data( char* pdata ) {
 }
 
 //回复命令
-static void nrf_replay_cmd( char* replay ) {
+void nrf_replay_cmd( char* replay ) {
 	//wait_tx_buff_empty();//等待TX非空
 	nrf_str.txBuf[0] = udata.deviceId;
 	nrf_str.txBuf[1] = nrf_str.code >> 8;
