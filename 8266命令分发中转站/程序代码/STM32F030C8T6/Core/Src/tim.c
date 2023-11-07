@@ -21,7 +21,7 @@
 #include "tim.h"
 
 /* USER CODE BEGIN 0 */
-
+#include "../common.h"
 /* USER CODE END 0 */
 
 TIM_HandleTypeDef htim3;
@@ -42,7 +42,7 @@ void MX_TIM3_Init(void)
 
   /* USER CODE END TIM3_Init 1 */
   htim3.Instance = TIM3;
-  htim3.Init.Prescaler = 500;
+  htim3.Init.Prescaler = 500-1;
   htim3.Init.CounterMode = TIM_COUNTERMODE_UP;
   htim3.Init.Period = 48000;
   htim3.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
@@ -79,9 +79,9 @@ void MX_TIM6_Init(void)
 
   /* USER CODE END TIM6_Init 1 */
   htim6.Instance = TIM6;
-  htim6.Init.Prescaler = 1-1;
+  htim6.Init.Prescaler = 48-1;
   htim6.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim6.Init.Period = 48000;
+  htim6.Init.Period = 0;
   htim6.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
   if (HAL_TIM_Base_Init(&htim6) != HAL_OK)
   {
@@ -155,5 +155,24 @@ void HAL_TIM_Base_MspDeInit(TIM_HandleTypeDef* tim_baseHandle)
 }
 
 /* USER CODE BEGIN 1 */
-
+/*
+* 功能: 定时器3,us级延时
+*	参数: xus, 范围0~65535us
+*/
+void Delay_Us(uint16_t t){
+  uint16_t counter = 0;
+	__HAL_TIM_SET_AUTORELOAD( &htim6, t );//设置定时器自动重装载的值, 到该值后重新计数
+	__HAL_TIM_SET_COUNTER( &htim6, 0 );//设置定时器初始值
+	HAL_TIM_Base_Start( &htim6 );//启动定时器
+	while ( counter != t ) {
+		counter = __HAL_TIM_GET_COUNTER(&htim6);//获取定时器当前计数值
+	}
+	HAL_TIM_Base_Stop( &htim6 );//停止定时器
+}
+void Delay_Ms(uint32_t t){
+  while(t--) Delay_Us( 1000 );
+}
+void Delay_S(uint32_t t){
+  while(t--) Delay_Ms( 1000 );
+}
 /* USER CODE END 1 */

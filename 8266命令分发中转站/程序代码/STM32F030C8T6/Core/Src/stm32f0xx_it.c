@@ -120,16 +120,17 @@ void EXTI0_1_IRQHandler(void)
   /* USER CODE BEGIN EXTI0_1_IRQn 1 */
 	if(__HAL_GPIO_EXTI_GET_IT(KEY_Pin) != RESET) {
 		__HAL_GPIO_EXTI_CLEAR_IT(KEY_Pin);
-		for ( uint32_t i=0; ; i++ ) {
+		for ( uint16_t i=0; ; i++ ) {
 			if ( HAL_GPIO_ReadPin(KEY_GPIO_Port,KEY_Pin) == GPIO_PIN_SET ) {
-				printf("计数i: %d\r\n", i);
+				printf("%dms\r\n", i*10);
 				break;
 			}
-			if ( i >= 0x00300000 ) {
+			if ( i >= 100 ) {
 				printf("复位\r\n");
 				__disable_irq();//关中断
 				NVIC_SystemReset();//复位
 			}
+			Delay_Ms(10);
 		}
 //		for ( int i=0; i<=200; i++ ) {
 //			if ( HAL_GPIO_ReadPin(KEY_GPIO_Port,KEY_Pin) == GPIO_PIN_SET ) {
@@ -141,8 +142,8 @@ void EXTI0_1_IRQHandler(void)
 //			vTaskDelay(10);
 //			if ( i == 200 ) {
 //				printf("复位\r\n");
-//				//__set_FAULTMASK(1);//关闭所有中断
-//				__disable_irq();//关中断
+//				//__set_FAULTMASK(1);//关闭�?有中�?
+//				__disable_irq();//关中�?
 //				NVIC_SystemReset();//复位
 //			}
 //		}

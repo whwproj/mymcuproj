@@ -65,13 +65,13 @@ void MX_GPIO_Init(void)
   HAL_GPIO_Init(KEY_GPIO_Port, &GPIO_InitStruct);
 
 	init_str.restore = 0;
-	for ( uint8_t i=0; ; i++ ) {
-		if ( i >= 40 ) {//恢复出厂设置
+	for ( uint16_t i=0; ; i++ ) {
+		if ( i >= 400 ) {//恢复出厂设置
 			init_str.restore = 1;
 			break;
 		}
 		if ( HAL_GPIO_ReadPin( KEY_GPIO_Port, KEY_Pin ) == GPIO_PIN_RESET ) {
-			//delay(100);
+			Delay_Ms(10);
 			continue;
 		}
 		break;
