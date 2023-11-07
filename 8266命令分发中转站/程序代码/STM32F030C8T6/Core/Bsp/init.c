@@ -1,5 +1,7 @@
 #include "../common.h"
 
+INIT_STR init_str;
+
 static void cyclicShift( uint32_t *cpuID ) {
 	uint32_t cpuTemp;
 	cpuTemp = cpuID[2];
@@ -28,5 +30,22 @@ void getSnByDeviceId_setClientId( void ) {
 	sprintf( (char*)udata.duid, "%.02X%.02X%.02X%.02X", sn[0], sn[1], sn[2], sn[3] );
 	memcpy( nrf_str.TSAddr, sn, 4 );
 	printf("设备snid:%.02X%.02X%.02X%.02X\r\n", sn[0], sn[1], sn[2], sn[3]);
+}
+
+void restore_factory_setting ( void ) {
+	//恢复外部flash数据
+	W25Qx_WAKEUP();
+	Erase_Write_data_Sector(STR_ADDR1,sizeof(USER_DATA));
+	sprintf( udata.wssid, "MI" );
+	sprintf( udata.wpswd, "wuhanwei" );
+	sprintf( udata.tcpurl, "anvntlw.iot.gz.baidubce.com" );
+	sprintf( udata.mqusername, "thingidp@anvntlw|esp8266|0|MD5" );
+	sprintf( udata.mqpasswd, "fcbfa8ffddfca54945ca549955cfa2cc" );
+	udata.tcpport = 1883;
+	W25Qx_Write_Page((uint8_t*)&udata ,STR_ADDR1 ,sizeof(USER_DATA) );
+	W25Qx_PowerDown();
+	//擦除设备id
+	user_flash_erase();
+	printf("恢复出厂设置完成\r\n");
 }
 

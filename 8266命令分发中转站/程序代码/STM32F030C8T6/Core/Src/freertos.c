@@ -147,6 +147,9 @@ void StartDefaultTask(void const * argument)
 
   for(;;)
   {
+		
+		//xTaskNotify( wifi_control_taskHandle, 1U<<WIFI_DEVICE_RESET, eSetBits );
+		
 #ifdef WIFIDEBUG
 		//复位ESP
 		HAL_GPIO_WritePin( ESP_EN_GPIO_Port, ESP_EN_Pin, GPIO_PIN_SET );
@@ -167,7 +170,7 @@ void StartDefaultTask(void const * argument)
 		vTaskDelay(1200);
 		xTaskNotify( wifi_control_taskHandle, 1U<<WIFI_STATION_MODE_INIT, eSetBits );
 		//xTaskNotify( nrf_control_taskHandle, 1U<<NRF_INIT_EVENT, eSetBits );
-#endif		
+#endif
 		printf("init ok\r\n");
 		vTaskDelete( defaultTaskHandle );
   }
@@ -266,7 +269,6 @@ void nrf_control_task_fun(void const * argument) {
 		}
 		if ( oldBits & (1U<<NRF_RX_EVENT) ) {
 			oldBits &=~ (1U<<NRF_RX_EVENT);
-			//LED_NRF_Toggle();
 		  nrf_receive_data();
 		}
 		if ( oldBits & (1U<<TIM_CLEAR_NRFREG) ) {
@@ -290,6 +292,10 @@ void nrf_control_task_fun(void const * argument) {
 //		if ( wifi_send_taskHandle != NULL ) printf("%d / %ld   wifi_send_taskHandle\r\n", wifi_send_taskSize, uxTaskGetStackHighWaterMark(wifi_send_taskHandle) );
 //		printf("内存剩余�?%d Byte 历史�?小内存剩余：%d Byte\r\n", xPortGetFreeHeapSize(), xPortGetMinimumEverFreeHeapSize());
 //		printf("------ 单个任务堆栈的历史最小内�? end ------\r\n");
+//		if ( oldBits & (1U<<KEY_PRESS) ) {
+//			oldBits &=~ (1U<<KEY_PRESS);
+//			key_press_fun();
+//		}
 
   }
 }

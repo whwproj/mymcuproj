@@ -36,7 +36,6 @@ typedef struct _USER_DATA {
 
 extern USER_DATA udata;
 
-void user_flash_erase( void );//擦除用户flash
 void read_data_from_flash( void );//从flash中读取数据
 void write_data_into_flash( void );//写入数据到flash
 
@@ -44,6 +43,7 @@ uint32_t get_nrfaddr_by_deviceId( uint8_t id );//根据deviceId查找nrfAddr
 int insert_nrfaddr( uint8_t id );//对应deviceId新增/更新nrfAddr
 uint32_t create_deviceId( uint8_t id );//生成新的deviceId并存入nrfAddr
 
+void user_flash_erase( void );//擦除用户flash
 #endif /*__BSP__FLASH__H*/
 
 

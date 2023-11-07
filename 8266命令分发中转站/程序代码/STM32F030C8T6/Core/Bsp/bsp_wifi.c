@@ -128,9 +128,9 @@ void station_and_ap_init( void ) {
 	printf("station+AP模式初始化...\r\n");
 	wifi_dma_init( STATION_AP_MODE );
 	send_at_commond( "AT+CWMODE=3\r\n", "OK", 50 );
-	vTaskDelay(100);
+	vTaskDelay(500);
 	send_at_commond( "AT+CIPMUX=1\r\n", "OK", 50 );
-	vTaskDelay(100);
+	vTaskDelay(500);
 	do {
 		res = send_at_commond( "AT+CWSAP=\"ESP8266\",\"12345678\",5,3\r\n", "OK", 100 );
 		vTaskDelay(500);

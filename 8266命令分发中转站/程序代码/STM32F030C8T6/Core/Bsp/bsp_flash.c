@@ -4,23 +4,19 @@ USER_DATA udata;
 
 //擦除用户flash
 void user_flash_erase( void ) {
-//	FLASH_EraseInitTypeDef eraseInitStruc;
-//	uint32_t SectorError;
-//	
-//	eraseInitStruc.Banks = FLASH_BANK_1;
-//	eraseInitStruc.TypeErase = FLASH_TYPEERASE_PAGES;
-//	eraseInitStruc.Page = 15;
-//	eraseInitStruc.NbPages = 1;
-//	
-//	__HAL_FLASH_CLEAR_FLAG(
-//		FLASH_FLAG_EOP | FLASH_FLAG_OPERR | FLASH_FLAG_WRPERR |
-//	FLASH_FLAG_PGAERR | FLASH_FLAG_PGSERR);
-//	
-//	HAL_FLASH_Unlock();
-//	
-//	HAL_FLASHEx_Erase(&eraseInitStruc, &SectorError);
-//	
-//	HAL_FLASH_Lock();
+	FLASH_EraseInitTypeDef eraseType;
+	uint32_t SectorError;
+	
+	HAL_FLASH_Unlock();
+	
+	//1.擦除 FLASH_NRFADDR_MEM, 将 FLASH_NRFADDR 复制到 FLASH_NRFADDR_MEM
+	eraseType.PageAddress = FLASH_NRFADDR_MEM;
+	eraseType.NbPages = 2;
+	eraseType.TypeErase = FLASH_TYPEERASE_PAGES;
+	__HAL_FLASH_CLEAR_FLAG( FLASH_FLAG_EOP | FLASH_FLAG_WRPERR);
+	HAL_FLASHEx_Erase(&eraseType, &SectorError);
+	
+	HAL_FLASH_Lock();
 }
 
 //从flash中读取数据
