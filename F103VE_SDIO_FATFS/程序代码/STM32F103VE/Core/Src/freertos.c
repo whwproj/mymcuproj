@@ -48,7 +48,6 @@ TaskHandle_t myTestTaskHandle;
 /* USER CODE END Variables */
 osThreadId defaultTaskHandle;
 
-
 /* Private function prototypes -----------------------------------------------*/
 /* USER CODE BEGIN FunctionPrototypes */
 
@@ -104,13 +103,13 @@ void MX_FREERTOS_Init(void) {
 
   /* Create the thread(s) */
   /* definition and creation of defaultTask */
-  osThreadDef(defaultTask, StartDefaultTask, osPriorityNormal, 0, 1024);
+  osThreadDef(defaultTask, StartDefaultTask, osPriorityNormal, 0, 128);
   defaultTaskHandle = osThreadCreate(osThread(defaultTask), NULL);
 
-  osThreadDef(myTestTask, myTestTaskFun, osPriorityNormal, 0, 128);
-  myTestTaskHandle = osThreadCreate(osThread(myTestTask), NULL);
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
+  osThreadDef(myTestTask, myTestTaskFun, osPriorityNormal, 0, 128);
+    myTestTaskHandle = osThreadCreate(osThread(myTestTask), NULL);
   /* USER CODE END RTOS_THREADS */
 
 }
