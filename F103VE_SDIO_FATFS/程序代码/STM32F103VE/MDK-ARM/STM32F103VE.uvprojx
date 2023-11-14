@@ -331,7 +331,7 @@
             <v6Lto>0</v6Lto>
             <v6WtE>0</v6WtE>
             <VariousControls>
-              <MiscControls></MiscControls>
+              <MiscControls>--no-multibyte-chars</MiscControls>
               <Define>USE_HAL_DRIVER,STM32F103xE</Define>
               <Undefine></Undefine>
               <IncludePath>../Core/Inc;../FATFS/Target;../FATFS/App;../Drivers/STM32F1xx_HAL_Driver/Inc;../Drivers/STM32F1xx_HAL_Driver/Inc/Legacy;../Middlewares/Third_Party/FreeRTOS/Source/include;../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS;../Middlewares/Third_Party/FreeRTOS/Source/portable/RVDS/ARM_CM3;../Middlewares/Third_Party/FatFs/src;../Drivers/CMSIS/Device/ST/STM32F1xx/Include;../Drivers/CMSIS/Include;../Middlewares/Third_Party/FatFs/src/drivers</IncludePath>
@@ -374,16 +374,6 @@
         </TargetArmAds>
       </TargetOption>
       <Groups>
-        <Group>
-          <GroupName>Application/MDK-ARM</GroupName>
-          <Files>
-            <File>
-              <FileName>startup_stm32f103xe.s</FileName>
-              <FileType>2</FileType>
-              <FilePath>startup_stm32f103xe.s</FilePath>
-            </File>
-          </Files>
-        </Group>
         <Group>
           <GroupName>Application/User/Core</GroupName>
           <Files>
@@ -476,10 +466,35 @@
               <FileType>1</FileType>
               <FilePath>../Core/Src/stm32f1xx_hal_msp.c</FilePath>
             </File>
+          </Files>
+        </Group>
+        <Group>
+          <GroupName>Application/User/Bsp</GroupName>
+          <Files>
+            <File>
+              <FileName>bsp_sdio.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Core\Bsp\bsp_sdio.c</FilePath>
+            </File>
             <File>
               <FileName>common.h</FileName>
               <FileType>5</FileType>
               <FilePath>..\Core\common.h</FilePath>
+            </File>
+            <File>
+              <FileName>bsp_fatfs.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Core\Bsp\bsp_fatfs.c</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
+          <GroupName>Application/MDK-ARM</GroupName>
+          <Files>
+            <File>
+              <FileName>startup_stm32f103xe.s</FileName>
+              <FileType>2</FileType>
+              <FilePath>startup_stm32f103xe.s</FilePath>
             </File>
           </Files>
         </Group>

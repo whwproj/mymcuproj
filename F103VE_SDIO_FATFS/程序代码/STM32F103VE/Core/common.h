@@ -33,6 +33,8 @@
 //#include "../Bsp/bsp_flash.h"
 //#include "../Bsp/bsp_json.h"
 //#include "../Bsp/bsp_w25qxx.h"
+#include "../Bsp/bsp_sdio.h"
+#include "../Bsp/bsp_fatfs.h"
 
 /*---- Tools -------------------------*/
 //#include "../Tools/tool_url.h"

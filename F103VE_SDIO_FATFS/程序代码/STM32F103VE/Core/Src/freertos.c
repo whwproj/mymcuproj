@@ -30,9 +30,6 @@
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
-BYTE send_buf[512];
-HAL_SD_CardInfoTypeDef SDCardInfo;
-DRESULT ret;
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
@@ -54,34 +51,7 @@ osThreadId defaultTaskHandle;
 
 /* Private function prototypes -----------------------------------------------*/
 /* USER CODE BEGIN FunctionPrototypes */
-void printf_sdcard_info(HAL_SD_CardInfoTypeDef SDCardInfo) {
-	uint64_t CardCap; //SD卡容量
-	HAL_SD_CardCIDTypeDef SDCard_CID;
-	HAL_SD_GetCardCID(&hsd,&SDCard_CID); //获取CID
-	HAL_SD_GetCardInfo(&hsd,&SDCardInfo); //获取SD卡信息
-	CardCap=(uint64_t)(SDCardInfo.LogBlockNbr)*(uint64_t)(SDCardInfo.LogBlockSize); //计算SD卡容量
-	switch(SDCardInfo.CardType) {
-		case CARD_SDSC:
-		{
-			if(SDCardInfo.CardVersion == CARD_V1_X)
-				printf("Card Type:SDSC V1\r\n");
-			else if(SDCardInfo.CardVersion == CARD_V2_X)
-				printf("Card Type:SDSC V2\r\n");
-		} break;
-		case CARD_SDHC_SDXC:printf("Card Type:SDHC\r\n");
-			break;
-		default:break;
-	}
-	printf("Card ManufacturerID: %d \r\n",SDCard_CID.ManufacturerID); //制造商ID
-	printf("CardVersion: %d \r\n",(uint32_t)(SDCardInfo.CardVersion)); //卡版本号
-	printf("Class: %d \r\n",(uint32_t)(SDCardInfo.Class)); //SD卡类别
-	printf("Card RCA(RelCardAdd):%d \r\n",SDCardInfo.RelCardAdd); //卡相对地址
-	printf("Card BlockNbr: %d \r\n",SDCardInfo.BlockNbr); //块数量
-	printf("Card BlockSize: %d \r\n",SDCardInfo.BlockSize); //块大小
-	printf("LogBlockNbr: %d \r\n",(uint32_t)(SDCardInfo.LogBlockNbr)); //逻辑块数量
-	printf("LogBlockSize: %d \r\n",(uint32_t)(SDCardInfo.LogBlockSize)); //逻辑块大小
-	printf("Card Capacity: %d MB\r\n",(uint32_t)(CardCap>>20)); //卡容量
-}
+
 
 void myTestTaskFun(void const * argument);
 /* USER CODE END FunctionPrototypes */
@@ -134,8 +104,8 @@ void MX_FREERTOS_Init(void) {
 
   /* Create the thread(s) */
   /* definition and creation of defaultTask */
-//  osThreadDef(defaultTask, StartDefaultTask, osPriorityNormal, 0, 1024);
-//  defaultTaskHandle = osThreadCreate(osThread(defaultTask), NULL);
+  osThreadDef(defaultTask, StartDefaultTask, osPriorityNormal, 0, 1024);
+  defaultTaskHandle = osThreadCreate(osThread(defaultTask), NULL);
 
   osThreadDef(myTestTask, myTestTaskFun, osPriorityNormal, 0, 128);
   myTestTaskHandle = osThreadCreate(osThread(myTestTask), NULL);
@@ -155,28 +125,13 @@ void MX_FREERTOS_Init(void) {
 void StartDefaultTask(void const * argument)
 {
   /* USER CODE BEGIN StartDefaultTask */
-	printf("init...\r\n");
-	
-	SD_Driver.disk_initialize(0);
-	printf_sdcard_info(SDCardInfo);
-	printf("\r\n\r\n********** 英文读写测试 **********\r\n");
-	ret = SD_Driver.disk_write(0, (BYTE *)"L is too short to spend 阿time",20,2);
-	printf("sd write result:%d\r\n", ret);
-	ret = SD_Driver.disk_read(0, send_buf, 20, 2);
-	printf("sd reak result:%d\r\n", ret);
-	printf("sd read content:\r\n%s\r\n", send_buf);
+	printf("\r\n\r\n\r\n\r\nstart\r\n");
+	fatfs_test_fun();
   /* Infinite loop */
   for(;;)
   {
-	printf("test \r\n");
 	osDelay(1000);
-	printf("test ok\r\n");
-//	printf("\r\n\r\n********** 中文读写测试 **********\r\n");
-//	ret = SD_Driver.disk_write(0,(BYTE *)"1.wifi模块", 22, 2);
-//	printf("sd write result:%d\r\n", ret);
-//	ret = SD_Driver.disk_read(0, send_buf, 23, 2);
-//	printf("sd reak result:%d\r\n", ret);
-//	printf("sd read content:\r\n%s\r\n", send_buf);
+
 	
   }
   /* USER CODE END StartDefaultTask */
