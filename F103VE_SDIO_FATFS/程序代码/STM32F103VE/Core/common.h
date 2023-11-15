@@ -18,7 +18,7 @@
 #include "task.h"
 #include "main.h"
 #include "cmsis_os.h"
-//#include "tim.h"
+#include "tim.h"
 #include "usart.h"
 #include "gpio.h"
 //#include "spi.h"
@@ -35,6 +35,7 @@
 //#include "../Bsp/bsp_w25qxx.h"
 #include "../Bsp/bsp_sdio.h"
 #include "../Bsp/bsp_fatfs.h"
+#include "../Bsp/bsp_debug.h"
 
 /*---- Tools -------------------------*/
 //#include "../Tools/tool_url.h"
@@ -46,13 +47,17 @@
 //#define 	nrf_control_taskSize				100
 //#define 	wifi_send_taskSize				  100
 
-//typedef struct __INIT_STR {
-//	uint8_t restore;
-//} INIT_STR;
-//extern INIT_STR init_str;
+typedef struct __USER_STR {
+	uint8_t sdInit;//0:默认 1:卡就绪
+	uint8_t transferStar;//0:默认 1:正在传输
+	uint32_t size;
+	char name[32];
+	
+} _USER_STR;
+extern _USER_STR u_str;
 
+extern TaskHandle_t debugTaskHandle;		
 
-//extern TaskHandle_t wifi_control_taskHandle;
 //extern TaskHandle_t nrf_control_taskHandle;
 //extern TaskHandle_t wifi_send_taskHandle;
 
@@ -65,6 +70,7 @@
 //void Delay_Us(uint16_t t);
 //void Delay_Ms(uint32_t t);
 //void Delay_S(uint32_t t);
+
 #endif /*__COMMON__H*/
 
 

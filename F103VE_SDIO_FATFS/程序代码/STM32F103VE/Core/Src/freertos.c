@@ -30,6 +30,7 @@
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
+_USER_STR u_str;
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
@@ -45,14 +46,14 @@
 /* Private variables ---------------------------------------------------------*/
 /* USER CODE BEGIN Variables */
 TaskHandle_t myTestTaskHandle;
+TaskHandle_t debugTaskHandle;
 /* USER CODE END Variables */
 osThreadId defaultTaskHandle;
 
 /* Private function prototypes -----------------------------------------------*/
 /* USER CODE BEGIN FunctionPrototypes */
-
-
 void myTestTaskFun(void const * argument);
+void debugTaskFun(void const * argument);
 /* USER CODE END FunctionPrototypes */
 
 void StartDefaultTask(void const * argument);
@@ -103,13 +104,17 @@ void MX_FREERTOS_Init(void) {
 
   /* Create the thread(s) */
   /* definition and creation of defaultTask */
-  osThreadDef(defaultTask, StartDefaultTask, osPriorityNormal, 0, 128);
+  osThreadDef(defaultTask, StartDefaultTask, osPriorityNormal, 0, 2048);
   defaultTaskHandle = osThreadCreate(osThread(defaultTask), NULL);
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
-  osThreadDef(myTestTask, myTestTaskFun, osPriorityNormal, 0, 128);
+	osThreadDef(myTestTask, myTestTaskFun, osPriorityNormal, 0, 128);
     myTestTaskHandle = osThreadCreate(osThread(myTestTask), NULL);
+	
+	osThreadDef(debugTask, debugTaskFun, osPriorityNormal, 0, 128);
+    debugTaskHandle = osThreadCreate(osThread(debugTask), NULL);
+	
   /* USER CODE END RTOS_THREADS */
 
 }
@@ -125,13 +130,16 @@ void StartDefaultTask(void const * argument)
 {
   /* USER CODE BEGIN StartDefaultTask */
 	printf("\r\n\r\n\r\n\r\nstart\r\n");
-	fatfs_test_fun();
+	//memset( &u_str, 0, sizeof(_USER_STR) );
+	xTaskNotify( debugTaskHandle, 1U<<DEBUG_DEVICE_INIT, eSetBits );
+	//fatfs_init_fun();
+	//my_fatfs_test_fun();
+	//fatfs_test_fun();
   /* Infinite loop */
   for(;;)
   {
 	osDelay(1000);
-
-	
+	vTaskDelete( defaultTaskHandle );
   }
   /* USER CODE END StartDefaultTask */
 }
@@ -141,8 +149,39 @@ void StartDefaultTask(void const * argument)
 void myTestTaskFun(void const * argument) {
 	for(;;) {
 		osDelay(2000);
-		printf("...\r\n");
+		//printf("...\r\n");
+	}
+}
+
+void debugTaskFun(void const * argument) {
+	uint32_t newBits, oldBits = 0;
+	for( ; ; ) {
+		xTaskNotifyWait( pdFALSE, portMAX_DELAY, &newBits, portMAX_DELAY );
+		oldBits |= newBits;
+		if ( oldBits & (1U<<DEBUG_DEVICE_INIT) ) {
+			oldBits &=~ (1U<<DEBUG_DEVICE_INIT);
+			debug_init();
+		}
+		if ( oldBits & (1U<<DEBUG_PARSE_DATA) ) {
+			oldBits &=~ (1U<<DEBUG_PARSE_DATA);
+			debug_parse_data_fun();
+			//debug_parse_data_fun2();
+		}
+		if ( oldBits & (1U<<D_DMA_HT_FUN) ) {
+			oldBits &=~ (1U<<D_DMA_HT_FUN);
+			//dma_ht_fun();
+		}
+		if ( oldBits & (1U<<D_DMA_TC_FUN) ) {
+			oldBits &=~ (1U<<D_DMA_TC_FUN);
+			//dma_tc_fun();
+		}
+		if ( oldBits & (1U<<D_TEST_UART_IT_TC) ) {
+			oldBits &=~ (1U<<D_TEST_UART_IT_TC);
+			//test_uart_it_tc();
+		}
 	}
 }
 /* USER CODE END Application */
+
+
 
