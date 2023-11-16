@@ -196,42 +196,26 @@ void TIM2_IRQHandler(void)
 void USART1_IRQHandler(void)
 {
   /* USER CODE BEGIN USART1_IRQn 0 */
-	BaseType_t phpt;
+	//BaseType_t phpt;
   /* USER CODE END USART1_IRQn 0 */
   HAL_UART_IRQHandler(&huart1);
   /* USER CODE BEGIN USART1_IRQn 1 */
 	if( (__HAL_UART_GET_FLAG( &huart1, UART_FLAG_IDLE ) != RESET))  {
 		__HAL_UART_CLEAR_IDLEFLAG( &huart1 );  //清除空闲状态标志
 		//xTaskNotifyFromISR( debugTaskHandle, 1U<<DEBUG_PARSE_DATA, eSetBits, &phpt );
-		xTaskNotifyFromISR( debugTaskHandle, 1U<<D_TEST_UART_IT_TC, eSetBits, &phpt );
-		portYIELD_FROM_ISR( phpt );
+		//xTaskNotifyFromISR( debugTaskHandle, 1U<<D_TEST_UART_IT_TC, eSetBits, &phpt );
+		//portYIELD_FROM_ISR( phpt );
+		debug_parse_data_fun();
 	}
   /* USER CODE END USART1_IRQn 1 */
 }
 
 /* USER CODE BEGIN 1 */
-//半传输中断回调
-//void HAL_UART_RxHalfCpltCallback( UART_HandleTypeDef *huart ) {
-////	BaseType_t phpt;
-////	if ( huart == &DEBUG_HUART ) {
-////		xTaskNotifyFromISR( debugTaskHandle, 1U<<D_DMA_HT_FUN, eSetBits, &phpt );
-////		portYIELD_FROM_ISR( phpt );
-////	}
-//	char str[13] = {0};
-//	memcpy(str, debug_str.rxBuff, 12);
-//	printf("半传输: %s  ", str);
-//}
 //全传输中断回调
 void HAL_UART_RxCpltCallback( UART_HandleTypeDef *huart  ) {
-//	BaseType_t phpt;
-//	if ( huart == &DEBUG_HUART ) {
-//		xTaskNotifyFromISR( debugTaskHandle, 1U<<D_DMA_TC_FUN, eSetBits, &phpt );
-//		portYIELD_FROM_ISR( phpt );
-//	}
-	dma_tc_fun();
-//	char str[13] = {0};
-//	memcpy(str, &debug_str.rxBuff[12], 12);
-//	printf("全传输: %s\r\n", str);
+	if ( huart == &DEBUG_HUART ) {
+		dma_tc_fun();
+	}
 }
 /* USER CODE END 1 */
 

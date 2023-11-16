@@ -51,6 +51,7 @@ typedef struct __USER_STR {
 	uint8_t sdInit;//0:默认 1:卡就绪
 	uint8_t transferStar;//0:默认 1:正在传输
 	uint32_t size;
+	uint32_t wSize;
 	char name[32];
 	
 } _USER_STR;

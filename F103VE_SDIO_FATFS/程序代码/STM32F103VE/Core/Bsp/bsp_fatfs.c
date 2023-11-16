@@ -1,10 +1,10 @@
 #include "../Bsp/bsp_fatfs.h"
 
-BYTE abc[] = "*0--123456789abcdefghi--E1--123456789abcdefghi--E2--123456789abcdefghi--E3--123456789abcdefghi--E4--123456789abcdefghi--E5--123456789abcdefghi--E6--123456789abcdefghi--E7--123456789abcdefghi--E8--123456789abcdefghi--E9--123456789abcdefghi--Ea--123456789abcdefghi--Eb--123456789abcdefghi--Ec--123456789abcdefghi--Ed--123456789abcdefghi--Ee--123456789abcdefghi--Ef--123456789abcdefghi--E0--123456789abcdefghi--E1--123456789abcdefghi--E2--123456789abcdefghi--E3--123456789abcdefghi--E4--123456789abcdefghi--E5--123456789abcdefghi--E6--123456789abcdefghi--E7--123456789abcdefghi--E8--123456789abcdefghi--E9--123456789abcdefghi--Ea--123456789abcdefghi--Eb--123456789abcdefghi--Ec--123456789abcdefghi--Ed--123456789abcdefghi--Ee--123456789abcdefghi--Ef--123456789abcdefghi--E0--123456789abcdefghi--E1--123456789abcdefghi--E2--123456789abcdefghi--E3--123456789abcdefghi--E4--123456789abcdefghi--E5--123456789abcdefghi--E6--123456789abcdefghi--E7--123456789abcdefghi--E8--123456789abcdefghi--E9--123456789abcdefghi--Ea--123456789ab*";
-BYTE write_buf[] = "**只分析FAT32文件系统相关的代码。**";
-//BYTE write_buf2[] = "**追加的消息aaaaaaabcd**";
-BYTE read_buf[2048] = {0};
-BYTE temp_buf[1025];
+BYTE write_buf2[] = "**追加的消息aaaaaaabcd**";
+BYTE read_buf[128] = {0};
+BYTE temp_buf[128];
+BYTE write_buf[128];
+
 #define USERPath "0:/"
 
 void fatfs_init_fun( void ) {
@@ -64,9 +64,9 @@ void my_fatfs_test_fun( void ) {
 		__HAL_TIM_SET_AUTORELOAD( &htim4, 65534 );//设置定时器自动重装载的值, 到该值后重新计数
 		__HAL_TIM_SET_COUNTER( &htim4, 0 );//设置定时器初始值
 		HAL_TIM_Base_Start( &htim4 );//启动定时器
-		memset(temp_buf, 0, 1025);
-		memcpy(temp_buf, abc, 1024);
-		ret = f_write(&SDFile, abc, strlen((char*)abc), &num);
+		//memset(temp_buf, 0, 1025);
+		//memcpy(temp_buf, abc, 1024);
+		//ret = f_write(&SDFile, abc, strlen((char*)abc), &num);
 		counter = __HAL_TIM_GET_COUNTER(&htim4);//获取定时器当前计数值
 		HAL_TIM_Base_Stop( &htim4 );//停止定时器
 		printf("写入1024字节总用时: %d us", counter);
