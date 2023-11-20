@@ -130,23 +130,20 @@ void MX_FREERTOS_Init(void) {
 void StartDefaultTask(void const * argument)
 {
   /* USER CODE BEGIN StartDefaultTask */
-	
+	uint16_t threshold = 0;
+
   /* Infinite loop */
   for(;;) {
-		//judge_if_Rest();
-		//printf("开机成功\r\n");
-		//osDelay(500);
-		//LED_ON();
-		
+		LED_OFF();
+		osDelay(700);
 		//OLED_Init();
 		//OLED_ShowString(3, 3, "aa");
 		
-		if ( !APDS9930_init() ) {
+		if ( APDS9930_init_fun() == 0 ) {
 			printf( "APDS9930 init fail!\r\n" );
 		} else {
 			printf( "APDS9930 init success!\r\n" );
 		}
-		
 		osDelay(500);
 	
 		
@@ -173,7 +170,6 @@ void debugTask_fun(void const * argument) {
 	}
 }
 
-
 void APDS9930Task_fun(void const * argument) {
 	uint32_t newBits, oldBits = 0;
   for ( ;; ) {
@@ -181,16 +177,11 @@ void APDS9930Task_fun(void const * argument) {
 		oldBits |= newBits;
 		if ( oldBits & (1U<<APDS9930_INIT) ) {
 			oldBits &=~ (1U<<APDS9930_INIT);
-			APDS9930_init();
+			APDS9930_init_fun();
 		}
 		if ( oldBits & (1U<<APDS9930_INTERRUPT) ) {
 			oldBits &=~ (1U<<APDS9930_INTERRUPT);
-			APDS9930_interrupt();
-		}
-		
-		if ( oldBits & (1U<<CHECK_ENTER_STANDBYMODE) ) {
-			oldBits &=~ (1U<<CHECK_ENTER_STANDBYMODE);
-			//Wkup0_Check_Up_OS();
+			APDS9930_interrupt_fun();
 		}
 	}
 }

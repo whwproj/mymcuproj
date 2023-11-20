@@ -131,9 +131,8 @@ enum {
 };
 
 
-#define APDS9930_INIT							0
-#define APDS9930_INTERRUPT				1
-#define CHECK_ENTER_STANDBYMODE		2
+#define APDS9930_INIT			0
+#define APDS9930_INTERRUPT		1
 
 
 uint8_t getMode( void );
@@ -206,10 +205,6 @@ uint8_t wireWriteDataByte(uint8_t reg, uint8_t val);
 uint8_t wireWriteDataBlock(uint8_t reg, uint8_t *val, unsigned int len);
 uint8_t wireReadDataByte(uint8_t reg, uint8_t *val);
 int wireReadDataBlock(uint8_t reg, uint8_t *val, unsigned int len);
-uint8_t APDS9930_init_fun( void );
-void APDS9930_interrupt_fun( void );
-uint8_t APDS9930_init( void );
-void APDS9930_interrupt( void );
 
 #endif /*__BSP_APDS9930__H*/
 

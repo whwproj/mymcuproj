@@ -1,13 +1,26 @@
-#ifndef __BSP_APDS9930__H
-#define __BSP_APDS9930__H
+/**
+ * @file    APDS-9930.h
+ * @brief   Library for the SparkFun APDS-9930 breakout board
+ * @author  Shawn Hymel (SparkFun Electronics)
+ *
+ * @copyright	This code is public domain but you buy me a beer if you use
+ * this and we meet someday (Beerware license).
+ *
+ * This library interfaces the Avago APDS-9930 to Arduino over I2C. The library
+ * relies on the Arduino Wire (I2C) library. to use the library, instantiate an
+ * APDS9930 object, call init(), and call the appropriate functions.
+ */
+ 
+#ifndef APDS9930_H
+#define APDS9930_H
 
-#include "../common.h"
+#include <Arduino.h>
 
 /* Debug */
 #define DEBUG                   0
 
 /* APDS-9930 I2C address */
-#define APDS9930_I2C_ADDR       (0x39<<1)
+#define APDS9930_I2C_ADDR       0x39
 
 /* Command register modes */
 #define REPEATED_BYTE           0x80
@@ -130,90 +143,89 @@ enum {
   ALL_STATE
 };
 
+#ifdef _AVR_IO_H_
+    // Do not use this alias as it's deprecated
+    #define NA_STATE NOTAVAILABLE_STATE
+#endif
 
-#define APDS9930_INIT							0
-#define APDS9930_INTERRUPT				1
-#define CHECK_ENTER_STANDBYMODE		2
+/* APDS9930 Class */
+class APDS9930 {
+public:
 
+    /* Initialization methods */
+    APDS9930();
+    ~APDS9930();
+    bool init();
+    uint8_t getMode();
+    bool setMode(uint8_t mode, uint8_t enable);
+    
+    /* Turn the APDS-9930 on and off */
+    bool enablePower();
+    bool disablePower();
+    
+    /* Enable or disable specific sensors */
+    bool enableLightSensor(bool interrupts = false);
+    bool disableLightSensor();
+    bool enableProximitySensor(bool interrupts = false);
+    bool disableProximitySensor();
 
-uint8_t getMode( void );
-uint8_t setMode(uint8_t mode, uint8_t enable);
+    /* LED drive strength control */
+    uint8_t getLEDDrive();
+    bool setLEDDrive(uint8_t drive);
+    // uint8_t getGestureLEDDrive();
+    // bool setGestureLEDDrive(uint8_t drive);
+    
+    /* Gain control */
+    uint8_t getAmbientLightGain();
+    bool setAmbientLightGain(uint8_t gain);
+    uint8_t getProximityGain();
+    bool setProximityGain(uint8_t gain);
+    bool setProximityDiode(uint8_t drive);
+    uint8_t getProximityDiode();
 
-/* Turn the APDS-9930 on and off */
-uint8_t enablePower( void );
-uint8_t disablePower( void );
+    
+    /* Get and set light interrupt thresholds */
+    bool getLightIntLowThreshold(uint16_t &threshold);
+    bool setLightIntLowThreshold(uint16_t threshold);
+    bool getLightIntHighThreshold(uint16_t &threshold);
+    bool setLightIntHighThreshold(uint16_t threshold);
+    
+    /* Get and set interrupt enables */
+    uint8_t getAmbientLightIntEnable();
+    bool setAmbientLightIntEnable(uint8_t enable);
+    uint8_t getProximityIntEnable();
+    bool setProximityIntEnable(uint8_t enable);
+    
+    /* Clear interrupts */
+    bool clearAmbientLightInt();
+    bool clearProximityInt();
+    bool clearAllInts();
+    
+    /* Proximity methods */
+    bool readProximity(uint16_t &val);
 
-/* Enable or disable specific sensors */
-uint8_t enableLightSensor(uint8_t interrupts);
-uint8_t disableLightSensor( void );
-uint8_t enableProximitySensor(uint8_t interrupts);
-uint8_t disableProximitySensor( void );
-
-/* LED drive strength control */
-uint8_t getLEDDrive( void );
-uint8_t setLEDDrive(uint8_t drive);
-// uint8_t getGestureLEDDrive( void );
-// uint8_t setGestureLEDDrive(uint8_t drive);
-
-/* Gain control */
-uint8_t getAmbientLightGain( void );
-uint8_t setAmbientLightGain(uint8_t gain);
-uint8_t getProximityGain( void );
-uint8_t setProximityGain(uint8_t gain);
-uint8_t setProximityDiode(uint8_t drive);
-uint8_t getProximityDiode( void );
-
-
-/* Get and set light interrupt thresholds */
-uint8_t getLightIntLowThreshold(uint16_t *threshold);
-uint8_t setLightIntLowThreshold(uint16_t threshold);
-uint8_t getLightIntHighThreshold(uint16_t *threshold);
-uint8_t setLightIntHighThreshold(uint16_t threshold);
-
-/* Get and set interrupt enables */
-uint8_t getAmbientLightIntEnable( void );
-uint8_t setAmbientLightIntEnable(uint8_t enable);
-uint8_t getProximityIntEnable( void );
-uint8_t setProximityIntEnable(uint8_t enable);
-
-/* Clear interrupts */
-uint8_t clearAmbientLightInt( void );
-uint8_t clearProximityInt( void );
-uint8_t clearAllInts( void );
-
-/* Proximity methods */
-uint8_t readProximity(uint16_t *val);
-
-/* Ambient light methods */
-uint8_t readAmbientLightLux(float *val);
-uint8_t ureadAmbientLightLux(unsigned long *val);
-float floatAmbientToLux(uint16_t Ch0, uint16_t Ch1);
-unsigned long ulongAmbientToLux(uint16_t Ch0, uint16_t Ch1);
-uint8_t readCh0Light(uint16_t *val);
-uint8_t readCh1Light(uint16_t *val);
-
+    /* Ambient light methods */
+    bool readAmbientLightLux(float &val);
+    bool readAmbientLightLux(unsigned long &val);
+    float floatAmbientToLux(uint16_t Ch0, uint16_t Ch1);
+    unsigned long ulongAmbientToLux(uint16_t Ch0, uint16_t Ch1);
+    bool readCh0Light(uint16_t &val);
+    bool readCh1Light(uint16_t &val);
+    
 //private:
 
-/* Proximity Interrupt Threshold */
-uint8_t getProximityIntLowThreshold( void );
-uint8_t setProximityIntLowThreshold(uint16_t threshold);
-uint8_t getProximityIntHighThreshold( void );
-uint8_t setProximityIntHighThreshold(uint16_t threshold);
+    /* Proximity Interrupt Threshold */
+    uint8_t getProximityIntLowThreshold();
+    bool setProximityIntLowThreshold(uint16_t threshold);
+    uint8_t getProximityIntHighThreshold();
+    bool setProximityIntHighThreshold(uint16_t threshold);
+    
+    /* Raw I2C Commands */
+    bool wireWriteByte(uint8_t val);
+    bool wireWriteDataByte(uint8_t reg, uint8_t val);
+    bool wireWriteDataBlock(uint8_t reg, uint8_t *val, unsigned int len);
+    bool wireReadDataByte(uint8_t reg, uint8_t &val);
+    int wireReadDataBlock(uint8_t reg, uint8_t *val, unsigned int len);
+};
 
-/* Raw I2C Commands */
-uint8_t wireWriteByte(uint8_t val);
-uint8_t wireWriteDataByte(uint8_t reg, uint8_t val);
-uint8_t wireWriteDataBlock(uint8_t reg, uint8_t *val, unsigned int len);
-uint8_t wireReadDataByte(uint8_t reg, uint8_t *val);
-int wireReadDataBlock(uint8_t reg, uint8_t *val, unsigned int len);
-uint8_t APDS9930_init_fun( void );
-void APDS9930_interrupt_fun( void );
-uint8_t APDS9930_init( void );
-void APDS9930_interrupt( void );
-
-#endif /*__BSP_APDS9930__H*/
-
-
-
-
-
+#endif

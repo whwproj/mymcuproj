@@ -227,7 +227,7 @@ uint8_t readAmbientLightLux(float *val) {
     }
 
     *val = floatAmbientToLux(Ch0, Ch1);
-		return 1;
+		return 0;
 }
 
 uint8_t ureadAmbientLightLux(unsigned long *val) {
@@ -968,204 +968,158 @@ int wireReadDataBlock( uint8_t reg, uint8_t *val, unsigned int len) {
  *
  * @return True if initialized successfully. False otherwise.
  */
-uint8_t APDS9930_init_fun( void ) {
-	uint8_t id;
+uint8_t APDS9930_init( void ) {
+    uint8_t id;
 	uint16_t threshold;
-    uint16_t proximity_data = 0;
-	
-	/* Read ID register and check against known values for APDS-9930 */
-	if( !wireReadDataByte(APDS9930_ID, &id) ) {
-		printf("ID read err!\r\n");
-		return 0;
-	}
-	if( !(id == APDS9930_ID_1 || id == APDS9930_ID_2) ) {
-		printf("ID check err\r\n");
-		return 0;
-	} else {
+     
+    /* Read ID register and check against known values for APDS-9930 */
+    if( !wireReadDataByte(APDS9930_ID, &id) ) {
+        printf("ID read err!\r\n");
+        return 0;
+    }
+    if( !(id == APDS9930_ID_1 || id == APDS9930_ID_2) ) {
+        printf("ID check err\r\n");
+        return 0;
+    } else {
 		printf("ID check is %d\r\n", id);
 	}
-
-	/* Set ENABLE register to 0 (disable all features) */
-	if( !setMode(ALL, OFF) ) {
-		printf("Regs off\r\n");
-		return 0;
-	}
-
-	/* Set default values for ambient light and proximity registers */
-	if( !wireWriteDataByte(APDS9930_ATIME, DEFAULT_ATIME) ) {
-		return 0;
-	}
-	if( !wireWriteDataByte(APDS9930_WTIME, DEFAULT_WTIME) ) {
-		return 0;
-	}
-	if( !wireWriteDataByte(APDS9930_PPULSE, DEFAULT_PPULSE) ) {
-		return 0;
-	}
-	if( !wireWriteDataByte(APDS9930_POFFSET, DEFAULT_POFFSET) ) {
-		return 0;
-	}
-	if( !wireWriteDataByte(APDS9930_CONFIG, DEFAULT_CONFIG) ) {
-		return 0;
-	}
-	if( !setLEDDrive(DEFAULT_PDRIVE) ) {
-		return 0;
-	}
-	if( !setProximityGain(DEFAULT_PGAIN) ) {
-		return 0;
-	}		 
-	if( !setAmbientLightGain(DEFAULT_AGAIN) ) {
-		return 0;
-	}
-	if( !setProximityDiode(DEFAULT_PDIODE) ) {
-		return 0;
-	}
-	if( !setProximityIntLowThreshold(DEFAULT_PILT) ) {
-		return 0;
-	}
-	if( !setProximityIntHighThreshold(DEFAULT_PIHT) ) {
-		return 0;
-	}
-	if( !setLightIntLowThreshold(DEFAULT_AILT) ) {
-		return 0;
-	}
-	if( !setLightIntHighThreshold(DEFAULT_AIHT) ) {
-		return 0;
-	}
-	if( !wireWriteDataByte(APDS9930_PERS, DEFAULT_PERS) ) {
-		return 0;
-	}
-	
-	
-//	// Set high and low interrupt thresholds
-//  if ( !setLightIntLowThreshold(LIGHT_INT_LOW) ) {
-//    printf("Error writing low threshold\r\n");
-//  }
-//  if ( !setLightIntHighThreshold(LIGHT_INT_HIGH) ) {
-//    printf("Error writing high threshold\r\n");
-//  }
-	
-//	// Start running the APDS-9930 light sensor (no interrupts)
-//  if ( enableLightSensor(1) ) {
-//    printf("Light sensor is now running\r\n");
-//  } else {
-//    printf("Something went wrong during light sensor init!\r\n");
-//  }
-//	
-//	// Read high and low interrupt thresholds
-//  if ( !getLightIntLowThreshold(&threshold) ) {
-//    printf("Error reading low threshold\r\n");
-//  } else {
-//    printf("Low Threshold: %d\r\n", threshold);
-//  }
-//  if ( !getLightIntHighThreshold(&threshold) ) {
-//    printf("Error reading high threshold\r\n");
-//  } else {
-//    printf("High Threshold: %d\r\n", threshold);
-//  }
-//  // Enable interrupts
-//  if ( !setAmbientLightIntEnable(1) ) {
-//    printf("Error enabling interrupts\r\n");
-//  }
-	
-//¾àÀëÖÐ¶Ï
-//	// Adjust the Proximity sensor gain
-//  if ( !setProximityGain(PGAIN_1X) ) {
-//    printf("Something went wrong trying to set PGAIN\r\n");
-//  }
-//  
-//  // Set proximity interrupt thresholds
-//  if ( !setProximityIntLowThreshold(PROX_INT_LOW) ) {
-//    printf("Error writing low threshold\r\n");
-//  }
-//  if ( !setProximityIntHighThreshold(PROX_INT_HIGH) ) {
-//    printf("Error writing high threshold\r\n");
-//  }
-//  
-//  // Start running the APDS-9930 proximity sensor (interrupts)
-//  if ( enableProximitySensor(1) ) {
-//    printf("Proximity sensor is now running\r\n");
-//  } else {
-//    printf("Something went wrong during sensor init!\r\n");
-//  }
-	
-
- // Adjust the Proximity sensor gain
-  setProximityGain(PGAIN_1X);
-  enableProximitySensor(0);
-	
-	while(1) {
-		if ( !readProximity(&proximity_data) ) {
-			printf("Error reading proximity value\r\n");
-		} else {
-			printf("Proximity: %d\r\n", proximity_data);
-
-    // This is an ugly hack to reduce sensor noise.
-    // You may want to adjust POFFSET instead.
-    /*
-    proximity_data -= 200;
-    if (proximity_data > 50000) {
-      proximity_data = 0;
+     
+    /* Set ENABLE register to 0 (disable all features) */
+    if( !setMode(ALL, OFF) ) {
+        printf("Regs off\r\n");
+        return 0;
     }
-    if (proximity_data > proximity_max) {
-      proximity_max = proximity_data;
+    
+		/* Set default values for ambient light and proximity registers */
+    if( !wireWriteDataByte(APDS9930_ATIME, DEFAULT_ATIME) ) {
+        return 0;
     }
-    proximity_data = map(proximity_data, 0, proximity_max, 0, 1023);
-    */
+    if( !wireWriteDataByte(APDS9930_WTIME, DEFAULT_WTIME) ) {
+        return 0;
+    }
+    if( !wireWriteDataByte(APDS9930_PPULSE, DEFAULT_PPULSE) ) {
+        return 0;
+    }
+    if( !wireWriteDataByte(APDS9930_POFFSET, DEFAULT_POFFSET) ) {
+        return 0;
+    }
+    if( !wireWriteDataByte(APDS9930_CONFIG, DEFAULT_CONFIG) ) {
+        return 0;
+    }
+    if( !setLEDDrive(DEFAULT_PDRIVE) ) {
+        return 0;
+    }
+    if( !setProximityGain(DEFAULT_PGAIN) ) {
+        return 0;
+    }
+    if( !setAmbientLightGain(DEFAULT_AGAIN) ) {
+        return 0;
+    }
+    if( !setProximityDiode(DEFAULT_PDIODE) ) {
+        return 0;
+    }
+    if( !setProximityIntLowThreshold(DEFAULT_PILT) ) {
+        return 0;
+    }
+    if( !setProximityIntHighThreshold(DEFAULT_PIHT) ) {
+        return 0;
+    }
+    if( !setLightIntLowThreshold(DEFAULT_AILT) ) {
+        return 0;
+    }
+    if( !setLightIntHighThreshold(DEFAULT_AIHT) ) {
+        return 0;
+    }
+    if( !wireWriteDataByte(APDS9930_PERS, DEFAULT_PERS) ) {
+        return 0;
+    }
 
-			printf("  Remapped: %d\r\n", proximity_data);
-		}
-		vTaskDelay(100);
-	}
+		/* Set default gain, interrupts, enable power, and enable sensor */
+		if( !setAmbientLightGain(DEFAULT_AGAIN) ) {
+        return 0;
+    }
+		
+		/*if( !setAmbientLightIntEnable(1) ) {
+        return 0;
+    }*/
+		if( !setAmbientLightIntEnable(0) ) {
+        return 0;
+    }
+		
+    if( !enablePower() ){
+        return 0;
+    }
+    if( !setMode(AMBIENT_LIGHT, 1) ) {
+        return 0;
+    }
+		
+//		// Set high and low interrupt thresholds
+//		if ( !setLightIntLowThreshold(LIGHT_INT_LOW) ) {
+//			printf("Error writing low threshold\r\n");
+//			return 0;
+//		}
+//		if ( !setLightIntHighThreshold(LIGHT_INT_HIGH) ) {
+//			printf("Error writing high threshold\r\n");
+//			return 0;
+//		}
+//		
+//		// Start running the APDS-9930 light sensor (no interrupts)
+//		if ( !enableLightSensor(0) ) {
+//			printf("Light sensor is now running\r\n");
+//		} else {
+//			printf("Something went wrong during light sensor init!\r\n");
+//			//return 0;
+//		}
+//	 
+//		// Read high and low interrupt thresholds
+//		if ( !getLightIntLowThreshold(&threshold) ) {
+//			printf("Error reading low threshold\r\n");
+//			return 0;
+//		} else {
+//			printf("Low Threshold: %d\r\n", threshold);
+//		}
+//		if ( !getLightIntHighThreshold(&threshold) ) {
+//			printf("Error reading high threshold\r\n");
+//			return 0;
+//		} else {
+//			printf("High Threshold: %d\r\n", threshold);
+//		}
+//		
+//		// Enable interrupts
+//		if ( !setAmbientLightIntEnable(1) ) {
+//			printf("Error enabling interrupts\r\n");
+//			return 0;
+//		}
 	
-  return 1;
+    return 1;
 }
 
 
-void APDS9930_interrupt_fun( void ) {
+void APDS9930_interrupt( void ) {
 	float ambient_light = 0;
 	uint16_t ch0 = 0;
 	uint16_t ch1 = 1;
 	
-	uint16_t proximity_data = 0;
+// Read the light levels (ambient, red, green, blue) and print
+	if ( !readAmbientLightLux(&ambient_light) ||
+			 !readCh0Light(&ch0) || 
+			 !readCh1Light(&ch1) ) {
+		printf("Error reading light values\r\n");
+	} else {
+		printf("Interrupt! Ambient:%f  ", ambient_light);
+		printf("Ch0:%d  ", ch0 );
+		printf("Ch1:%d\r\n", ch1 );
+	}
 	
-//// Read the light levels (ambient, red, green, blue) and print
-//	if ( !readAmbientLightLux(&ambient_light) ||
-//			 !readCh0Light(&ch0) || 
-//			 !readCh1Light(&ch1) ) {
-//		printf("Error reading light values\r\n");
-//	} else {
-//		printf("Interrupt! Ambient:%f  ", ambient_light);
-//		printf("Ch0:%d  ", ch0 );
-//		printf("Ch1:%d\r\n", ch1 );
-//	}
-//	
-//	// Turn on LED for a half a second
-//	LED_ON();
-//	osDelay(500);
-//	LED_OFF();
-//	
-//	// Reset flag and clear APDS-9930 interrupt (IMPORTANT!)
-//	if ( !clearAmbientLightInt() ) {
-//		printf("Error clearing interrupt\r\n");
-//	}
-
-if ( !readProximity(&proximity_data) ) {
-      printf("Error reading proximity value\r\n");
-    } else {
-      printf("Proximity detected! Level: %d\r\n", proximity_data);
-    }
-    
-    // Turn on LED for a half a second
-		LED_ON();
-		osDelay(500);
-		LED_OFF();
-    
-    // Reset flag and clear APDS-9930 interrupt (IMPORTANT!)
-    if ( !clearProximityInt() ) {
-      printf("Error clearing interrupt\r\n");
-    }
-		
-		
+	// Turn on LED for a half a second
+	LED_ON();
+	osDelay(500);
+	LED_OFF();
+	
+	// Reset flag and clear APDS-9930 interrupt (IMPORTANT!)
+	if ( !clearAmbientLightInt() ) {
+		printf("Error clearing interrupt\r\n");
+	}
 	HAL_NVIC_EnableIRQ(EXTI9_5_IRQn);
 }
 

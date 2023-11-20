@@ -5,8 +5,10 @@
 
 // Constants
 #define LIGHT_INT_HIGH  100 // High light level for interrupt
-#define LIGHT_INT_LOW   5   // Low light level for interrupt
+#define LIGHT_INT_LOW   20   // Low light level for interrupt
 
+#define PROX_INT_HIGH   300 // Proximity level for interrupt
+#define PROX_INT_LOW    0  // No far interrupt
 
 /* LIB ------------------------------------------------------------*/
 #include <stdio.h>
@@ -29,7 +31,6 @@
 /*---- Bsp -------------------------*/
 #include "../Bsp/bsp_debug.h"
 #include "../Bsp/bsp_apds9930.h"
-#include "../Bsp/bsp_wkup.h"
 
 /*---- Tools -------------------------*/
 
