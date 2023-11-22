@@ -92,16 +92,29 @@ int main(void)
   /* USER CODE END SysInit */
 
   /* Initialize all configured peripherals */
-  MX_GPIO_Init();
   MX_DMA_Init();
   MX_ADC_Init();
   //MX_IWDG_Init();
   MX_SPI1_Init();
+	#ifndef WIFIDEBUG
   MX_USART1_UART_Init();
+	#endif
   MX_USART2_UART_Init();
   MX_TIM3_Init();
+  MX_TIM6_Init();
+  MX_GPIO_Init();
   /* USER CODE BEGIN 2 */
-
+	if ( init_str.restore ) {
+		LED_NRF_ON();
+		LED_CON_ON();
+		restore_factory_setting();
+		for ( ;; ) {
+			if ( HAL_GPIO_ReadPin( KEY_GPIO_Port, KEY_Pin ) == GPIO_PIN_SET ) break;
+		}
+		__disable_irq();//关中断
+		NVIC_SystemReset();//复位
+	}
+		
   /* USER CODE END 2 */
 
   /* Call init function for freertos objects (in freertos.c) */

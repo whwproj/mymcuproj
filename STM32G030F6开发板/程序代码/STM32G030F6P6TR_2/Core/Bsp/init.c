@@ -14,7 +14,9 @@ void getSnByDeviceId_setClientId( void ) {
 	uint32_t cpuID[3];
 	uint8_t sn[4];
 	
-	uint8_t TS_ADDR[4] = {0xC8,0x8F,0xE6,0x96};
+	//uint8_t TS_ADDR[4] = {0xC8,0x8F,0xE6,0x96};
+	uint8_t TS_ADDR[4] = {0x3C,0x66,0xE7,0x16};
+	
 	
 	cpuID[0] = *(uint32_t *)UID_BASE;
 	cpuID[1] = *(uint32_t *)UID_BASE+4;

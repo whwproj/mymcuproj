@@ -42,6 +42,12 @@
 #define 	nrf_control_taskSize				100
 #define 	wifi_send_taskSize				  100
 
+typedef struct __INIT_STR {
+	uint8_t restore;
+} INIT_STR;
+extern INIT_STR init_str;
+
+
 extern TaskHandle_t wifi_control_taskHandle;
 extern TaskHandle_t nrf_control_taskHandle;
 extern TaskHandle_t wifi_send_taskHandle;
@@ -51,6 +57,10 @@ extern QueueHandle_t wifi_receive_cache_handle;
 extern QueueHandle_t wifi_using_lock_handle;//互斥量
 
 void getSnByDeviceId_setClientId( void );//通过唯一设备ID获取SN
+void restore_factory_setting ( void );
+void Delay_Us(uint16_t t);
+void Delay_Ms(uint32_t t);
+void Delay_S(uint32_t t);
 #endif /*__COMMON__H*/
 
 

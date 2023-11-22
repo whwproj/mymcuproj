@@ -109,6 +109,57 @@ void HardFault_Handler(void)
 /******************************************************************************/
 
 /**
+  * @brief This function handles EXTI line 0 and 1 interrupts.
+  */
+void EXTI0_1_IRQHandler(void)
+{
+  /* USER CODE BEGIN EXTI0_1_IRQn 0 */
+	//BaseType_t phpt;
+  /* USER CODE END EXTI0_1_IRQn 0 */
+  //HAL_GPIO_EXTI_IRQHandler(KEY_Pin);
+  /* USER CODE BEGIN EXTI0_1_IRQn 1 */
+	if(__HAL_GPIO_EXTI_GET_IT(KEY_Pin) != RESET) {
+		__HAL_GPIO_EXTI_CLEAR_IT(KEY_Pin);
+		for ( uint16_t i=0; ; i++ ) {
+			if ( HAL_GPIO_ReadPin(KEY_GPIO_Port,KEY_Pin) == GPIO_PIN_SET ) {
+				printf("%dms\r\n", i*10);
+				break;
+			}
+			if ( i >= 100 ) {
+				printf("复位\r\n");
+				__disable_irq();//关中断
+				NVIC_SystemReset();//复位
+			}
+			Delay_Ms(10);
+		}
+//		for ( int i=0; i<=200; i++ ) {
+//			if ( HAL_GPIO_ReadPin(KEY_GPIO_Port,KEY_Pin) == GPIO_PIN_SET ) {
+//				printf("GPIO_PIN_SET\r\n");
+//				break;
+//			}
+//			printf("...\r\n");
+//			HAL_Delay
+//			vTaskDelay(10);
+//			if ( i == 200 ) {
+//				printf("复位\r\n");
+//				//__set_FAULTMASK(1);//关闭�?有中�?
+//				__disable_irq();//关中�?
+//				NVIC_SystemReset();//复位
+//			}
+//		}
+//		HAL_NVIC_EnableIRQ(KEY_EXTI_IRQn);
+		
+//		printf("isr...\r\n");
+//    xTaskNotifyFromISR( nrf_control_taskHandle, 1U<<KEY_PRESS, eSetBits, &phpt );
+//		HAL_NVIC_DisableIRQ(KEY_EXTI_IRQn);
+//		portYIELD_FROM_ISR(phpt);
+	}
+	
+	
+  /* USER CODE END EXTI0_1_IRQn 1 */
+}
+
+/**
   * @brief This function handles EXTI line 4 to 15 interrupts.
   */
 void EXTI4_15_IRQHandler(void)

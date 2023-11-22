@@ -22,7 +22,7 @@
 #include "gpio.h"
 
 /* USER CODE BEGIN 0 */
-
+#include "../common.h"
 /* USER CODE END 0 */
 
 /*----------------------------------------------------------------------------*/
@@ -59,18 +59,45 @@ void MX_GPIO_Init(void)
   HAL_GPIO_WritePin(GPIOB, ESP_IO0_Pin|ESP_EN_Pin|ESP_RST_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin : PtPin */
+  GPIO_InitStruct.Pin = KEY_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;
+  GPIO_InitStruct.Pull = GPIO_PULLUP;
+  HAL_GPIO_Init(KEY_GPIO_Port, &GPIO_InitStruct);
+
+	init_str.restore = 0;
+	for ( uint16_t i=0; ; i++ ) {
+		if ( i >= 400 ) {//恢复出厂设置
+			init_str.restore = 1;
+			break;
+		}
+		if ( HAL_GPIO_ReadPin( KEY_GPIO_Port, KEY_Pin ) == GPIO_PIN_RESET ) {
+			Delay_Ms(10);
+			continue;
+		}
+		break;
+	}
+	
+
+  /*Configure GPIO pin : PtPin */
   GPIO_InitStruct.Pin = NRF_CE_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
-  GPIO_InitStruct.Pull = GPIO_PULLDOWN;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(NRF_CE_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : PAPin PAPin */
-  GPIO_InitStruct.Pin = NRF_CSN_Pin|FLASH_CSN_Pin;
+  /*Configure GPIO pin : PtPin */
+  GPIO_InitStruct.Pin = NRF_CSN_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_PULLDOWN;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(NRF_CSN_GPIO_Port, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : PtPin */
+  GPIO_InitStruct.Pin = FLASH_CSN_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_PULLUP;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+  HAL_GPIO_Init(FLASH_CSN_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pins : PFPin PFPin */
   GPIO_InitStruct.Pin = LED2_Pin|LED1_Pin;
@@ -92,10 +119,14 @@ void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_PULLUP;
   HAL_GPIO_Init(NRF_IRQ_GPIO_Port, &GPIO_InitStruct);
 
-  /* EXTI interrupt init*/
-  HAL_NVIC_SetPriority(EXTI4_15_IRQn, 3, 0);
-  HAL_NVIC_EnableIRQ(EXTI4_15_IRQn);
+	if ( !init_str.restore ) {
+		/* EXTI interrupt init*/
+		HAL_NVIC_SetPriority(EXTI0_1_IRQn, 3, 0);
+		HAL_NVIC_EnableIRQ(EXTI0_1_IRQn);
 
+		HAL_NVIC_SetPriority(EXTI4_15_IRQn, 3, 0);
+		HAL_NVIC_EnableIRQ(EXTI4_15_IRQn);
+	}
 }
 
 /* USER CODE BEGIN 2 */

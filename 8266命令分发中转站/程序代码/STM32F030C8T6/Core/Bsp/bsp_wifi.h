@@ -179,6 +179,8 @@ void parse_wifi_data_fun( void );//解析wifi数据
 
 void wifi_msg_add_SendList( uint8_t deviceId, uint16_t code, char* p_dat, int errCode );//添加待发送的wifi消息
 void wifi_send_mqtt( void );
+
+void key_press_fun( void );
 #endif /*__BSP_WIFI__H*/
 
 

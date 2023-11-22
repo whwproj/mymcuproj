@@ -162,13 +162,14 @@ void nrf_receive_data(void) {
 	
 	sta = SPI_RW_Reg( NRF_READ_REG + STATUS, NOP );//0xFF空指令
 	SPI_RW_Reg( NRF_WRITE_REG + STATUS, sta );
-	printf("sta: 0x%.2X\r\n", sta);
-	if ( sta & RX_DR ) {
+	printf("sta: 0x%.2X  ", sta);
+	if ( sta & (RX_DR) ) {
 		SPI_Read_Buf( RD_RX_PLOAD, nrf_str.rxBuf, RX_PLOAD_WIDTH );
-		printf("nrfdata: ");
-		for ( int i=0; i<10; i++ )
-			printf(" 0x%.2X", nrf_str.rxBuf[i]);
-		printf("\r\n");
+		printf("did: %d\r\n", nrf_str.rxBuf[0]);
+		//printf("nrfdata: ");
+		//for ( int i=0; i<10; i++ )
+		//	printf(" 0x%.2X", nrf_str.rxBuf[i]);
+		//printf("\r\n");
 		//LED_NRF_ON();
 	} else {
 		goto end;
@@ -183,7 +184,7 @@ void nrf_receive_data(void) {
 		if ( deviceId == 0 ) {
 			goto end;
 		} else if ( deviceId == 0xFF ) {
-			create_deviceId( deviceId );
+			deviceId = create_deviceId( deviceId );
 		} else if ( !get_nrfaddr_by_deviceId(deviceId) ||
 				nrf_str.rxBuf[4]!=nrf_str.deviceAddr[0] || nrf_str.rxBuf[5]!=nrf_str.deviceAddr[1] ||
 				nrf_str.rxBuf[6]!=nrf_str.deviceAddr[2] || nrf_str.rxBuf[7]!=nrf_str.deviceAddr[3] ) {

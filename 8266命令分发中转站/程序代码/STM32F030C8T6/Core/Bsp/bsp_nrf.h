@@ -75,6 +75,7 @@
 #define NRF_RX_EVENT		2
 #define TIM_CLEAR_NRFREG 3
 #define NRF_TASK_DELETE 4
+//#define KEY_PRESS				5
 /*-------------------- Task end --------------------*/
 
 
