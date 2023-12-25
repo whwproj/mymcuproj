@@ -45,13 +45,14 @@
 
 /* Private variables ---------------------------------------------------------*/
 /* USER CODE BEGIN Variables */
-osThreadId debugTaskHandle;
+TaskHandle_t nrf_control_taskHandle;
 /* USER CODE END Variables */
 osThreadId defaultTaskHandle;
 
 /* Private function prototypes -----------------------------------------------*/
 /* USER CODE BEGIN FunctionPrototypes */
-void debugTaskFun(void const * argument);
+//void debugTaskFun(void const * argument);
+void nrf_control_taskFun( void const * argument );
 /* USER CODE END FunctionPrototypes */
 
 void StartDefaultTask(void const * argument);
@@ -91,8 +92,8 @@ void MX_FREERTOS_Init(void) {
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
-	osThreadDef(debugTask, debugTaskFun, osPriorityNormal, 0, debugTaskSize);
-  debugTaskHandle = osThreadCreate(osThread(debugTask), NULL);
+	osThreadDef(nrf_control_task, nrf_control_taskFun, osPriorityNormal, 0, nrf_control_taskSize);
+	nrf_control_taskHandle = osThreadCreate(osThread(nrf_control_task), NULL);
   /* USER CODE END RTOS_THREADS */
 
 }
@@ -107,21 +108,13 @@ void MX_FREERTOS_Init(void) {
 void StartDefaultTask(void const * argument)
 {
   /* USER CODE BEGIN StartDefaultTask */
+	getSnByDeviceId_setClientId();
+	xTaskNotify( nrf_control_taskHandle, 1U<<NRF_INIT_EVENT, eSetBits );
+	
   /* Infinite loop */
   for(;;)
   {
-    //AT命令使能引脚 1:进入AT
-		//HAL_GPIO_WritePin( BLT_CDS_GPIO_Port, BLT_CDS_Pin, GPIO_PIN_SET );
-		//AT命令使能引脚 0:退出AT
-		HAL_GPIO_WritePin( BLT_CDS_GPIO_Port, BLT_CDS_Pin, GPIO_PIN_RESET );
-
-		//睡眠引脚 0:退出睡眠
-		//HAL_GPIO_WritePin( BLT_BRTS_GPIO_Port, BLT_BRTS_Pin, GPIO_PIN_RESET );
-		HAL_GPIO_WritePin( BLT_BRTS_GPIO_Port, BLT_BRTS_Pin, GPIO_PIN_SET );
-		
-		debug_init();
-		nrf_init();
-		
+		//debug_init();
 		vTaskDelete( defaultTaskHandle );
   }
   /* USER CODE END StartDefaultTask */
@@ -129,26 +122,36 @@ void StartDefaultTask(void const * argument)
 
 /* Private application code --------------------------------------------------*/
 /* USER CODE BEGIN Application */
-void debugTaskFun(void const * argument)
-{
+void nrf_control_taskFun( void const * argument ) {
 	uint32_t newBits, oldBits = 0;
-	vTaskDelay(2000);
-  for(;;)
-  {
-    //printf("STM32G030F6 Test\r\n");
-		//vTaskDelay(2000);
-//		xTaskNotifyWait( pdFALSE, portMAX_DELAY, &newBits, portMAX_DELAY );
-//		oldBits |= newBits;
-//		if ( oldBits & (1U<<DEBUG_PARSE_DATA) ) {//解析串口
-//			oldBits &=~ (1U<<DEBUG_PARSE_DATA);
-//			debug_parse_data_fun();
-//		}
-		
-//		vTaskDelay(4000);
-//		nrf_send_data();
-		vTaskDelay(100);
-		receive();
-  }
-}
+	for ( ;; ) {
+		xTaskNotifyWait( pdFALSE, portMAX_DELAY, &newBits, portMAX_DELAY );
+		oldBits |= newBits;
+		if ( oldBits & (1U<<NRF_INIT_EVENT) ) {
+			oldBits &=~ (1U<<NRF_INIT_EVENT);
+			nrf_init();
+		}
+		if ( oldBits & (1U<<NRF_SEND_DATA) ) {
+			oldBits &=~ (1U<<NRF_SEND_DATA);
+			nrf_send_data();
+		}
+		if ( oldBits & (1U<<NRF_PARSE_DATA) ) {
+			oldBits &=~ (1U<<NRF_PARSE_DATA);
+			nrf_parse_data();
+		}
+		if ( oldBits & (1U<<NRF_REGISTER_DEVICE) ) {
+			oldBits &=~ (1U<<NRF_REGISTER_DEVICE);
+			nrf_register_device();
+		}
+		if ( oldBits & (1U<<NRF_HEARTBEAT) ) {
+			oldBits &=~ (1U<<NRF_HEARTBEAT);
+			nrf_send_heartbeat();
+		}
+		if ( oldBits & (1U<<SEND_KEY_DOWN) ) {
+			oldBits &=~ (1U<<SEND_KEY_DOWN);
+			nrf_push_data("鎸夐敭鎸変笅");
+		}
+	}
+}	
 /* USER CODE END Application */
 

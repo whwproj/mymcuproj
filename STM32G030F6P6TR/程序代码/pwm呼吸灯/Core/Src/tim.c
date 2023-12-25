@@ -152,6 +152,10 @@ void HAL_TIM_Base_MspInit(TIM_HandleTypeDef* tim_baseHandle)
   /* USER CODE END TIM14_MspInit 0 */
     /* TIM14 clock enable */
     __HAL_RCC_TIM14_CLK_ENABLE();
+
+    /* TIM14 interrupt Init */
+    HAL_NVIC_SetPriority(TIM14_IRQn, 3, 0);
+    HAL_NVIC_EnableIRQ(TIM14_IRQn);
   /* USER CODE BEGIN TIM14_MspInit 1 */
 
   /* USER CODE END TIM14_MspInit 1 */
@@ -206,6 +210,9 @@ void HAL_TIM_Base_MspDeInit(TIM_HandleTypeDef* tim_baseHandle)
   /* USER CODE END TIM14_MspDeInit 0 */
     /* Peripheral clock disable */
     __HAL_RCC_TIM14_CLK_DISABLE();
+
+    /* TIM14 interrupt Deinit */
+    HAL_NVIC_DisableIRQ(TIM14_IRQn);
   /* USER CODE BEGIN TIM14_MspDeInit 1 */
 
   /* USER CODE END TIM14_MspDeInit 1 */

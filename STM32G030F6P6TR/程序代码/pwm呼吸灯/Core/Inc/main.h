@@ -57,12 +57,17 @@ void Error_Handler(void);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
+#define STDBY_G_Pin GPIO_PIN_14
+#define STDBY_G_GPIO_Port GPIOC
+#define CHRG_R_Pin GPIO_PIN_15
+#define CHRG_R_GPIO_Port GPIOC
 #define BAT_Pin GPIO_PIN_0
 #define BAT_GPIO_Port GPIOA
 #define NRF_CE_Pin GPIO_PIN_3
 #define NRF_CE_GPIO_Port GPIOA
 #define NRF_IRQ_Pin GPIO_PIN_4
 #define NRF_IRQ_GPIO_Port GPIOA
+#define NRF_IRQ_EXTI_IRQn EXTI4_15_IRQn
 #define NRF_CSN_Pin GPIO_PIN_7
 #define NRF_CSN_GPIO_Port GPIOA
 #define PWM_LED_Pin GPIO_PIN_8

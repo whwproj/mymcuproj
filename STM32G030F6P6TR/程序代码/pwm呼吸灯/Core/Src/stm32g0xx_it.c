@@ -59,6 +59,7 @@
 
 /* External variables --------------------------------------------------------*/
 extern DMA_HandleTypeDef hdma_spi1_tx;
+extern TIM_HandleTypeDef htim14;
 extern DMA_HandleTypeDef hdma_usart1_rx;
 extern DMA_HandleTypeDef hdma_usart1_tx;
 extern UART_HandleTypeDef huart1;
@@ -129,6 +130,24 @@ void SysTick_Handler(void)
 /******************************************************************************/
 
 /**
+  * @brief This function handles EXTI line 4 to 15 interrupts.
+  */
+void EXTI4_15_IRQHandler(void)
+{
+  /* USER CODE BEGIN EXTI4_15_IRQn 0 */
+	BaseType_t phpt;
+  /* USER CODE END EXTI4_15_IRQn 0 */
+  //HAL_GPIO_EXTI_IRQHandler(NRF_IRQ_Pin);
+  /* USER CODE BEGIN EXTI4_15_IRQn 1 */
+	__HAL_GPIO_EXTI_CLEAR_IT(NRF_IRQ_Pin);
+	HAL_NVIC_DisableIRQ(NRF_IRQ_EXTI_IRQn);
+	nrf_str.heartTime = 0;
+	xTaskNotifyFromISR( nrf_control_taskHandle, 1U<<NRF_PARSE_DATA, eSetBits, &phpt );
+	portYIELD_FROM_ISR( phpt );
+  /* USER CODE END EXTI4_15_IRQn 1 */
+}
+
+/**
   * @brief This function handles DMA1 channel 1 interrupt.
   */
 void DMA1_Channel1_IRQHandler(void)
@@ -158,25 +177,39 @@ void DMA1_Channel2_3_IRQHandler(void)
 }
 
 /**
+  * @brief This function handles TIM14 global interrupt.
+  */
+void TIM14_IRQHandler(void)
+{
+  /* USER CODE BEGIN TIM14_IRQn 0 */
+
+  /* USER CODE END TIM14_IRQn 0 */
+  HAL_TIM_IRQHandler(&htim14);
+  /* USER CODE BEGIN TIM14_IRQn 1 */
+
+  /* USER CODE END TIM14_IRQn 1 */
+}
+
+/**
   * @brief This function handles USART1 global interrupt / USART1 wake-up interrupt through EXTI line 25.
   */
 void USART1_IRQHandler(void)
 {
   /* USER CODE BEGIN USART1_IRQn 0 */
-	BaseType_t phpt;
+	//BaseType_t phpt;
   /* USER CODE END USART1_IRQn 0 */
   HAL_UART_IRQHandler(&huart1);
   /* USER CODE BEGIN USART1_IRQn 1 */
 	if((__HAL_UART_GET_FLAG(&huart1,UART_FLAG_IDLE) != RESET))
 	{
 		__HAL_UART_CLEAR_IDLEFLAG(&huart1); 
-		xTaskNotifyFromISR( debugTaskHandle, 1U<<DEBUG_PARSE_DATA, eSetBits, &phpt );
-		portYIELD_FROM_ISR( phpt );
+		//xTaskNotifyFromISR( debugTaskHandle, 1U<<DEBUG_PARSE_DATA, eSetBits, &phpt );
+		//portYIELD_FROM_ISR( phpt );
 		
 	}else if ( __HAL_UART_GET_FLAG(&huart1,UART_FLAG_TC) != RESET ) {
 		__HAL_UART_CLEAR_FLAG( &huart1, UART_FLAG_TC );
-		xTaskNotifyFromISR( debugTaskHandle, 1U<<DEBUG_SEND_OK, eSetBits, &phpt );//DMA?????????
-		portYIELD_FROM_ISR( phpt );
+		//xTaskNotifyFromISR( debugTaskHandle, 1U<<DEBUG_SEND_OK, eSetBits, &phpt );//DMA?????????
+		//portYIELD_FROM_ISR( phpt );
 	}
   /* USER CODE END USART1_IRQn 1 */
 }

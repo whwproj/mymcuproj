@@ -23,14 +23,21 @@
 /*---- Bsp -------------------------*/
 #include "../Bsp/bsp_debug.h"
 #include "../Bsp/bsp_nrf.h"
+#include "../Bsp/bsp_flash.h"
+#include "../Bsp/bsp_led.h"
 
+/*---- Tools -------------------------*/
+#include "../Tools/crc.h"
 
-#define 	debugTaskSize					128
+#define	nrf_control_taskSize			128
 
 
 extern TaskHandle_t debugTaskHandle;
+extern TaskHandle_t nrf_control_taskHandle;
 
 
+
+void getSnByDeviceId_setClientId( void );
 
 
 #endif /*__COMMON__H*/
