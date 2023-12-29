@@ -175,14 +175,14 @@ void nrf_parse_data( void ) {
 	SPI_RW_Reg( NRF_WRITE_REG + STATUS, sta );
 	if ( sta & RX_DR ) {
 		SPI_Read_Buf( RD_RX_PLOAD, nrf_str.rxBuf, RX_PLOAD_WIDTH );
-		//printf("%s\n",nrf_str.rxBuf);
+		printf("%s\n",nrf_str.rxBuf);
 	} else {
 		goto end;
 	}
-	
+
 	if ( nrf_str.regSta == 4 ) {//等待注册反馈
 		if (  nrf_str.rxBuf[3]==0 || ((nrf_str.rxBuf[1]<<8)|nrf_str.rxBuf[2])==nrf_str.code ) {
-			if ( nrf_str.rxBuf[4] == nrf_str.localAddr[0] && 
+			if ( nrf_str.rxBuf[4] == nrf_str.localAddr[0] &&
 					 nrf_str.rxBuf[5] == nrf_str.localAddr[1] &&
 					 nrf_str.rxBuf[6] == nrf_str.localAddr[2] &&
 					 nrf_str.rxBuf[7] == nrf_str.localAddr[3] ) {
@@ -196,7 +196,7 @@ void nrf_parse_data( void ) {
 			}
 		}
 	}
-	
+
 	if ( nrf_str.rxBuf[3] == 1 ) {//msgType: 1:命令 中转站->设备 (回复时msgType需要设置为:2)
 		nrf_str.code = (nrf_str.rxBuf[1]<<8) | nrf_str.rxBuf[2];
 		dstr = (char*)&nrf_str.rxBuf[4];
@@ -204,12 +204,12 @@ void nrf_parse_data( void ) {
 			pwm_on();
 		} else if ( strstr( dstr, "PWM_OFF" ) != NULL ) {
 			pwm_off();
-		} else if ( strstr( dstr, "PWM_FLICKER" ) != NULL ) { 
+		} else if ( strstr( dstr, "PWM_FLICKER" ) != NULL ) {
 			pwm_flicker();
-		} else if ( strstr( dstr, "PWM_SET_" ) != NULL ) { 
+		} else if ( strstr( dstr, "PWM_SET_" ) != NULL ) {
 			dstr = strstr( dstr, "PWM_SET_" ) + 8;
 			pwm_set_speed( str_to_u16( dstr ) );
-		} 
+		}
 	}
 	
 	end:
@@ -326,5 +326,36 @@ static uint16_t str_to_u16( char * str ) {
 
 
 
+void tim_clear_nrfreg( void ) {
+	uint8_t sta;
+	sta = SPI_RW_Reg( NRF_READ_REG + STATUS, NOP );//0xFF空指令
+	if ( sta & ( (RX_DR)|(TX_DS)|(MAX_RT)|(TX_FULL) ) ) {
+		printf( "寄存器状态异常 sta: 0x%.2X\r\n", sta );
+		SPI_RW_Reg( NRF_WRITE_REG + STATUS, 0xF0 );
+		SPI_RW_Reg( FLUSH_RX, NOP );
+		SPI_RW_Reg( FLUSH_TX, NOP );
+		Rx_Mode();
+		__HAL_GPIO_EXTI_CLEAR_IT(NRF_IRQ_Pin);
+		HAL_NVIC_EnableIRQ(NRF_IRQ_EXTI_IRQn);
+		sta = SPI_RW_Reg( NRF_READ_REG + STATUS, NOP );//0xFF空指令
+		printf( "清除异常状态寄存器 sta: 0x%.2X\r\n", sta );
+	}
+}
+void nrf_receive_data_2(void) {
+	uint8_t sta, deviceId, msgType;
+	uint16_t code;
+	sta = SPI_RW_Reg( NRF_READ_REG + STATUS, NOP );//0xFF空指令
+	SPI_RW_Reg( NRF_WRITE_REG + STATUS, sta );
+	printf("sta: 0x%.2X  ", sta);
+	if ( sta & (RX_DR) ) {
+		SPI_Read_Buf( RD_RX_PLOAD, nrf_str.rxBuf, RX_PLOAD_WIDTH );
+		printf( "receive: %s\r\n", nrf_str.rxBuf );
+	} else {
+		
+	}
+	tim_clear_nrfreg();
+	__HAL_GPIO_EXTI_CLEAR_IT(NRF_IRQ_Pin);
+	HAL_NVIC_EnableIRQ(NRF_IRQ_EXTI_IRQn);
+}
 
 

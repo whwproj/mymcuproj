@@ -30,10 +30,14 @@
 #include "../Tools/crc.h"
 
 #define	nrf_control_taskSize			128
+#define	pwm_taskSize					128
+#define	debug_taskSize					128
 
 
-extern TaskHandle_t debugTaskHandle;
+
 extern TaskHandle_t nrf_control_taskHandle;
+extern TaskHandle_t pwm_taskHandle;
+extern TaskHandle_t debug_taskHandle;
 
 
 

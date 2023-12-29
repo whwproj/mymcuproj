@@ -11,16 +11,13 @@ typedef struct _DEBUG_STR {
 	uint32_t len;
 } DEBUG_STR;
 
-
 extern DEBUG_STR debug_str;
-
 
 #define DEBUG_BUFF_SIZE	128
 
 /*---- debug task bits start ----------------*/
-#define DEBUG_DEVICE_INIT 0
-#define DEBUG_PARSE_DATA 	1
-#define DEBUG_SEND_OK 		2
+#define DEBUG_INIT 0
+#define PARSE_DATA 	1
 /*---- debug task bits end ----------------*/
 
 void debug_init( void );

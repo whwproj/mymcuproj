@@ -58,10 +58,10 @@
 /* USER CODE END 0 */
 
 /* External variables --------------------------------------------------------*/
-extern DMA_HandleTypeDef hdma_spi1_tx;
-extern TIM_HandleTypeDef htim14;
+extern ADC_HandleTypeDef hadc1;
+extern TIM_HandleTypeDef htim16;
+extern TIM_HandleTypeDef htim17;
 extern DMA_HandleTypeDef hdma_usart1_rx;
-extern DMA_HandleTypeDef hdma_usart1_tx;
 extern UART_HandleTypeDef huart1;
 /* USER CODE BEGIN EV */
 
@@ -135,15 +135,11 @@ void SysTick_Handler(void)
 void EXTI4_15_IRQHandler(void)
 {
   /* USER CODE BEGIN EXTI4_15_IRQn 0 */
-	BaseType_t phpt;
   /* USER CODE END EXTI4_15_IRQn 0 */
-  //HAL_GPIO_EXTI_IRQHandler(NRF_IRQ_Pin);
+  HAL_GPIO_EXTI_IRQHandler(NRF_IRQ_Pin);
+  HAL_GPIO_EXTI_IRQHandler(STDBY_G_Pin);
+  HAL_GPIO_EXTI_IRQHandler(CHRG_R_Pin);
   /* USER CODE BEGIN EXTI4_15_IRQn 1 */
-	__HAL_GPIO_EXTI_CLEAR_IT(NRF_IRQ_Pin);
-	HAL_NVIC_DisableIRQ(NRF_IRQ_EXTI_IRQn);
-	nrf_str.heartTime = 0;
-	xTaskNotifyFromISR( nrf_control_taskHandle, 1U<<NRF_PARSE_DATA, eSetBits, &phpt );
-	portYIELD_FROM_ISR( phpt );
   /* USER CODE END EXTI4_15_IRQn 1 */
 }
 
@@ -155,39 +151,52 @@ void DMA1_Channel1_IRQHandler(void)
   /* USER CODE BEGIN DMA1_Channel1_IRQn 0 */
 
   /* USER CODE END DMA1_Channel1_IRQn 0 */
-  HAL_DMA_IRQHandler(&hdma_spi1_tx);
+  HAL_DMA_IRQHandler(&hdma_usart1_rx);
   /* USER CODE BEGIN DMA1_Channel1_IRQn 1 */
 
   /* USER CODE END DMA1_Channel1_IRQn 1 */
 }
 
 /**
-  * @brief This function handles DMA1 channel 2 and channel 3 interrupts.
+  * @brief This function handles ADC1 interrupt.
   */
-void DMA1_Channel2_3_IRQHandler(void)
+void ADC1_IRQHandler(void)
 {
-  /* USER CODE BEGIN DMA1_Channel2_3_IRQn 0 */
+  /* USER CODE BEGIN ADC1_IRQn 0 */
 
-  /* USER CODE END DMA1_Channel2_3_IRQn 0 */
-  HAL_DMA_IRQHandler(&hdma_usart1_rx);
-  HAL_DMA_IRQHandler(&hdma_usart1_tx);
-  /* USER CODE BEGIN DMA1_Channel2_3_IRQn 1 */
+  /* USER CODE END ADC1_IRQn 0 */
+  HAL_ADC_IRQHandler(&hadc1);
+  /* USER CODE BEGIN ADC1_IRQn 1 */
 
-  /* USER CODE END DMA1_Channel2_3_IRQn 1 */
+  /* USER CODE END ADC1_IRQn 1 */
 }
 
 /**
-  * @brief This function handles TIM14 global interrupt.
+  * @brief This function handles TIM16 global interrupt.
   */
-void TIM14_IRQHandler(void)
+void TIM16_IRQHandler(void)
 {
-  /* USER CODE BEGIN TIM14_IRQn 0 */
+  /* USER CODE BEGIN TIM16_IRQn 0 */
 
-  /* USER CODE END TIM14_IRQn 0 */
-  HAL_TIM_IRQHandler(&htim14);
-  /* USER CODE BEGIN TIM14_IRQn 1 */
+  /* USER CODE END TIM16_IRQn 0 */
+  HAL_TIM_IRQHandler(&htim16);
+  /* USER CODE BEGIN TIM16_IRQn 1 */
 
-  /* USER CODE END TIM14_IRQn 1 */
+  /* USER CODE END TIM16_IRQn 1 */
+}
+
+/**
+  * @brief This function handles TIM17 global interrupt.
+  */
+void TIM17_IRQHandler(void)
+{
+  /* USER CODE BEGIN TIM17_IRQn 0 */
+
+  /* USER CODE END TIM17_IRQn 0 */
+  HAL_TIM_IRQHandler(&htim17);
+  /* USER CODE BEGIN TIM17_IRQn 1 */
+
+  /* USER CODE END TIM17_IRQn 1 */
 }
 
 /**
@@ -196,24 +205,33 @@ void TIM14_IRQHandler(void)
 void USART1_IRQHandler(void)
 {
   /* USER CODE BEGIN USART1_IRQn 0 */
-	//BaseType_t phpt;
+	BaseType_t phpt;
   /* USER CODE END USART1_IRQn 0 */
   HAL_UART_IRQHandler(&huart1);
   /* USER CODE BEGIN USART1_IRQn 1 */
 	if((__HAL_UART_GET_FLAG(&huart1,UART_FLAG_IDLE) != RESET))
 	{
-		__HAL_UART_CLEAR_IDLEFLAG(&huart1); 
-		//xTaskNotifyFromISR( debugTaskHandle, 1U<<DEBUG_PARSE_DATA, eSetBits, &phpt );
-		//portYIELD_FROM_ISR( phpt );
-		
-	}else if ( __HAL_UART_GET_FLAG(&huart1,UART_FLAG_TC) != RESET ) {
-		__HAL_UART_CLEAR_FLAG( &huart1, UART_FLAG_TC );
-		//xTaskNotifyFromISR( debugTaskHandle, 1U<<DEBUG_SEND_OK, eSetBits, &phpt );//DMA?????????
-		//portYIELD_FROM_ISR( phpt );
+		__HAL_UART_CLEAR_IDLEFLAG(&huart1);  //清除空闲状态标志
+		xTaskNotifyFromISR( debug_taskHandle, 1U<<PARSE_DATA, eSetBits,  &phpt );
+		portYIELD_FROM_ISR( phpt );
+
 	}
   /* USER CODE END USART1_IRQn 1 */
 }
 
 /* USER CODE BEGIN 1 */
-
+void HAL_GPIO_EXTI_Rising_Callback(uint16_t GPIO_Pin) {
+	BaseType_t phpt;
+	if ( GPIO_Pin == NRF_IRQ_Pin ) {
+		HAL_NVIC_DisableIRQ(NRF_IRQ_EXTI_IRQn);
+		nrf_str.heartTime = 0;
+		xTaskNotifyFromISR( nrf_control_taskHandle, 1U<<NRF_PARSE_DATA, eSetBits, &phpt );
+		portYIELD_FROM_ISR( phpt );
+		
+	} else if ( GPIO_Pin == STDBY_G_Pin ) {
+		
+	} else if ( GPIO_Pin == CHRG_R_Pin ) {
+		
+	}
+}
 /* USER CODE END 1 */
