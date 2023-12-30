@@ -150,7 +150,7 @@ int nrf_send_data( void ) {
 		vTaskDelay(2);
 		sta = SPI_RW_Reg( NRF_READ_REG + STATUS, NOP );
 	} while ( (sta & ((TX_DS)|(MAX_RT))) == 0 );
-	printf("sta: 0x%.2X\r\n", sta);
+	printf("send sta: 0x%.2X\r\n", sta);
 	if ( sta & (TX_DS) ) {//发送成功
 		res = 0;
 	} else if ( sta & (MAX_RT) ) {//重发次数达到最大,发送失败
@@ -173,14 +173,16 @@ void nrf_parse_data( void ) {
 	
 	sta = SPI_RW_Reg( NRF_READ_REG + STATUS, NOP );//0xFF空指令
 	SPI_RW_Reg( NRF_WRITE_REG + STATUS, sta );
+	printf("sta: 0x%.2X\r\n", sta);
 	if ( sta & RX_DR ) {
 		SPI_Read_Buf( RD_RX_PLOAD, nrf_str.rxBuf, RX_PLOAD_WIDTH );
 		printf("%s\n",nrf_str.rxBuf);
 	} else {
 		goto end;
 	}
-
+	
 	if ( nrf_str.regSta == 4 ) {//等待注册反馈
+		printf("注册反馈\r\n");
 		if (  nrf_str.rxBuf[3]==0 || ((nrf_str.rxBuf[1]<<8)|nrf_str.rxBuf[2])==nrf_str.code ) {
 			if ( nrf_str.rxBuf[4] == nrf_str.localAddr[0] &&
 					 nrf_str.rxBuf[5] == nrf_str.localAddr[1] &&
@@ -192,7 +194,7 @@ void nrf_parse_data( void ) {
 				}
 				nrf_str.regSta = 2;//注册成功
 				//LED0_OFF();
-				//printf("设备注册成功\r\n");
+				printf("设备注册成功\r\n");
 			}
 		}
 	}
@@ -200,15 +202,22 @@ void nrf_parse_data( void ) {
 	if ( nrf_str.rxBuf[3] == 1 ) {//msgType: 1:命令 中转站->设备 (回复时msgType需要设置为:2)
 		nrf_str.code = (nrf_str.rxBuf[1]<<8) | nrf_str.rxBuf[2];
 		dstr = (char*)&nrf_str.rxBuf[4];
-		if ( strstr( dstr, "PWM_ON" ) != NULL ) {
-			pwm_on();
-		} else if ( strstr( dstr, "PWM_OFF" ) != NULL ) {
-			pwm_off();
-		} else if ( strstr( dstr, "PWM_FLICKER" ) != NULL ) {
-			pwm_flicker();
-		} else if ( strstr( dstr, "PWM_SET_" ) != NULL ) {
-			dstr = strstr( dstr, "PWM_SET_" ) + 8;
-			pwm_set_speed( str_to_u16( dstr ) );
+		
+		if ( strstr( (char *)dstr, "led_on" ) != NULL ) {
+			xTaskNotify( pwm_taskHandle, 1U<<LED_ON, eSetBits );
+			printf("led_on ok\r\n");
+		} else if ( strstr( (char *)dstr, "led_off" ) != NULL ) {
+			xTaskNotify( pwm_taskHandle, 1U<<LED_OFF, eSetBits );
+			printf("led_off ok\r\n");
+		}  else if ( strstr( (char *)dstr, "power_on" ) != NULL ) {
+			xTaskNotify( pwm_taskHandle, 1U<<POWER_ON, eSetBits );
+			printf("power_on ok\r\n");
+		} else if ( strstr( (char *)dstr, "power_off" ) != NULL ) {
+			xTaskNotify( pwm_taskHandle, 1U<<POWER_OFF, eSetBits );
+			printf("power_off ok\r\n");
+		}  else if ( strstr( (char *)dstr, "pwm_flashing" ) != NULL ) {
+			xTaskNotify( pwm_taskHandle, 1U<<PWM_FLASHING, eSetBits );
+			printf("pwm_flashing ok\r\n");
 		}
 	}
 	
@@ -234,6 +243,7 @@ void nrf_register_device( void ) {
 //	nrf_str.txBuf[4], nrf_str.txBuf[5], nrf_str.txBuf[6], nrf_str.txBuf[7]);
 	for ( ;; ) {
 		if ( nrf_send_data() != -1 ) {//发送成功
+			printf("发送成功\r\n");
 			nrf_str.regSta = 4;
 			break;
 		}

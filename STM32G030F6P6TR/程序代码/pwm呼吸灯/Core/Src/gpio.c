@@ -54,7 +54,7 @@ void MX_GPIO_Init(void)
 
   /*Configure GPIO pins : PCPin PCPin */
   GPIO_InitStruct.Pin = STDBY_G_Pin|CHRG_R_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
+  GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;
   GPIO_InitStruct.Pull = GPIO_PULLUP;
   HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
@@ -67,7 +67,7 @@ void MX_GPIO_Init(void)
 
   /*Configure GPIO pin : PtPin */
   GPIO_InitStruct.Pin = NRF_IRQ_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
+  GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;
   GPIO_InitStruct.Pull = GPIO_PULLUP;
   HAL_GPIO_Init(NRF_IRQ_GPIO_Port, &GPIO_InitStruct);
 

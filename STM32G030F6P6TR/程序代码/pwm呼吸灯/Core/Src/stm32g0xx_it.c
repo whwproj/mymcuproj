@@ -220,7 +220,7 @@ void USART1_IRQHandler(void)
 }
 
 /* USER CODE BEGIN 1 */
-void HAL_GPIO_EXTI_Rising_Callback(uint16_t GPIO_Pin) {
+void HAL_GPIO_EXTI_Falling_Callback(uint16_t GPIO_Pin) {
 	BaseType_t phpt;
 	if ( GPIO_Pin == NRF_IRQ_Pin ) {
 		HAL_NVIC_DisableIRQ(NRF_IRQ_EXTI_IRQn);

@@ -49,6 +49,8 @@ void read_data_from_flash( void ) {
 		if ( j >= 2 ) { pudata[1] = da_t>>16; }
 		if ( j == 3 ) { pudata[2] = da_t>>8; }
 	}
+	
+	printf("deviceid: %d\r\n", udata.deviceId);
 }
 
 

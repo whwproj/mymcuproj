@@ -172,22 +172,24 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
 
 	}
 	if (htim->Instance == TIM17) {
-		if ( nrf_str.regSta==1 || nrf_str.regSta==4 ) {//注册/等待注册反馈
-			if ( nrf_str.regSta == 4 ) {
-				if ( nrf_str.reg4Num++ > 4 ) {
-					nrf_str.reg4Num = 0;
-					nrf_str.regSta = 1;
-					xTaskNotifyFromISR( nrf_control_taskHandle, 1U<<NRF_REGISTER_DEVICE, eSetBits, &phpt );//发送心跳
-				}
-			}
-		} else if ( nrf_str.regSta == 2 ) {//通信定时,10s发一次心跳
-			nrf_str.heartTime++;
-			if ( nrf_str.heartTime > 20 ) {
-				nrf_str.heartTime = 0;
-				nrf_str.regSta = 3;
-				xTaskNotifyFromISR( nrf_control_taskHandle, 1U<<NRF_HEARTBEAT, eSetBits, &phpt );//发送心跳
-			}
-		}
+//		if ( nrf_str.regSta==1 || nrf_str.regSta==4 ) {//注册/等待注册反馈
+//			if ( nrf_str.regSta == 4 ) {
+//				if ( nrf_str.reg4Num++ > 4 ) {
+//					nrf_str.reg4Num = 0;
+//					nrf_str.regSta = 1;
+//					xTaskNotifyFromISR( nrf_control_taskHandle, 1U<<NRF_REGISTER_DEVICE, eSetBits, &phpt );
+//				}
+//			}
+//		} else if ( nrf_str.regSta == 2 ) {//通信定时,10s发一次心跳
+//			nrf_str.heartTime++;
+//			if ( nrf_str.heartTime > 20 ) {
+//				nrf_str.heartTime = 0;
+//				nrf_str.regSta = 3;
+//				xTaskNotifyFromISR( nrf_control_taskHandle, 1U<<NRF_HEARTBEAT, eSetBits, &phpt );//发送心跳
+//			}
+//		}
+		
+		//tim_clear_nrfreg();
 	}
 }
 /* USER CODE END 4 */

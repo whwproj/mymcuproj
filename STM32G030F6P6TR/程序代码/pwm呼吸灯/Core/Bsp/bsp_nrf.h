@@ -290,6 +290,7 @@ void nrf_send_heartbeat( void );
 void nrf_replay_cmd( char* replay );
 void nrf_push_data( char* pdata );//推送数据
 
+void tim_clear_nrfreg( void );
 #endif /*__BSP_NRF__H*/
 
 

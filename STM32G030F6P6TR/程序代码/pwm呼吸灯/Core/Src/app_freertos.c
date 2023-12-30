@@ -125,7 +125,8 @@ void StartDefaultTask(void const * argument)
 	vTaskDelay(100);
 	xTaskNotify( nrf_control_taskHandle, 1U<<NRF_REGISTER_DEVICE, eSetBits );
 	xTaskNotify( debug_taskHandle, 1U<<DEBUG_INIT, eSetBits );
-	
+	HAL_TIM_Base_Start_IT( &htim17 );
+	HAL_TIM_Base_Start( &htim17 );
   /* Infinite loop */
   for(;;) {
 	vTaskDelete( defaultTaskHandle );
