@@ -24,6 +24,7 @@
 #include "main.h"
 
 /* Private define ------------------------------------------------------------*/
+#include "common.h"
 /* Private variables ---------------------------------------------------------*/
 /* Private user code ---------------------------------------------------------*/
 /* Private macro -------------------------------------------------------------*/
@@ -41,8 +42,10 @@ int main(void)
   
   /* Configure the system clock */
   APP_SystemClockConfig(); 
-  
+  MX_USART1_UART_Init();
+	
   /* Infinite loop */
+	printf("init ok");
   while (1)
   {
   }

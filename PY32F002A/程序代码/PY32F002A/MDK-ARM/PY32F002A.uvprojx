@@ -387,6 +387,11 @@
               <FileType>1</FileType>
               <FilePath>..\Core\Src\py32f0xx_it.c</FilePath>
             </File>
+            <File>
+              <FileName>usart.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Core\Src\usart.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
