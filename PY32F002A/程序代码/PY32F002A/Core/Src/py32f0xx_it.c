@@ -25,6 +25,7 @@
 #include "py32f0xx_it.h"
 
 /* Private includes ----------------------------------------------------------*/
+#include "common.h"
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
 /* Private macro -------------------------------------------------------------*/
@@ -74,6 +75,15 @@ void SysTick_Handler(void)
 {
   HAL_IncTick();
 }
+void EXTI4_15_IRQHandler(void) {
+	HAL_GPIO_EXTI_IRQHandler(IR_Pin);
+}
+
+
+void TIM16_IRQHandler(void) {
+  HAL_TIM_IRQHandler(&htim16);
+}
+
 
 /******************************************************************************/
 /* PY32F0xx Peripheral Interrupt Handlers                                     */

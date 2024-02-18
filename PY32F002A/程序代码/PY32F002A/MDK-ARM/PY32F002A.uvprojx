@@ -392,10 +392,27 @@
               <FileType>1</FileType>
               <FilePath>..\Core\Src\usart.c</FilePath>
             </File>
+            <File>
+              <FileName>gpio.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Core\Src\gpio.c</FilePath>
+            </File>
+            <File>
+              <FileName>tim.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Core\Src\tim.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
           <GroupName>Application/User</GroupName>
+          <Files>
+            <File>
+              <FileName>bsp_ir.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Bsp\bsp_ir.c</FilePath>
+            </File>
+          </Files>
         </Group>
         <Group>
           <GroupName>::CMSIS</GroupName>

@@ -34,6 +34,11 @@ extern "C" {
 
 /* Private includes ----------------------------------------------------------*/
 /* Private defines -----------------------------------------------------------*/
+#define IR_Pin GPIO_PIN_7
+#define IR_GPIO_Port GPIOA
+#define IR_EXTI_IRQn EXTI4_15_IRQn
+	
+	
 /* Exported variables prototypes ---------------------------------------------*/
 /* Exported functions prototypes ---------------------------------------------*/
 void APP_ErrorHandler(void);
