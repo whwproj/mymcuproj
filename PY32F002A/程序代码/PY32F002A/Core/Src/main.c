@@ -41,13 +41,21 @@ int main(void)
   HAL_Init();
   
   /* Configure the system clock */
-  APP_SystemClockConfig(); 
-  MX_USART1_UART_Init();
+	APP_SystemClockConfig(); 
+	HAL_Delay(1000);
+	
+	MX_GPIO_Init();
+	MX_USART1_UART_Init();
 	
   /* Infinite loop */
-	printf("init ok");
+	printf("init ok\r\n");
   while (1)
   {
+	  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_1, GPIO_PIN_SET );
+	  HAL_Delay(1000);
+	  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_1, GPIO_PIN_RESET );
+	  HAL_Delay(1000);
+	  printf("uart send\r\n");
   }
 }
 
