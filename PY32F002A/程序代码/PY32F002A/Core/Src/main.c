@@ -31,6 +31,8 @@
 /* Private function prototypes -----------------------------------------------*/
 static void APP_SystemClockConfig(void);
 
+uint16_t temp_t;
+
 /**
   * @brief  The application entry point
   * @retval int
@@ -42,21 +44,23 @@ int main(void)
   
   /* Configure the system clock */
 	APP_SystemClockConfig(); 
-	HAL_Delay(1000);
 	
 	MX_GPIO_Init();
 	MX_USART1_UART_Init();
-	MX_TIM16_Init();
 	
+	MX_TIM16_Init();
 	HAL_TIM_Base_Start_IT( &htim16 );
-	//HAL_TIM_Base_Stop( &htim3 );
 	HAL_TIM_Base_Start( &htim16 );
-	 __HAL_TIM_SET_COUNTER( &htim16, 0 );
+	__HAL_TIM_SET_COUNTER( &htim16, 0 );
+	
+	TIM1_PWM_Init();
+	HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_4);//通道4开始输出PWM
 	
   /* Infinite loop */
-	printf("init ok\r\n");
+  printf("init ok\r\n");
   while (1)
   {
+
 //	  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_1, GPIO_PIN_SET );
 //	  HAL_Delay(1000);
 //	  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_1, GPIO_PIN_RESET );
@@ -65,11 +69,13 @@ int main(void)
 	  if ( ir_str.rxDr != 0 ) {
 		ir_str.rxDr = 0;
 		if ( ri_data_parse() == 0 ) {
-			printf("接收到用户码: 0x%.2X 0x%.2X  ", ir_str.irData[0], ir_str.irData[1]);
-			printf("接收到键值码: 0x%.2X 0x%.2X\r\n", ir_str.irData[2], ir_str.irData[3]);
+			//printf("接收到用户码: 0x%.2X 0x%.2X  ", ir_str.irData[0], ir_str.irData[1]);
+			//printf("接收到键值码: 0x%.2X 0x%.2X\r\n", ir_str.irData[2], ir_str.irData[3]);
+			execute_led();
+		} else {
+			//printf("ErrCode\r\n");
 		}
 	}
-	  
   }
 }
 
@@ -91,7 +97,7 @@ void HAL_GPIO_EXTI_Callback ( uint16_t GPIO_Pin ) {
 			ir_str.rxDr = 1;//一帧数据接收完毕
 		}
 	}
-	if ( ir_str.count>=42 && /*ir_str.count<=54 &&*/ !ir_str.rxDr ) {//引导码
+	if ( ir_str.count>=42 && ir_str.count<=54 && !ir_str.rxDr ) {//引导码
 		//printf("解码开始\r\n");
 		ir_str.startFlag = 1;//解码开始
 		idx = 0;
