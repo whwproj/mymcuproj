@@ -1,9 +1,13 @@
 #include "../Bsp/bsp_led.h"
 
-PWM_STR pwm_str;
+PWM_STR pwm_str = {
+	.lightSta=0,
+	.maxBtnPer=0,
+	.pulse=0,
+	.mode=0
+};
 
 void pwm_on( void ) {
-	
 	
 }
 
@@ -18,18 +22,18 @@ void pwm_flicker( void ) {
 }
 
 void pwm_set_speed( uint16_t n ) {
-	
-	
+	__HAL_TIM_SetCompare(&htim3, TIM_CHANNEL_3, ( n * pwm_str.maxBtnPer ) / pwm_str.maxBtnPer );
+	pwm_str.lightSta = 1;
 }
 
-void led_turn_on ( void ) {
+void led_turn_on ( uint16_t pwmVal ) {
 //	uint8_t i;
 //	for ( i=0; i<23; i++ ) {
 //		__HAL_TIM_SetCompare(&htim3, TIM_CHANNEL_3, pwm1[i]);//ўلռࠕ҈
 //		vTaskDelay( 100 );
 //	}
-	uint16_t pwmVal = 0;
-	if ( pwm_str.lightSta == 0 ) {
+	//uint16_t pwmVal = 0;
+	//if ( pwm_str.lightSta==0 || pwm_str.pulse<=100 ) {
 		while ( pwmVal < 1000 ) {
 			if ( pwmVal <= 100 ) {
 				pwmVal++;
@@ -53,17 +57,18 @@ void led_turn_on ( void ) {
 			}
 		}
 		pwm_str.lightSta = 1;
-	}
+		pwm_str.pulse = pwm_str.maxBtnPer;
+	//}
 }
 
-void led_turn_off ( void ) {
+void led_turn_off ( uint16_t pwmVal ) {
 //	uint8_t i;
 //	for ( i=23; i>0; i-- ) {
 //		__HAL_TIM_SetCompare(&htim3, TIM_CHANNEL_3, pwm1[i-1]);//ўلռࠕ҈
 //		vTaskDelay( 100 );
 //	}
-	uint16_t pwmVal = 1000;
-	if ( pwm_str.lightSta == 1 ) {
+	//uint16_t pwmVal = 1000;
+	//if ( pwm_str.lightSta == 1 ) {
 		while ( pwmVal ) {
 			if ( pwmVal <= 100 ) {
 				pwmVal--;
@@ -87,7 +92,8 @@ void led_turn_off ( void ) {
 			}
 		}
 		pwm_str.lightSta = 0;
-	}
+		pwm_str.pulse = 0;
+	//}
 }
 
 void pwm_flashing ( void ) {

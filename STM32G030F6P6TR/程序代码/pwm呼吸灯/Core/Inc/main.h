@@ -76,7 +76,9 @@ void Error_Handler(void);
 #define PWM_LED_GPIO_Port GPIOB
 #define HXCTL_Pin GPIO_PIN_11
 #define HXCTL_GPIO_Port GPIOA
-
+#define IR_GPIO_Pin GPIO_PIN_7
+#define IR_GPIO_Port	GPIOB
+#define IR_EXTI_IRQn EXTI4_15_IRQn
 /* USER CODE BEGIN Private defines */
 
 /* USER CODE END Private defines */

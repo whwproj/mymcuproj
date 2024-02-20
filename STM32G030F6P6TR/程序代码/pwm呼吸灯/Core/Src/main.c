@@ -169,7 +169,10 @@ void SystemClock_Config(void)
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
 	BaseType_t phpt;
 	if (htim->Instance == TIM16) {
-
+		ir_str.count++;
+		if ( ir_str.checkRepet > 0 ) {//计数一次260us 110ms共计数 = 110*1000/260次 = 423.07次 100ms~120ms：384~461次
+			ir_str.checkRepet++;
+		}
 	}
 	if (htim->Instance == TIM17) {
 //		if ( nrf_str.regSta==1 || nrf_str.regSta==4 ) {//注册/等待注册反馈

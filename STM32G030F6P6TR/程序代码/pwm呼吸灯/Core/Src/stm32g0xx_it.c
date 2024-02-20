@@ -139,6 +139,7 @@ void EXTI4_15_IRQHandler(void)
   HAL_GPIO_EXTI_IRQHandler(NRF_IRQ_Pin);
   HAL_GPIO_EXTI_IRQHandler(STDBY_G_Pin);
   HAL_GPIO_EXTI_IRQHandler(CHRG_R_Pin);
+	HAL_GPIO_EXTI_IRQHandler(IR_GPIO_Pin);
   /* USER CODE BEGIN EXTI4_15_IRQn 1 */
   /* USER CODE END EXTI4_15_IRQn 1 */
 }
@@ -232,6 +233,41 @@ void HAL_GPIO_EXTI_Falling_Callback(uint16_t GPIO_Pin) {
 		
 	} else if ( GPIO_Pin == CHRG_R_Pin ) {
 		
+	} else if ( GPIO_Pin == IR_GPIO_Pin ) {
+		static uint8_t idx;
+		//采用280us中断一次 https://zhuanlan.zhihu.com/p/532388873  https://blog.csdn.net/STATEABC/article/details/131857097
+		//NEC协议 引导码：低9ms(38Khz载波)~高4.5ms(空) -> 8000~10000us + 4000~5000us  最短12000us(42次中断) 最长15000us(54次中断)
+		//逻辑“1”：低560us(38Khz载波) + 高1680us(空) = 2.24ms (8次中断)
+		//逻辑“0”：低560us(38Khz载波) + 高560us(空) = 1.12ms (4次中断)
+		//printf("..%d\r\n", ir_str.count);
+		if ( ir_str.startFlag!=0 && (idx<32) && ir_str.count<42 ) {
+			ir_str.irBitData[idx] = ir_str.count;
+			__HAL_TIM_SET_COUNTER( &htim16, 0 );
+			idx++;
+			if ( idx >= 32 ) {
+				idx = 0;
+				ir_str.rxDr = 1;//一帧数据接收完毕
+				ir_str.irRepet = 0;//非重复码
+				ir_str.startFlag = 0;//解码结束
+				xTaskNotifyFromISR( ir_taskHandle, 1U<<IR_DATA_PARSE, eSetBits, &phpt );
+			}
+		}
+		if ( ir_str.count>=42 && ir_str.count<=54 && !ir_str.rxDr ) {//引导码
+			//printf("解码开始\r\n");
+			ir_str.startFlag = 1;//解码开始
+			if ( ir_str.checkRepet>384 && ir_str.checkRepet<461 ) {//是重复码
+				ir_str.rxDr = 1;//一帧数据接收完毕
+				ir_str.irRepet = 1;//是重复码
+				ir_str.startFlag = 0;//解码结束
+				xTaskNotifyFromISR( ir_taskHandle, 1U<<IR_DATA_PARSE, eSetBits, &phpt );
+			}
+			ir_str.checkRepet = 1;//判断重复码开始
+			idx = 0;
+			__HAL_TIM_SET_COUNTER( &htim16, 0 );
+		}
+		ir_str.count = 0;
 	}
 }
+
+
 /* USER CODE END 1 */
