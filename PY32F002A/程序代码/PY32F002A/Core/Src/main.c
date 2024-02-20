@@ -60,12 +60,6 @@ int main(void)
   printf("init ok\r\n");
   while (1)
   {
-
-//	  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_1, GPIO_PIN_SET );
-//	  HAL_Delay(1000);
-//	  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_1, GPIO_PIN_RESET );
-//	  HAL_Delay(1000);
-//	  printf("uart send\r\n");
 	  if ( ir_str.rxDr != 0 ) {
 		ir_str.rxDr = 0;
 		if ( ri_data_parse() == 0 ) {
@@ -82,12 +76,12 @@ int main(void)
 
 void HAL_GPIO_EXTI_Callback ( uint16_t GPIO_Pin ) {
 	static uint8_t idx;
-	//采用280us中断一次 https://zhuanlan.zhihu.com/p/532388873
+	//采用280us中断一次 https://zhuanlan.zhihu.com/p/532388873  https://blog.csdn.net/STATEABC/article/details/131857097
 	//NEC协议 引导码：低9ms(38Khz载波)~高4.5ms(空) -> 8000~10000us + 4000~5000us  最短12000us(42次中断) 最长15000us(54次中断)
 	//逻辑“1”：低560us(38Khz载波) + 高1680us(空) = 2.24ms (8次中断)
 	//逻辑“0”：低560us(38Khz载波) + 高560us(空) = 1.12ms (4次中断)
 	//printf("..%d\r\n", ir_str.count);
-	if ( ir_str.startFlag != 0 && (idx<32)) {
+	if ( ir_str.startFlag!=0 && (idx<32) && ir_str.count<42 ) {
 		ir_str.irBitData[idx] = ir_str.count;
 		__HAL_TIM_SET_COUNTER( &htim16, 0 );
 		idx++;
@@ -95,11 +89,18 @@ void HAL_GPIO_EXTI_Callback ( uint16_t GPIO_Pin ) {
 			ir_str.startFlag = 0;//解码结束
 			idx = 0;
 			ir_str.rxDr = 1;//一帧数据接收完毕
+			ir_str.irRepet = 0;//非重复码
 		}
 	}
 	if ( ir_str.count>=42 && ir_str.count<=54 && !ir_str.rxDr ) {//引导码
 		//printf("解码开始\r\n");
 		ir_str.startFlag = 1;//解码开始
+		if ( ir_str.checkRepet>384 && ir_str.checkRepet<461 ) {//是重复码
+			ir_str.startFlag = 0;//解码结束
+			ir_str.rxDr = 1;//一帧数据接收完毕
+			ir_str.irRepet = 1;//是重复码
+		}
+		ir_str.checkRepet = 1;//判断重复码开始
 		idx = 0;
 		__HAL_TIM_SET_COUNTER( &htim16, 0 );
 	}
@@ -109,6 +110,9 @@ void HAL_GPIO_EXTI_Callback ( uint16_t GPIO_Pin ) {
 void HAL_TIM_PeriodElapsedCallback ( TIM_HandleTypeDef *htim ) {
 	if ( htim == &htim16 ) {
 		ir_str.count++;
+		if ( ir_str.checkRepet > 0 ) {//计数一次260us 110ms共计数 = 110*1000/260次 = 423.07次 100ms~120ms：384~461次
+			ir_str.checkRepet++;
+		}
 	}
 }
 

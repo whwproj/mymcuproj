@@ -41,17 +41,17 @@ void execute_led( void ) {
 	uint16_t temp;
 	temp = ir_str.irData[2]<<8 | ir_str.irData[3];
 	if ( temp == LIGHT_ENHANCE_1 ) {
-		led_str.r_pulse = (led_str.r_pulse+10)>100 ? 100 : (led_str.r_pulse+10);
-		led_str.g_pulse = (led_str.g_pulse+10)>100 ? 100 : (led_str.g_pulse+10);
-		led_str.b_pulse = (led_str.b_pulse+10)>100 ? 100 : (led_str.b_pulse+10);
+		led_str.r_pulse = (led_str.r_pulse+5)>100 ? 100 : (led_str.r_pulse+5);
+		led_str.g_pulse = (led_str.g_pulse+5)>100 ? 100 : (led_str.g_pulse+5);
+		led_str.b_pulse = (led_str.b_pulse+5)>100 ? 100 : (led_str.b_pulse+5);
 		//set_pwm_configchannel_2( led_str.r_pulse );
 		//set_pwm_configchannel_3( led_str.g_pulse );
 		set_pwm_configchannel_4( led_str.b_pulse );
 		
 	} else if ( temp == LIGHT_WEAKEN_1 ) {
-		led_str.r_pulse = (led_str.r_pulse-10)<0 ? 0 : (led_str.r_pulse-10);
-		led_str.g_pulse = (led_str.g_pulse-10)<0 ? 0 : (led_str.g_pulse-10);
-		led_str.b_pulse = (led_str.b_pulse-10)<0 ? 0 : (led_str.b_pulse-10);
+		led_str.r_pulse = (led_str.r_pulse-5)<0 ? 0 : (led_str.r_pulse-5);
+		led_str.g_pulse = (led_str.g_pulse-5)<0 ? 0 : (led_str.g_pulse-5);
+		led_str.b_pulse = (led_str.b_pulse-5)<0 ? 0 : (led_str.b_pulse-5);
 		//set_pwm_configchannel_2( led_str.r_pulse );
 		//set_pwm_configchannel_3( led_str.g_pulse );
 		set_pwm_configchannel_4( led_str.b_pulse );
