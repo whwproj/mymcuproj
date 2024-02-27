@@ -133,8 +133,8 @@ void StartDefaultTask(void const * argument)
 		nrf_register_device();
 		nrf_parse_data();//解析数据
 		
-		APDS9930_init(  );
-		APDS9930_interrupt(  );
+		APDS9930_init();
+		APDS9930_interrupt();
 		
 		
 		W25Qx_ReadDeviceID();//读取DeviceID
@@ -151,7 +151,6 @@ void StartDefaultTask(void const * argument)
 		Wkup0_Check_Up_HAL(  );
 		enter_standbyMode(  );
 		judge_if_Rest();
-		
 		
 		
 		OLED_Init();
