@@ -25,7 +25,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "common.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -121,6 +121,29 @@ void MX_FREERTOS_Init(void) {
 void StartDefaultTask(void const * argument)
 {
   /* USER CODE BEGIN StartDefaultTask */
+  uint16_t data;
+  HAL_GPIO_WritePin(BK_GPIO_Port,BK_Pin,GPIO_PIN_SET);
+  LCD_RST_Low();
+  vTaskDelay(100);
+  LCD_RST_High();
+  // HAL_UART_Transmit(&huart1, (uint8_t *) "&ch", 3, 0xffff);
+  vTaskDelay(100);
+  lcd_init();
+	vTaskDelay(100);
+  lcd_fillRect(10,10,50,50, RGB_565(237, 28, 36) );
+
+
+  ReadID();
+	// for ( int i=0; i<255; i++ ) {
+	// 	LCD_RST_Low();
+	// 	vTaskDelay(100);
+	// 	LCD_RST_High();
+	// 	data = lcd_8080_read(i);
+	// }
+	
+  printf("addr: 0x00 data: %d\n", data);
+
+
   /* Infinite loop */
   for(;;)
   {

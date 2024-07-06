@@ -26,8 +26,6 @@
 //#include "crc.h"
 
 
-#define 	StartDefaultTaskSize				128
-
 
 #endif /*__COMMON__H*/
 
